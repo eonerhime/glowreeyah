@@ -867,6 +867,7 @@ export default mongoose.models.Initiative ||
 
 **Section 5 Checklist:**
 
+<<<<<<< HEAD
 - [x] `src/lib/mongodb.ts` created and tested — `connectDB()` resolves without error
 - [ ] `src/lib/cloudinary.ts` created (see §9.1)
 - [ ] `src/lib/utils.ts` created
@@ -879,6 +880,20 @@ export default mongoose.models.Initiative ||
 - [x] `src/models/Booking.ts` created
 - [x] `src/models/Tag.ts` created
 - [x] `src/models/Initiative.ts` created
+=======
+- [ ] `src/lib/mongodb.ts` created and tested — `connectDB()` resolves without error
+- [ ] `src/lib/cloudinary.ts` created (see §9.1)
+- [ ] `src/lib/utils.ts` created
+- [ ] `src/models/Artist.ts` created
+- [ ] `src/models/Album.ts` created
+- [ ] `src/models/Song.ts` created
+- [ ] `src/models/Post.ts` created
+- [ ] `src/models/MediaAsset.ts` created
+- [ ] `src/models/Event.ts` created
+- [ ] `src/models/Booking.ts` created
+- [ ] `src/models/Tag.ts` created
+- [ ] `src/models/Initiative.ts` created
+>>>>>>> 2ca71e4 (feat: data layer — API routes, [id] handlers, validators, cloudinary, utils)
 - [ ] All models import without TypeScript errors (`npx tsc --noEmit`)
 
 ---
@@ -899,15 +914,23 @@ DELETE /api/[resource]/[id]     → delete
 
 ---
 
-### 6.2 Example: Songs Route
+### 6.2 Songs Route ✅
 
 **File:** `src/app/api/songs/route.ts`
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
+<<<<<<< HEAD
 import { connectDB } from '@/lib/mongodb';
 import Song from '@/models/Song';
 import slugify from 'slugify';
+=======
+import mongoose from 'mongoose';
+import { connectDB } from '@/lib/mongodb';
+import Song from '@/models/Song';
+import slugify from 'slugify';
+import { SongSchema } from '@/lib/validators/songValidator';
+>>>>>>> 2ca71e4 (feat: data layer — API routes, [id] handlers, validators, cloudinary, utils)
 
 export async function GET(req: NextRequest) {
   await connectDB();
@@ -915,7 +938,13 @@ export async function GET(req: NextRequest) {
   const albumId = searchParams.get('albumId');
   const tag = searchParams.get('tag');
 
+<<<<<<< HEAD
   const query: Record<string, any> = { isPublished: true };
+=======
+  const query: Record<string, string | boolean | mongoose.Types.ObjectId> = {
+    isPublished: true,
+  };
+>>>>>>> 2ca71e4 (feat: data layer — API routes, [id] handlers, validators, cloudinary, utils)
   if (albumId) query.albumId = albumId;
   if (tag) query.tags = tag;
 
@@ -931,30 +960,927 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   await connectDB();
   const body = await req.json();
+<<<<<<< HEAD
   body.slug = slugify(body.title, { lower: true, strict: true });
 
   const song = await Song.create(body);
+=======
+  const parsed = SongSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
+  }
+  const song = await Song.create({
+    ...parsed.data,
+    slug: slugify(parsed.data.title, { lower: true, strict: true }),
+  });
+>>>>>>> 2ca71e4 (feat: data layer — API routes, [id] handlers, validators, cloudinary, utils)
   return NextResponse.json({ data: song }, { status: 201 });
 }
 ```
 
-Apply the same pattern for: `/api/albums`, `/api/posts`, `/api/events`, `/api/initiatives`, `/api/bookings`, `/api/tags`, `/api/artists`, `/api/media`.
+**File:** `src/app/api/songs/[id]/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Song from '@/models/Song';
+import slugify from 'slugify';
+import { SongSchema } from '@/lib/validators/songValidator';
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  const song = await Song.findById(params.id)
+    .populate('albumId', 'title slug')
+    .populate('tags', 'name slug')
+    .lean();
+  if (!song) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ data: song });
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  const body = await req.json();
+  const parsed = SongSchema.partial().safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
+  }
+  const update = parsed.data.title
+    ? {
+        ...parsed.data,
+        slug: slugify(parsed.data.title, { lower: true, strict: true }),
+      }
+    : parsed.data;
+  const song = await Song.findByIdAndUpdate(params.id, update, { new: true });
+  if (!song) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ data: song });
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  await Song.findByIdAndDelete(params.id);
+  return NextResponse.json({ ok: true });
+}
+```
 
 ---
 
-### 6.3 Validation with Zod
+### 6.3 Albums Route
 
-**File:** `src/lib/validators/songValidator.ts`
+**File:** `src/app/api/albums/route.ts`
+
+```typescript
+<<<<<<< HEAD
+import { z } from 'zod';
+=======
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Album from '@/models/Album';
+import slugify from 'slugify';
+import { AlbumSchema } from '@/lib/validators/albumValidator';
+>>>>>>> 2ca71e4 (feat: data layer — API routes, [id] handlers, validators, cloudinary, utils)
+
+export async function GET(req: NextRequest) {
+  await connectDB();
+  const { searchParams } = new URL(req.url);
+  const tag = searchParams.get('tag');
+
+  const query: Record<string, string> = {};
+  if (tag) query.tags = tag;
+
+  const albums = await Album.find(query)
+    .populate('tags', 'name slug')
+    .sort({ releaseYear: -1 })
+    .lean();
+
+  return NextResponse.json({ data: albums });
+}
+
+export async function POST(req: NextRequest) {
+  await connectDB();
+  const body = await req.json();
+  const parsed = AlbumSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
+  }
+  const album = await Album.create({
+    ...parsed.data,
+    slug: slugify(parsed.data.title, { lower: true, strict: true }),
+  });
+  return NextResponse.json({ data: album }, { status: 201 });
+}
+```
+
+**File:** `src/app/api/albums/[id]/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Album from '@/models/Album';
+import slugify from 'slugify';
+import { AlbumSchema } from '@/lib/validators/albumValidator';
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  const album = await Album.findById(params.id)
+    .populate('tags', 'name slug')
+    .lean();
+  if (!album) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ data: album });
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  const body = await req.json();
+  const parsed = AlbumSchema.partial().safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
+  }
+  const update = parsed.data.title
+    ? {
+        ...parsed.data,
+        slug: slugify(parsed.data.title, { lower: true, strict: true }),
+      }
+    : parsed.data;
+  const album = await Album.findByIdAndUpdate(params.id, update, { new: true });
+  if (!album) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ data: album });
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  await Album.findByIdAndDelete(params.id);
+  return NextResponse.json({ ok: true });
+}
+```
+
+---
+
+### 6.4 Posts Route
+
+**File:** `src/app/api/posts/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Post from '@/models/Post';
+import slugify from 'slugify';
+import { PostSchema } from '@/lib/validators/postValidator';
+
+export async function GET(req: NextRequest) {
+  await connectDB();
+  const { searchParams } = new URL(req.url);
+  const category = searchParams.get('category');
+  const tag = searchParams.get('tag');
+
+  const query: Record<string, string | boolean> = { isPublished: true };
+  if (category) query.category = category;
+  if (tag) query.tags = tag;
+
+  const posts = await Post.find(query)
+    .populate('tags', 'name slug')
+    .sort({ publishedAt: -1 })
+    .lean();
+
+  return NextResponse.json({ data: posts });
+}
+
+export async function POST(req: NextRequest) {
+  await connectDB();
+  const body = await req.json();
+  const parsed = PostSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
+  }
+  const post = await Post.create({
+    ...parsed.data,
+    slug: slugify(parsed.data.title, { lower: true, strict: true }),
+    publishedAt: parsed.data.isPublished ? new Date() : null,
+  });
+  return NextResponse.json({ data: post }, { status: 201 });
+}
+```
+
+**File:** `src/app/api/posts/[id]/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Post from '@/models/Post';
+import slugify from 'slugify';
+import { PostSchema } from '@/lib/validators/postValidator';
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  const post = await Post.findById(params.id)
+    .populate('tags', 'name slug')
+    .lean();
+  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ data: post });
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  const body = await req.json();
+  const parsed = PostSchema.partial().safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
+  }
+  const update: Record<string, unknown> = { ...parsed.data };
+  if (parsed.data.title)
+    update.slug = slugify(parsed.data.title, { lower: true, strict: true });
+  if (parsed.data.isPublished) update.publishedAt = new Date();
+  const post = await Post.findByIdAndUpdate(params.id, update, { new: true });
+  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ data: post });
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  await Post.findByIdAndDelete(params.id);
+  return NextResponse.json({ ok: true });
+}
+```
+
+---
+
+### 6.5 Events Route
+
+**File:** `src/app/api/events/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Event from '@/models/Event';
+import slugify from 'slugify';
+import { EventSchema } from '@/lib/validators/eventValidator';
+
+export async function GET(req: NextRequest) {
+  await connectDB();
+  const { searchParams } = new URL(req.url);
+  const upcoming = searchParams.get('upcoming');
+
+  const query: Record<string, boolean> = {};
+  if (upcoming === 'true') query.isUpcoming = true;
+  if (upcoming === 'false') query.isUpcoming = false;
+
+  const events = await Event.find(query).sort({ date: 1 }).lean();
+  return NextResponse.json({ data: events });
+}
+
+export async function POST(req: NextRequest) {
+  await connectDB();
+  const body = await req.json();
+  const parsed = EventSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
+  }
+  const event = await Event.create({
+    ...parsed.data,
+    slug: slugify(parsed.data.title, { lower: true, strict: true }),
+  });
+  return NextResponse.json({ data: event }, { status: 201 });
+}
+```
+
+**File:** `src/app/api/events/[id]/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Event from '@/models/Event';
+import slugify from 'slugify';
+import { EventSchema } from '@/lib/validators/eventValidator';
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  const event = await Event.findById(params.id).lean();
+  if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ data: event });
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  const body = await req.json();
+  const parsed = EventSchema.partial().safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
+  }
+  const update = parsed.data.title
+    ? {
+        ...parsed.data,
+        slug: slugify(parsed.data.title, { lower: true, strict: true }),
+      }
+    : parsed.data;
+  const event = await Event.findByIdAndUpdate(params.id, update, { new: true });
+  if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ data: event });
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  await Event.findByIdAndDelete(params.id);
+  return NextResponse.json({ ok: true });
+}
+```
+
+---
+
+### 6.6 Initiatives Route
+
+**File:** `src/app/api/initiatives/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Initiative from '@/models/Initiative';
+import slugify from 'slugify';
+import { InitiativeSchema } from '@/lib/validators/initiativeValidator';
+
+export async function GET() {
+  await connectDB();
+  const initiatives = await Initiative.find()
+    .populate('tags', 'name slug')
+    .sort({ createdAt: -1 })
+    .lean();
+  return NextResponse.json({ data: initiatives });
+}
+
+export async function POST(req: NextRequest) {
+  await connectDB();
+  const body = await req.json();
+  const parsed = InitiativeSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
+  }
+  const initiative = await Initiative.create({
+    ...parsed.data,
+    slug: slugify(parsed.data.title, { lower: true, strict: true }),
+  });
+  return NextResponse.json({ data: initiative }, { status: 201 });
+}
+```
+
+**File:** `src/app/api/initiatives/[id]/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Initiative from '@/models/Initiative';
+import slugify from 'slugify';
+import { InitiativeSchema } from '@/lib/validators/initiativeValidator';
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  const initiative = await Initiative.findById(params.id)
+    .populate('tags', 'name slug')
+    .lean();
+  if (!initiative)
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ data: initiative });
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  const body = await req.json();
+  const parsed = InitiativeSchema.partial().safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
+  }
+  const update = parsed.data.title
+    ? {
+        ...parsed.data,
+        slug: slugify(parsed.data.title, { lower: true, strict: true }),
+      }
+    : parsed.data;
+  const initiative = await Initiative.findByIdAndUpdate(params.id, update, {
+    new: true,
+  });
+  if (!initiative)
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ data: initiative });
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  await Initiative.findByIdAndDelete(params.id);
+  return NextResponse.json({ ok: true });
+}
+```
+
+---
+
+### 6.7 Tags Route
+
+**File:** `src/app/api/tags/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Tag from '@/models/Tag';
+import slugify from 'slugify';
+import { TagSchema } from '@/lib/validators/tagValidator';
+
+export async function GET() {
+  await connectDB();
+  const tags = await Tag.find().sort({ name: 1 }).lean();
+  return NextResponse.json({ data: tags });
+}
+
+export async function POST(req: NextRequest) {
+  await connectDB();
+  const body = await req.json();
+  const parsed = TagSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
+  }
+  const tag = await Tag.create({
+    ...parsed.data,
+    slug: slugify(parsed.data.name, { lower: true, strict: true }),
+  });
+  return NextResponse.json({ data: tag }, { status: 201 });
+}
+```
+
+**File:** `src/app/api/tags/[id]/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Tag from '@/models/Tag';
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  await Tag.findByIdAndDelete(params.id);
+  return NextResponse.json({ ok: true });
+}
+```
+
+> Tags use `name` not `title` for slug generation — note `slugify(parsed.data.name, ...)` in the POST handler.
+
+---
+
+### 6.8 Artists Route
+
+No slug. Single artist document — GET returns the first (and only) artist record. POST creates it on first setup. PATCH updates it.
+
+**File:** `src/app/api/artists/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Artist from '@/models/Artist';
+import { ArtistSchema } from '@/lib/validators/artistValidator';
+
+export async function GET() {
+  await connectDB();
+  const artist = await Artist.findOne().lean();
+  return NextResponse.json({ data: artist });
+}
+
+export async function POST(req: NextRequest) {
+  await connectDB();
+  const body = await req.json();
+  const parsed = ArtistSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
+  }
+  const artist = await Artist.create(parsed.data);
+  return NextResponse.json({ data: artist }, { status: 201 });
+}
+```
+
+**File:** `src/app/api/artists/[id]/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Artist from '@/models/Artist';
+import { ArtistSchema } from '@/lib/validators/artistValidator';
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  const body = await req.json();
+  const parsed = ArtistSchema.partial().safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
+  }
+  const artist = await Artist.findByIdAndUpdate(params.id, parsed.data, {
+    new: true,
+  });
+  if (!artist)
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ data: artist });
+}
+```
+
+---
+
+### 6.9 Bookings Route
+
+No slug. Submissions only come in via POST from the public booking form. Status updates via PATCH from the CMS.
+
+**File:** `src/app/api/bookings/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Booking from '@/models/Booking';
+import { BookingSchema } from '@/lib/validators/bookingValidator';
+
+export async function GET(req: NextRequest) {
+  await connectDB();
+  const { searchParams } = new URL(req.url);
+  const status = searchParams.get('status');
+
+  const query: Record<string, string> = {};
+  if (status) query.status = status;
+
+  const bookings = await Booking.find(query).sort({ createdAt: -1 }).lean();
+  return NextResponse.json({ data: bookings });
+}
+
+export async function POST(req: NextRequest) {
+  await connectDB();
+  const body = await req.json();
+  const parsed = BookingSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
+  }
+  const booking = await Booking.create(parsed.data);
+  return NextResponse.json({ data: booking }, { status: 201 });
+}
+```
+
+**File:** `src/app/api/bookings/[id]/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Booking from '@/models/Booking';
+
+const VALID_STATUSES = ['pending', 'reviewed', 'accepted', 'declined'] as const;
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  const { status } = await req.json();
+  if (!VALID_STATUSES.includes(status)) {
+    return NextResponse.json(
+      { error: { status: ['Invalid status value'] } },
+      { status: 422 }
+    );
+  }
+  const booking = await Booking.findByIdAndUpdate(
+    params.id,
+    { status },
+    { new: true }
+  );
+  if (!booking)
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ data: booking });
+}
+```
+
+---
+
+### 6.10 Media Route
+
+Entirely different — handles `FormData`, not JSON. Uploads to Cloudinary before writing to MongoDB. No slug. See §9 for Cloudinary setup.
+
+**File:** `src/app/api/media/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import cloudinary from '@/lib/cloudinary';
+import MediaAsset from '@/models/MediaAsset';
+
+export async function GET() {
+  await connectDB();
+  const assets = await MediaAsset.find().sort({ createdAt: -1 }).lean();
+  return NextResponse.json({ data: assets });
+}
+
+export async function POST(req: NextRequest) {
+  await connectDB();
+  const formData = await req.formData();
+  const file = formData.get('file') as File;
+  const altText = formData.get('altText') as string;
+  const type = formData.get('type') as string;
+
+  if (!altText) {
+    return NextResponse.json(
+      { error: { altText: ['Alt text is required'] } },
+      { status: 422 }
+    );
+  }
+  if (!file) {
+    return NextResponse.json(
+      { error: { file: ['File is required'] } },
+      { status: 422 }
+    );
+  }
+
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+
+  const uploadResult = await new Promise<{
+    secure_url: string;
+    public_id: string;
+  }>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'glowreeyah', resource_type: 'auto' },
+      (err, result) => {
+        if (err || !result) return reject(err);
+        resolve(result);
+      }
+    );
+    stream.end(buffer);
+  });
+
+  const asset = await MediaAsset.create({
+    url: uploadResult.secure_url,
+    publicId: uploadResult.public_id,
+    altText,
+    type,
+  });
+
+  return NextResponse.json({ data: asset }, { status: 201 });
+}
+```
+
+**File:** `src/app/api/media/[id]/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import cloudinary from '@/lib/cloudinary';
+import MediaAsset from '@/models/MediaAsset';
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+  const asset = await MediaAsset.findById(params.id);
+  if (!asset) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  // Delete from Cloudinary first, then remove the DB record
+  await cloudinary.uploader.destroy(asset.publicId);
+  await asset.deleteOne();
+
+  return NextResponse.json({ ok: true });
+}
+```
+
+---
+
+### 6.11 Validators
+
+Create one file per resource in `src/lib/validators/`.
+
+**`albumValidator.ts`**
 
 ```typescript
 import { z } from 'zod';
+export const AlbumSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  releaseYear: z.number({ required_error: 'Release year is required' }),
+  coverImageUrl: z.string().url('Must be a valid URL'),
+  description: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  seo: z
+    .object({
+      metaTitle: z.string().optional(),
+      metaDescription: z.string().optional(),
+    })
+    .optional(),
+});
+export type AlbumInput = z.infer<typeof AlbumSchema>;
+```
 
+**`postValidator.ts`**
+
+```typescript
+import { z } from 'zod';
+export const PostSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  category: z.enum(['blog', 'devotional', 'story']).default('blog'),
+  body: z.string().min(1, 'Body is required'),
+  excerpt: z.string().max(300).optional(),
+  coverImageUrl: z.string().url().optional(),
+  tags: z.array(z.string()).optional(),
+  isPublished: z.boolean().default(false),
+  seo: z
+    .object({
+      metaTitle: z.string().optional(),
+      metaDescription: z.string().optional(),
+    })
+    .optional(),
+});
+export type PostInput = z.infer<typeof PostSchema>;
+```
+
+**`eventValidator.ts`**
+
+```typescript
+import { z } from 'zod';
+export const EventSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  date: z.string().min(1, 'Date is required'),
+  location: z.string().min(1, 'Location is required'),
+  description: z.string().optional(),
+  externalLink: z.string().url().optional(),
+  isUpcoming: z.boolean().default(true),
+  coverImageUrl: z.string().url().optional(),
+});
+export type EventInput = z.infer<typeof EventSchema>;
+```
+
+**`initiativeValidator.ts`**
+
+```typescript
+import { z } from 'zod';
+export const InitiativeSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  body: z.string().optional(),
+  coverImageUrl: z.string().url().optional(),
+  externalLink: z.string().url().optional(),
+  tags: z.array(z.string()).optional(),
+});
+export type InitiativeInput = z.infer<typeof InitiativeSchema>;
+```
+
+**`tagValidator.ts`**
+
+```typescript
+import { z } from 'zod';
+export const TagSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional(),
+});
+export type TagInput = z.infer<typeof TagSchema>;
+```
+
+**`artistValidator.ts`**
+
+```typescript
+import { z } from 'zod';
+export const ArtistSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  slugName: z.string().min(1, 'Slug is required'),
+  biographyShort: z.string().max(160, 'Max 160 characters'),
+  biographyMedium: z.string().max(500, 'Max 500 characters'),
+  biographyLong: z.string(),
+  achievements: z.array(z.string()).optional(),
+  speakingProfile: z.string().optional(),
+  profileImageUrl: z.string().url('Must be a valid URL'),
+  socialLinks: z
+    .object({
+      instagram: z.string().url().optional(),
+      youtube: z.string().url().optional(),
+      spotify: z.string().url().optional(),
+      twitter: z.string().url().optional(),
+    })
+    .optional(),
+  seo: z
+    .object({
+      metaTitle: z.string().optional(),
+      metaDescription: z.string().optional(),
+    })
+    .optional(),
+});
+export type ArtistInput = z.infer<typeof ArtistSchema>;
+```
+
+**`bookingValidator.ts`**
+
+```typescript
+import { z } from 'zod';
+export const BookingSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Must be a valid email'),
+  organisation: z.string().optional(),
+  eventType: z.string().optional(),
+  eventDate: z.string().optional(),
+  message: z.string().min(1, 'Message is required'),
+});
+export type BookingInput = z.infer<typeof BookingSchema>;
+```
+
+**`songValidator.ts`** (updated full version)
+
+```typescript
+import { z } from 'zod';
 export const SongSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   albumId: z.string().min(1, 'Album is required'),
-  audioUrl: z.string().url().optional(),
-  videoUrl: z.string().url().optional(),
+  trackNumber: z.number().optional(),
+  description: z.string().optional(),
+  lyrics: z.string().optional(),
+  storyBehindSong: z.string().optional(),
+  audioUrl: z.string().url('Must be a valid URL').optional(),
+  videoUrl: z.string().url('Must be a valid URL').optional(),
+  coverImageUrl: z.string().url('Must be a valid URL').optional(),
+  tags: z.array(z.string()).optional(),
   isPublished: z.boolean().default(true),
+<<<<<<< HEAD
 });
 
 export type SongInput = z.infer<typeof SongSchema>;
@@ -967,6 +1893,16 @@ const parsed = SongSchema.safeParse(body);
 if (!parsed.success) {
   return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
 }
+=======
+  seo: z
+    .object({
+      metaTitle: z.string().optional(),
+      metaDescription: z.string().optional(),
+    })
+    .optional(),
+});
+export type SongInput = z.infer<typeof SongSchema>;
+>>>>>>> 2ca71e4 (feat: data layer — API routes, [id] handlers, validators, cloudinary, utils)
 ```
 
 **Section 6 Checklist:**
@@ -986,6 +1922,64 @@ if (!parsed.success) {
 
 ---
 
+<<<<<<< HEAD
+=======
+### 6.12 Key Differences Summary
+
+| Route         | Slug field | Slug source | Query filters     | Special behaviour                                            |
+| ------------- | ---------- | ----------- | ----------------- | ------------------------------------------------------------ |
+| `songs`       | ✅         | `title`     | `albumId`, `tag`  | Filters by `isPublished` on GET                              |
+| `albums`      | ✅         | `title`     | `tag`             | Sorted by `releaseYear` desc                                 |
+| `posts`       | ✅         | `title`     | `category`, `tag` | Sets `publishedAt` on publish                                |
+| `events`      | ✅         | `title`     | `upcoming`        | Sorted by `date` asc                                         |
+| `initiatives` | ✅         | `title`     | none              | —                                                            |
+| `tags`        | ✅         | `name`      | none              | DELETE only on `[id]`                                        |
+| `artists`     | ❌         | —           | none              | GET returns single record                                    |
+| `bookings`    | ❌         | —           | `status`          | PATCH updates status only                                    |
+| `media`       | ❌         | —           | none              | Uses `FormData`, not JSON; deletes from Cloudinary on DELETE |
+
+**Section 6 Checklist:**
+
+**Validators** (`src/lib/validators/`)
+
+- [x] `songValidator.ts`
+- [x] `albumValidator.ts`
+- [x] `postValidator.ts`
+- [x] `eventValidator.ts`
+- [x] `initiativeValidator.ts`
+- [x] `tagValidator.ts`
+- [x] `artistValidator.ts`
+- [x] `bookingValidator.ts`
+
+**Route files** (`src/app/api/`)
+
+- [x] `songs/route.ts` — GET (filters: `albumId`, `tag`, `isPublished`), POST
+- [x] `songs/[id]/route.ts` — GET, PATCH, DELETE
+- [x] `albums/route.ts` — GET (filters: `tag`), POST
+- [x] `albums/[id]/route.ts` — GET, PATCH, DELETE
+- [x] `posts/route.ts` — GET (filters: `category`, `tag`, `isPublished`), POST
+- [x] `posts/[id]/route.ts` — GET, PATCH, DELETE
+- [x] `events/route.ts` — GET (filters: `upcoming`), POST
+- [x] `events/[id]/route.ts` — GET, PATCH, DELETE
+- [x] `initiatives/route.ts` — GET, POST
+- [x] `initiatives/[id]/route.ts` — GET, PATCH, DELETE
+- [x] `tags/route.ts` — GET, POST
+- [x] `tags/[id]/route.ts` — DELETE only
+- [x] `artists/route.ts` — GET (single record), POST
+- [x] `artists/[id]/route.ts` — PATCH only
+- [x] `bookings/route.ts` — GET (filters: `status`), POST
+- [x] `bookings/[id]/route.ts` — PATCH (status update only)
+- [x] `media/route.ts` — GET, POST (FormData + Cloudinary upload)
+- [x] `media/[id]/route.ts` — DELETE (removes from Cloudinary + MongoDB)
+
+**Verification**
+
+- [x] `npx tsc --noEmit` — zero TypeScript errors across all route files
+- [x] All routes tested via REST client — correct status codes and response shapes
+
+---
+
+>>>>>>> 2ca71e4 (feat: data layer — API routes, [id] handlers, validators, cloudinary, utils)
 ## 7. UI & Component Layer ⬜
 
 ### 7.1 Root Layout
