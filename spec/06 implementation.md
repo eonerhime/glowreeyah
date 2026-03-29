@@ -1908,7 +1908,7 @@ export type SongInput = z.infer<typeof SongSchema>;
 
 ---
 
-## 7. UI & Component Layer ⬜
+## 7. UI & Component Layer ✅
 
 ### 7.1 Root Layout
 
@@ -2036,7 +2036,7 @@ export default function Navbar() {
 
 ---
 
-## 8. Page Implementation ⬜
+## 8. Page Implementation ✅
 
 ### 8.1 Home Page — `src/app/(public)/page.tsx`
 
