@@ -17,7 +17,7 @@
 | §3      | Environment Setup           | ✅ Complete    |
 | §4      | Project Scaffolding         | ✅ Complete    |
 | §5      | Database Design             | 🔄 In Progress |
-| §6      | API Layer                   | 🔄 In Progress |
+| §6      | API Layer                   | ⬜ Not Started |
 | §7      | UI & Component Layer        | ✅ Complete    |
 | §8      | Page Implementation         | ✅ Complete    |
 | §9      | Media Integration           | 🔄 In Progress |
@@ -1908,7 +1908,7 @@ export type SongInput = z.infer<typeof SongSchema>;
 
 ---
 
-## 7. UI & Component Layer ✅
+## 7. UI & Component Layer ⬜
 
 ### 7.1 Root Layout
 
@@ -1943,9 +1943,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 ---
 
-### 7.2 Navbar & Footer
+### 7.2 Navbar
 
-**File:** `src/components/layout/Navbar.tsx` `src/components/layout/Footer.tsx`
+**File:** `src/components/layout/Navbar.tsx`
 
 ```typescript
 'use client'
@@ -2017,26 +2017,26 @@ export default function Navbar() {
 
 **Section 7 Checklist:**
 
-- [x] `src/app/layout.tsx` — root layout with Navbar and Footer wired up
-- [x] `src/components/layout/Navbar.tsx` — responsive, mobile menu working
-- [x] `src/components/layout/Footer.tsx` — created
-- [x] `src/components/layout/PageWrapper.tsx` — created
-- [x] `src/components/ui/Button.tsx` — created
-- [x] `src/components/ui/Input.tsx` — created
-- [x] `src/components/ui/Tag.tsx` — created
-- [x] `src/components/ui/LoadingSpinner.tsx` — created
-- [x] `src/components/music/AlbumCard.tsx` — created
-- [x] `src/components/music/SongCard.tsx` — created
-- [x] `src/components/music/AudioPlayer.tsx` — created
-- [x] `src/components/content/PostCard.tsx` — created
-- [x] `src/components/content/RichText.tsx` — created
-- [x] `src/components/media/MediaCard.tsx` — created
-- [x] `src/components/seo/MetaTags.tsx` — created
-- [x] `npm run dev` renders root layout with Navbar and Footer, no console errors
+- [ ] `src/app/layout.tsx` — root layout with Navbar and Footer wired up
+- [ ] `src/components/layout/Navbar.tsx` — responsive, mobile menu working
+- [ ] `src/components/layout/Footer.tsx` — created
+- [ ] `src/components/layout/PageWrapper.tsx` — created
+- [ ] `src/components/ui/Button.tsx` — created
+- [ ] `src/components/ui/Input.tsx` — created
+- [ ] `src/components/ui/Tag.tsx` — created
+- [ ] `src/components/ui/LoadingSpinner.tsx` — created
+- [ ] `src/components/music/AlbumCard.tsx` — created
+- [ ] `src/components/music/SongCard.tsx` — created
+- [ ] `src/components/music/AudioPlayer.tsx` — created
+- [ ] `src/components/content/PostCard.tsx` — created
+- [ ] `src/components/content/RichText.tsx` — created
+- [ ] `src/components/media/MediaCard.tsx` — created
+- [ ] `src/components/seo/MetaTags.tsx` — created
+- [ ] `npm run dev` renders root layout with Navbar and Footer, no console errors
 
 ---
 
-## 8. Page Implementation ✅
+## 8. Page Implementation ⬜
 
 ### 8.1 Home Page — `src/app/(public)/page.tsx`
 
@@ -2081,33 +2081,34 @@ Follow the same Server Component data-fetching pattern for all public pages.
 **File:** `src/app/(public)/music/[albumSlug]/[songSlug]/page.tsx`
 
 ```typescript
-import { connectDB } from '@/lib/mongodb';
-import Song from '@/models/Song';
-import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { connectDB } from '@/lib/mongodb'
+import Song from '@/models/Song'
+import Album from '@/models/Album'
+import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 
 interface Props {
-  params: { albumSlug: string; songSlug: string };
+  params: { albumSlug: string; songSlug: string }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  await connectDB();
-  const song = await Song.findOne({ slug: params.songSlug }).lean();
-  if (!song) return {};
+  await connectDB()
+  const song = await Song.findOne({ slug: params.songSlug }).lean()
+  if (!song) return {}
   return {
     title: song.seo?.metaTitle || song.title,
     description: song.seo?.metaDescription || song.description,
-  };
+  }
 }
 
 export default async function SongPage({ params }: Props) {
-  await connectDB();
+  await connectDB()
   const song = await Song.findOne({ slug: params.songSlug })
     .populate('albumId')
     .populate('tags')
-    .lean();
+    .lean()
 
-  if (!song) notFound();
+  if (!song) notFound()
 
   return (
     <article className="max-w-3xl mx-auto px-6 py-12">
@@ -2122,7 +2123,7 @@ export default async function SongPage({ params }: Props) {
         </section>
       )}
     </article>
-  );
+  )
 }
 ```
 
@@ -2172,49 +2173,9 @@ export default cloudinary;
 
 ### 9.2 Upload API Route
 
-**File:** `src/app/api/media/route.ts`
+The complete implementation is in §6.10. The `src/app/api/media/route.ts` file covers `GET` and `POST`, and `src/app/api/media/[id]/route.ts` covers `DELETE` (removes from Cloudinary then MongoDB). Use those files — do not use the snippet below.
 
-```typescript
-import { NextRequest, NextResponse } from 'next/server';
-import cloudinary from '@/lib/cloudinary';
-import { connectDB } from '@/lib/mongodb';
-import MediaAsset from '@/models/MediaAsset';
-
-export async function POST(req: NextRequest) {
-  await connectDB();
-  const formData = await req.formData();
-  const file = formData.get('file') as File;
-  const altText = formData.get('altText') as string;
-  const type = formData.get('type') as string;
-
-  if (!altText) {
-    return NextResponse.json(
-      { error: 'Alt text is required' },
-      { status: 422 }
-    );
-  }
-
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-
-  const uploadResult = await new Promise<any>((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder: 'glowreeyah', resource_type: 'auto' },
-      (err, result) => (err ? reject(err) : resolve(result))
-    );
-    stream.end(buffer);
-  });
-
-  const asset = await MediaAsset.create({
-    url: uploadResult.secure_url,
-    publicId: uploadResult.public_id,
-    altText,
-    type,
-  });
-
-  return NextResponse.json({ data: asset }, { status: 201 });
-}
-```
+> The version in your codebase (`media/route.ts`) is the correct one — it includes `file` validation, proper TypeScript typing on the upload promise, and both `altText` and `file` guards before the Cloudinary upload.
 
 ---
 
@@ -2231,13 +2192,17 @@ export async function POST(req: NextRequest) {
 
 **Section 9 Checklist:**
 
-- [ ] `src/lib/cloudinary.ts` created with correct env var references
-- [ ] `src/app/api/media/route.ts` POST handler uploads to Cloudinary successfully
-- [ ] `MediaAsset` document created in MongoDB after upload (URL, publicId, altText, type)
-- [ ] Upload blocked with `422` when `altText` is missing
-- [ ] `next.config.ts` updated with Cloudinary `remotePatterns`
-- [ ] All `<img>` tags replaced with `next/image` using Cloudinary URLs
+- [x] `src/lib/cloudinary.ts` created with correct env var references
+- [x] `src/app/api/media/route.ts` — GET, POST implemented (see §6.10)
+- [x] `src/app/api/media/[id]/route.ts` — DELETE implemented (see §6.10)
+- [x] `next.config.ts` updated with Cloudinary `remotePatterns`
+- [x] `next/image` used in `AlbumCard`, `PostCard`, `MediaCard` — no raw `<img>` tags in those components
+- [x] Cloudinary env vars added to `.env.local` (`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`)
+- [ ] `MediaAsset` document created in MongoDB after upload — verified via MongoDB Atlas or Compass
+- [ ] Upload blocked with `422` when `altText` is missing — verified via REST client
 - [ ] Test upload end-to-end: file → Cloudinary → URL resolves in browser
+
+> The remaining items require the CMS media uploader (`/cms/media`) built in §10, and valid Cloudinary credentials in `.env.local`. Defer until §10 is complete.
 
 ---
 
