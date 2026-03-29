@@ -22,18 +22,18 @@ The platform exists to present Glowreeyah as a multidimensional brand spanning m
 
 Every feature, page, component, and piece of content must reflect:
 
-| Value | Application |
-|---|---|
-| Warmth | Approachable copy tone, warm colour palette, generous white space |
-| Spirituality | Language, imagery, and content themes reflect faith and ministry identity |
-| Intelligence | Clear information hierarchy, no clutter, purposeful copy |
-| Elegance | Refined typography, restrained animations, high-quality imagery only |
-| Expressiveness | Bold hero sections, rich media, lyric and story sections |
+| Value          | Application                                                               |
+| -------------- | ------------------------------------------------------------------------- |
+| Warmth         | Approachable copy tone, warm colour palette, generous white space         |
+| Spirituality   | Language, imagery, and content themes reflect faith and ministry identity |
+| Intelligence   | Clear information hierarchy, no clutter, purposeful copy                  |
+| Elegance       | Refined typography, restrained animations, high-quality imagery only      |
+| Expressiveness | Bold hero sections, rich media, lyric and story sections                  |
 
 ### 2.2 Visual Identity Rules
 
 - Primary typeface: Serif for headings (Georgia or equivalent), Sans-serif for body (Inter)
-- Colour palette: Gold (`#C9A84C`), Deep Navy (`#1A1A2E`), Warm Off-White (`#F5EDE0`), Accent Purple (`#8B5CF6`)
+- Colour palette: Teal (`#39AFB9`) — primary brand colour, Gold (`#C9A84C`), Deep Navy (`#1A1A2E`), Warm Off-White (`#F5EDE0`), Accent Purple (`#8B5CF6`)
 - No stock-looking imagery; authentic photography and branded graphics only
 - Minimum colour contrast ratio for body text: 4.5:1 (WCAG AA)
 
@@ -51,22 +51,23 @@ All content must be database-driven:
 
 ### 3.2 Performance by Default
 
-| Rule | Implementation |
-|---|---|
-| Fast load times | Target LCP < 2 seconds; ISR revalidation on all content pages |
-| Optimised media | All images via `next/image`; Cloudinary handles transforms and CDN |
-| Minimal JS | Prefer Server Components; use Client Components only where interactivity requires it |
-| No blocking resources | Fonts via `next/font`; third-party scripts loaded asynchronously |
+| Rule                  | Implementation                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------ |
+| Fast load times       | Target LCP < 2 seconds; ISR revalidation on all content pages                        |
+| Optimised media       | All images via `next/image`; Cloudinary handles transforms and CDN                   |
+| Minimal JS            | Prefer Server Components; use Client Components only where interactivity requires it |
+| No blocking resources | Fonts via `next/font`; third-party scripts loaded asynchronously                     |
 
 ### 3.3 Editorial Independence
 
-Non-technical team members must be able to:
+Non-technical team members must be able to — via the built-in CMS at `/cms`:
+
 - Create, update, and delete songs, albums, posts, events, and initiatives
 - Upload and manage media
 - Publish and unpublish content
 - Manage booking submissions
 
-No content operation should require a developer or a code deployment.
+No content operation should require a developer or a code deployment. The CMS is a first-class part of the application, not an afterthought.
 
 ### 3.4 SEO as Architecture
 
@@ -81,13 +82,13 @@ SEO is not a post-development concern — it is baked into the architecture:
 
 ### 3.5 Media Governance (Strict)
 
-| Rule | Detail |
-|---|---|
-| Binary data never stored in MongoDB | Images, audio, and video go to object storage only |
-| MongoDB stores metadata only | URL, `publicId`, `altText`, `type`, `linkedContentId` |
-| Alt text is mandatory | Upload API returns `422` if `altText` is missing |
-| GridFS not used | URL references to object storage only |
-| Cloudinary is the primary provider | S3 or Supabase may substitute; the storage provider must be interchangeable |
+| Rule                                | Detail                                                                      |
+| ----------------------------------- | --------------------------------------------------------------------------- |
+| Binary data never stored in MongoDB | Images, audio, and video go to object storage only                          |
+| MongoDB stores metadata only        | URL, `publicId`, `altText`, `type`, `linkedContentId`                       |
+| Alt text is mandatory               | Upload API returns `422` if `altText` is missing                            |
+| GridFS not used                     | URL references to object storage only                                       |
+| Cloudinary is the primary provider  | S3 or Supabase may substitute; the storage provider must be interchangeable |
 
 ### 3.6 Extensibility
 
@@ -107,46 +108,47 @@ These are defined in `features.md` as P3 (Future). No v1.0 component should be d
 
 ### 4.1 Approved Stack
 
-| Layer | Technology | Version |
-|---|---|---|
-| Framework | Next.js (App Router) | 14.x |
-| Styling | Tailwind CSS | 3.x |
-| Language | TypeScript | 5.x |
-| Database | MongoDB (via Mongoose) | Atlas M0+ |
-| Media Storage | Cloudinary | 2.x |
-| Hosting | Vercel | — |
-| Validation | Zod | 3.x |
+| Layer         | Technology             | Version   |
+| ------------- | ---------------------- | --------- |
+| Framework     | Next.js (App Router)   | 14.x      |
+| Styling       | Tailwind CSS           | 3.x       |
+| Language      | TypeScript             | 5.x       |
+| Database      | MongoDB (via Mongoose) | Atlas M0+ |
+| Media Storage | Cloudinary             | 2.x       |
+| Hosting       | Vercel                 | —         |
+| Validation    | Zod                    | 3.x       |
 
 **No deviations from this stack without a documented architectural decision.** Replacing any approved technology requires updating this document and `implementation.md` before development proceeds.
 
 ### 4.2 MongoDB Rules
 
-| Rule | Rationale |
-|---|---|
-| No binary data in BSON documents | MongoDB is not a file store; large BSON documents degrade performance |
-| Store only URL references to media | Object storage is designed for this; MongoDB is not |
-| GridFS only as last resort | If offline/airgapped storage is required, document the decision |
-| All collections use Mongoose schemas with TypeScript interfaces | Type safety and consistent validation |
+| Rule                                                            | Rationale                                                             |
+| --------------------------------------------------------------- | --------------------------------------------------------------------- |
+| No binary data in BSON documents                                | MongoDB is not a file store; large BSON documents degrade performance |
+| Store only URL references to media                              | Object storage is designed for this; MongoDB is not                   |
+| GridFS only as last resort                                      | If offline/airgapped storage is required, document the decision       |
+| All collections use Mongoose schemas with TypeScript interfaces | Type safety and consistent validation                                 |
 
 ### 4.3 Storage Decision Matrix
 
-| Data Type | Storage Location |
-|---|---|
-| Structured content (posts, songs, events) | MongoDB |
-| Metadata about media (URL, alt text, type) | MongoDB |
-| Images | Cloudinary (object storage) |
-| Audio files | Cloudinary (object storage) |
-| Video files | Cloudinary or YouTube embed URL |
-| Session data | HTTP-only cookies (server-side) |
-| Secrets and credentials | Environment variables only |
+| Data Type                                  | Storage Location                |
+| ------------------------------------------ | ------------------------------- |
+| Structured content (posts, songs, events)  | MongoDB                         |
+| Metadata about media (URL, alt text, type) | MongoDB                         |
+| Images                                     | Cloudinary (object storage)     |
+| Audio files                                | Cloudinary (object storage)     |
+| Video files                                | Cloudinary or YouTube embed URL |
+| Session data                               | HTTP-only cookies (server-side) |
+| Secrets and credentials                    | Environment variables only      |
 
 ### 4.4 Security Rules
 
-- `ADMIN_SECRET` and all API credentials stored as environment variables only
+- CMS routes (`/cms/*`) protected by NextAuth.js middleware — unauthenticated requests redirect to `/cms/login`
+- `NEXTAUTH_SECRET`, `CMS_ADMIN_EMAIL`, `CMS_ADMIN_PASSWORD` and all API credentials stored as environment variables only
 - No credentials committed to Git under any circumstances
-- Admin routes protected by `src/middleware.ts`
 - All form inputs validated server-side with Zod before persistence
 - `Content-Security-Policy` header configured at Vercel level before launch
+- `/cms/*` disallowed in `robots.txt` — CMS must never be indexed
 
 ---
 
@@ -166,6 +168,7 @@ This constitution takes precedence over all other documents. In the event of a c
 ### 5.2 Change Control
 
 Any change to this document requires:
+
 1. A written rationale
 2. An update to the relevant implementation files if the change affects code
 3. A version bump and date update in the document header
@@ -173,6 +176,7 @@ Any change to this document requires:
 ### 5.3 Definition of Done
 
 A feature is complete when:
+
 - [ ] All acceptance criteria in `features.md` are met
 - [ ] No hardcoded content (all data from database)
 - [ ] `generateMetadata()` implemented if the feature adds a new route

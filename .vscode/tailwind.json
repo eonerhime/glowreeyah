@@ -1,0 +1,12 @@
+{
+  "version": 1.1,
+  "atDirectives": [
+    {
+      "name": "@theme",
+      "description": "Tailwind v4 theme token definition block"
+    },
+    { "name": "@import", "description": "CSS import" },
+    { "name": "@apply", "description": "Tailwind apply directive" },
+    { "name": "@layer", "description": "Tailwind layer directive" }
+  ]
+}

@@ -98,22 +98,106 @@
 
 ---
 
-## Phase 6 — Admin System
+## Phase 6 — CMS Build
 
-- [ ] Create `src/middleware.ts` (admin route protection)
-- [ ] Create `src/app/api/admin/auth/route.ts`
-- [ ] Create admin login page `src/app/admin/login/page.tsx`
-- [ ] Create admin dashboard `src/app/admin/page.tsx`
-- [ ] Create admin songs management page
-- [ ] Create admin albums management page
-- [ ] Create admin posts management page
-- [ ] Create admin events management page
-- [ ] Create admin initiatives management page
-- [ ] Create admin bookings view page
-- [ ] Create admin tags management page
-- [ ] Create admin media browser page
-- [ ] Test all admin CRUD operations
-- [ ] Test admin auth (protected pages redirect unauthenticated users)
+### Dependencies
+
+- [ ] Install `next-auth`
+- [ ] Install `@uiw/react-md-editor` and `react-markdown`
+- [ ] Add `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `CMS_ADMIN_EMAIL`, `CMS_ADMIN_PASSWORD` to `.env.local`
+- [ ] Add same vars to Vercel environment variables dashboard
+
+### Authentication
+
+- [ ] Create `src/app/api/auth/[...nextauth]/route.ts` (Credentials provider)
+- [ ] Update `src/middleware.ts` to use `withAuth` from `next-auth/middleware`
+- [ ] Create `src/app/(cms)/login/page.tsx`
+- [ ] Test: unauthenticated visit to `/cms/dashboard` redirects to `/cms/login`
+- [ ] Test: valid credentials grant access and persist session
+
+### CMS Shell
+
+- [ ] Create `src/app/(cms)/layout.tsx`
+- [ ] Create `src/components/cms/CMSSidebar.tsx`
+- [ ] Create `src/components/cms/CMSTopbar.tsx`
+- [ ] Create `src/components/cms/CMSPageHeader.tsx`
+- [ ] Create `src/components/cms/StatusBadge.tsx`
+- [ ] Create `src/components/cms/ConfirmDialog.tsx`
+
+### Shared Form Components
+
+- [ ] Create `src/components/cms/SlugField.tsx` (auto-generates slug from title)
+- [ ] Create `src/components/cms/PublishToggle.tsx`
+- [ ] Create `src/components/cms/TagSelector.tsx`
+- [ ] Create `src/components/cms/RichTextEditor.tsx` (wraps `@uiw/react-md-editor`)
+- [ ] Create `src/components/cms/MediaPicker.tsx` (select existing asset)
+- [ ] Create `src/components/cms/MediaUploader.tsx` (upload new file)
+- [ ] Create `src/components/cms/ContentForm.tsx` (generic form wrapper)
+- [ ] Create `src/components/cms/ContentTable.tsx` (reusable list table)
+
+### Dashboard
+
+- [ ] Create `src/app/(cms)/dashboard/page.tsx` (stats: songs, posts, albums, pending bookings, upcoming events)
+
+### Posts
+
+- [ ] Create `src/app/(cms)/posts/page.tsx` (list)
+- [ ] Create `src/components/cms/PostForm.tsx`
+- [ ] Create `src/app/(cms)/posts/new/page.tsx`
+- [ ] Create `src/app/(cms)/posts/[id]/page.tsx`
+- [ ] Test: create → list shows new post → edit → delete
+
+### Songs
+
+- [ ] Create `src/app/(cms)/songs/page.tsx`
+- [ ] Create `src/components/cms/SongForm.tsx`
+- [ ] Create `src/app/(cms)/songs/new/page.tsx`
+- [ ] Create `src/app/(cms)/songs/[id]/page.tsx`
+- [ ] Test: create → list → edit → delete
+
+### Albums
+
+- [ ] Create `src/app/(cms)/albums/page.tsx`
+- [ ] Create `src/components/cms/AlbumForm.tsx`
+- [ ] Create `src/app/(cms)/albums/new/page.tsx`
+- [ ] Create `src/app/(cms)/albums/[id]/page.tsx`
+
+### Events
+
+- [ ] Create `src/app/(cms)/events/page.tsx`
+- [ ] Create `src/components/cms/EventForm.tsx`
+- [ ] Create `src/app/(cms)/events/new/page.tsx`
+- [ ] Create `src/app/(cms)/events/[id]/page.tsx`
+
+### Initiatives
+
+- [ ] Create `src/app/(cms)/initiatives/page.tsx`
+- [ ] Create `src/components/cms/InitiativeForm.tsx`
+- [ ] Create `src/app/(cms)/initiatives/new/page.tsx`
+- [ ] Create `src/app/(cms)/initiatives/[id]/page.tsx`
+
+### Media Library
+
+- [ ] Create `src/app/(cms)/media/page.tsx` (upload + grid browser)
+- [ ] Test: upload image → appears in grid → URL copyable
+- [ ] Test: alt text missing → save blocked with error message
+
+### Bookings
+
+- [ ] Create `src/app/(cms)/bookings/page.tsx` (list submissions with status)
+- [ ] Add status update (PATCH `/api/bookings/[id]`) callable from bookings page
+
+### Tags & Artist Profile
+
+- [ ] Create `src/app/(cms)/tags/page.tsx` (create / delete tags)
+- [ ] Create `src/app/(cms)/artist/page.tsx` (edit artist biography, images, social links)
+
+### Final CMS Checks
+
+- [ ] Confirm `/cms/*` is disallowed in `robots.txt`
+- [ ] Confirm "View site ↗" link in topbar opens public frontend correctly
+- [ ] Confirm logout clears session and redirects to `/cms/login`
+- [ ] Confirm all content created in CMS appears correctly on public frontend
 
 ---
 
@@ -164,8 +248,9 @@
 - [ ] Verify Google Search Console ownership
 - [ ] Submit sitemap at `https://search.google.com/search-console`
 - [ ] Run final Lighthouse audit on production URL
+- [ ] Confirm CMS login works on production domain (`/cms/login`)
 - [ ] Test booking form on production
-- [ ] Confirm admin login on production domain
+- [ ] Test all CMS CRUD operations on production
 - [ ] Enable MongoDB Atlas automated backups
 
 ---
@@ -173,6 +258,6 @@
 ## Ongoing
 
 - [ ] Review booking submissions weekly
-- [ ] Publish content via admin dashboard
+- [ ] Publish content via CMS (`/cms/posts`, `/cms/songs`, etc.)
 - [ ] Run `npm outdated` monthly and update dependencies
 - [ ] Monitor Vercel and MongoDB Atlas dashboards for errors

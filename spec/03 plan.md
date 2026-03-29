@@ -22,6 +22,7 @@ This document defines the delivery phases, milestones, and sequencing for the Gl
 **Goal:** Understand all existing content and define a complete data architecture before writing code.
 
 **Activities:**
+
 - Analyse WordPress XML backup export
 - Catalogue all existing content types (posts, pages, media)
 - Count total posts, media assets, and custom fields
@@ -29,6 +30,7 @@ This document defines the delivery phases, milestones, and sequencing for the Gl
 - Flag orphaned or low-quality content for exclusion
 
 **Outputs:**
+
 - Content inventory spreadsheet
 - Confirmed list of data models (cross-referenced with `specification.md` §6)
 - Migration scope decision (what to migrate vs. what to start fresh)
@@ -43,6 +45,7 @@ This document defines the delivery phases, milestones, and sequencing for the Gl
 **Goal:** Lock all design decisions before development begins. No schemas should change after this phase without a formal decision.
 
 **Activities:**
+
 - Finalize all MongoDB schemas (reference `implementation.md` §5)
 - Confirm all API routes (`implementation.md` §6.1)
 - Map all UI pages to routes (`specification.md` §7)
@@ -50,6 +53,7 @@ This document defines the delivery phases, milestones, and sequencing for the Gl
 - Review `features.md` and confirm P1 scope for v1.0
 
 **Outputs:**
+
 - Signed-off `specification.md`
 - Signed-off `features.md`
 - Signed-off `implementation.md`
@@ -63,6 +67,7 @@ This document defines the delivery phases, milestones, and sequencing for the Gl
 **Goal:** Full local development environment operational; all external services connected.
 
 **Activities (in order):**
+
 1. Create accounts: MongoDB Atlas, Cloudinary, Vercel, GitHub
 2. Create and configure MongoDB Atlas M0 cluster
 3. Create GitHub repository
@@ -85,6 +90,7 @@ This document defines the delivery phases, milestones, and sequencing for the Gl
 #### Step 4.1 — Data Layer
 
 **File creation order:**
+
 1. `src/lib/mongodb.ts`
 2. `src/lib/cloudinary.ts`
 3. `src/lib/utils.ts`
@@ -105,6 +111,7 @@ This document defines the delivery phases, milestones, and sequencing for the Gl
 #### Step 4.3 — Public Pages
 
 Build pages in this order (each depends on the previous):
+
 1. `/` (Home)
 2. `/about`
 3. `/music` and `/music/[albumSlug]` and `/music/[albumSlug]/[songSlug]`
@@ -125,6 +132,7 @@ Build pages in this order (each depends on the previous):
 **Goal:** Object storage connected; upload and retrieval working end-to-end.
 
 **Activities:**
+
 1. Configure Cloudinary client (`src/lib/cloudinary.ts`)
 2. Implement upload API route (`src/app/api/media/route.ts`)
 3. Test image upload → Cloudinary → URL stored in `MediaAsset`
@@ -143,7 +151,7 @@ const nextConfig = {
       },
     ],
   },
-}
+};
 ```
 
 **Reference:** `implementation.md` §9
@@ -151,20 +159,33 @@ const nextConfig = {
 
 ---
 
-### Phase 6 — Admin System
+### Phase 6 — CMS Build
 
-**Goal:** Content editors can manage all content without developer involvement.
+**Goal:** Fully functional Content Management System operational — editors can manage all content without developer involvement.
 
 **Activities:**
-1. Implement admin authentication (`src/middleware.ts`, `/api/admin/auth`)
-2. Build admin layout with sidebar navigation
-3. Build CRUD forms for: songs, albums, posts, events, initiatives, tags
-4. Build media browser (list uploaded assets, select for content linking)
-5. Build bookings view (list submissions, update status)
-6. Test all admin operations end-to-end
+
+1. Install NextAuth.js: `npm install next-auth`
+2. Install rich text and markdown packages: `npm install @uiw/react-md-editor react-markdown`
+3. Add NextAuth env vars to `.env.local` (`NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `CMS_ADMIN_EMAIL`, `CMS_ADMIN_PASSWORD`)
+4. Create `src/app/api/auth/[...nextauth]/route.ts` (Credentials provider)
+5. Update `src/middleware.ts` to use `withAuth` from NextAuth
+6. Create `(cms)` route group and `src/app/(cms)/layout.tsx`
+7. Build `CMSSidebar`, `CMSTopbar`, `CMSPageHeader` components
+8. Build shared form components: `SlugField`, `PublishToggle`, `StatusBadge`, `ConfirmDialog`, `TagSelector`, `RichTextEditor`, `MediaPicker`, `MediaUploader`
+9. Build `src/app/(cms)/login/page.tsx`
+10. Build `src/app/(cms)/dashboard/page.tsx`
+11. Build list + new + edit pages for: posts, songs, albums, events, initiatives
+12. Build `src/app/(cms)/media/page.tsx` (upload + browser)
+13. Build `src/app/(cms)/bookings/page.tsx`
+14. Build `src/app/(cms)/tags/page.tsx`
+15. Build `src/app/(cms)/artist/page.tsx`
+16. Test all CRUD operations end-to-end for every content type
+17. Test auth — confirm unauthenticated requests redirect to `/cms/login`
+18. Test media upload → Cloudinary → URL stored in MongoDB
 
 **Reference:** `implementation.md` §10
-**Estimated Duration:** 3–5 days
+**Estimated Duration:** 4–6 days
 
 ---
 
@@ -173,6 +194,7 @@ const nextConfig = {
 **Goal:** All pages meet performance and SEO targets.
 
 **Activities:**
+
 1. Implement `generateMetadata()` on all dynamic routes
 2. Implement `src/app/sitemap.ts`
 3. Implement `src/app/robots.ts`
@@ -192,6 +214,7 @@ const nextConfig = {
 **Goal:** Application live on production URL with all services connected.
 
 **Activities (in order):**
+
 1. Confirm `npm run build` completes without errors locally
 2. Push all code to `main` branch on GitHub
 3. Import repository to Vercel
@@ -211,6 +234,7 @@ const nextConfig = {
 **Goal:** All WordPress content accurately imported and validated in MongoDB.
 
 **Activities:**
+
 1. Export WordPress content as XML
 2. Parse XML and map to MongoDB schema
 3. Upload all media assets to Cloudinary
@@ -226,30 +250,30 @@ const nextConfig = {
 
 ## Phase Summary
 
-| Phase | Name | Duration | Dependencies |
-|---|---|---|---|
-| 1 | Discovery & Structuring | 2–3 days | WordPress access |
-| 2 | Specification Finalization | 1–2 days | Phase 1 complete |
-| 3 | Environment Setup | 1 day | Accounts created |
-| 4 | Core Development | 5–7 days | Phase 3 complete |
-| 5 | Media Integration | 1–2 days | Phase 4 partial |
-| 6 | Admin System | 3–5 days | Phase 4 complete |
-| 7 | SEO & Optimisation | 2–3 days | Phase 6 complete |
-| 8 | Deployment | 1 day | Phase 7 complete |
-| 9 | Content Migration | 2–4 days | Phase 8 complete |
-| **Total** | | **18–28 days** | |
+| Phase     | Name                       | Duration       | Dependencies     |
+| --------- | -------------------------- | -------------- | ---------------- |
+| 1         | Discovery & Structuring    | 2–3 days       | WordPress access |
+| 2         | Specification Finalization | 1–2 days       | Phase 1 complete |
+| 3         | Environment Setup          | 1 day          | Accounts created |
+| 4         | Core Development           | 5–7 days       | Phase 3 complete |
+| 5         | Media Integration          | 1–2 days       | Phase 4 partial  |
+| 6         | CMS Build                  | 4–6 days       | Phase 4 complete |
+| 7         | SEO & Optimisation         | 2–3 days       | Phase 6 complete |
+| 8         | Deployment                 | 1 day          | Phase 7 complete |
+| 9         | Content Migration          | 2–4 days       | Phase 8 complete |
+| **Total** |                            | **18–28 days** |                  |
 
 ---
 
 ## Future Phases (v1.1+)
 
-| Phase | Feature | Spec Ref |
-|---|---|---|
-| v1.1 | Newsletter subscription integration | F-015 |
-| v1.2 | Gated / premium content | F-016 |
-| v1.3 | Courses module | F-017 |
-| v1.x | NextAuth.js — replace secret-based admin auth | §10.1 |
+| Phase | Feature                                                | Spec Ref |
+| ----- | ------------------------------------------------------ | -------- |
+| v1.1  | Newsletter subscription integration                    | F-015    |
+| v1.1  | Multi-user CMS with role-based access (Editor / Admin) | §10.2    |
+| v1.2  | Gated / premium content                                | F-016    |
+| v1.3  | Courses module                                         | F-017    |
 
 ---
 
-*For task-level tracking see `tasks.md`. For implementation instructions see `implementation.md`.*
+_For task-level tracking see `tasks.md`. For implementation instructions see `implementation.md`._
