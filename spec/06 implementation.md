@@ -433,7 +433,7 @@ This project uses **Tailwind v4**, which removes `tailwind.config.ts` entirely. 
 **File:** `src/app/globals.css` — replace all existing content with:
 
 ```css
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   --color-brand-gold: #c9a84c;
@@ -454,7 +454,7 @@ Tailwind v4 generates all utility classes from the `@theme` block automatically 
 ```js
 module.exports = {
   plugins: {
-    "@tailwindcss/postcss": {},
+    '@tailwindcss/postcss': {},
   },
 };
 ```
@@ -475,12 +475,12 @@ module.exports = {
 **File:** `src/lib/mongodb.ts`
 
 ```typescript
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI!;
 
 if (!MONGODB_URI) {
-  throw new Error("MONGODB_URI environment variable is not defined");
+  throw new Error('MONGODB_URI environment variable is not defined');
 }
 
 const cached = (
@@ -513,7 +513,7 @@ export async function connectDB() {
 #### Artist — `src/models/Artist.ts`
 
 ```typescript
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IArtist extends Document {
   name: string;
@@ -558,11 +558,11 @@ const ArtistSchema = new Schema<IArtist>(
       metaDescription: String,
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export default mongoose.models.Artist ||
-  mongoose.model<IArtist>("Artist", ArtistSchema);
+  mongoose.model<IArtist>('Artist', ArtistSchema);
 ```
 
 ---
@@ -570,7 +570,7 @@ export default mongoose.models.Artist ||
 #### Album — `src/models/Album.ts`
 
 ```typescript
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IAlbum extends Document {
   title: string;
@@ -589,17 +589,17 @@ const AlbumSchema = new Schema<IAlbum>(
     releaseYear: { type: Number, required: true },
     coverImageUrl: { type: String, required: true },
     description: { type: String },
-    tags: [{ type: Schema.Types.ObjectId, ref: "Tag" }],
+    tags: [{ type: Schema.Types.ObjectId, ref: 'Tag' }],
     seo: {
       metaTitle: String,
       metaDescription: String,
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export default mongoose.models.Album ||
-  mongoose.model<IAlbum>("Album", AlbumSchema);
+  mongoose.model<IAlbum>('Album', AlbumSchema);
 ```
 
 ---
@@ -607,7 +607,7 @@ export default mongoose.models.Album ||
 #### Song — `src/models/Song.ts`
 
 ```typescript
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ISong extends Document {
   title: string;
@@ -629,7 +629,7 @@ const SongSchema = new Schema<ISong>(
   {
     title: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
-    albumId: { type: Schema.Types.ObjectId, ref: "Album", required: true },
+    albumId: { type: Schema.Types.ObjectId, ref: 'Album', required: true },
     trackNumber: { type: Number },
     description: { type: String },
     lyrics: { type: String },
@@ -637,18 +637,18 @@ const SongSchema = new Schema<ISong>(
     audioUrl: { type: String },
     videoUrl: { type: String },
     coverImageUrl: { type: String },
-    tags: [{ type: Schema.Types.ObjectId, ref: "Tag" }],
+    tags: [{ type: Schema.Types.ObjectId, ref: 'Tag' }],
     isPublished: { type: Boolean, default: true },
     seo: {
       metaTitle: String,
       metaDescription: String,
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export default mongoose.models.Song ||
-  mongoose.model<ISong>("Song", SongSchema);
+  mongoose.model<ISong>('Song', SongSchema);
 ```
 
 ---
@@ -656,12 +656,12 @@ export default mongoose.models.Song ||
 #### Post — `src/models/Post.ts`
 
 ```typescript
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IPost extends Document {
   title: string;
   slug: string;
-  category: "blog" | "devotional" | "story";
+  category: 'blog' | 'devotional' | 'story';
   body: string;
   excerpt: string;
   coverImageUrl: string;
@@ -677,13 +677,13 @@ const PostSchema = new Schema<IPost>(
     slug: { type: String, required: true, unique: true },
     category: {
       type: String,
-      enum: ["blog", "devotional", "story"],
-      default: "blog",
+      enum: ['blog', 'devotional', 'story'],
+      default: 'blog',
     },
     body: { type: String, required: true },
     excerpt: { type: String, maxlength: 300 },
     coverImageUrl: { type: String },
-    tags: [{ type: Schema.Types.ObjectId, ref: "Tag" }],
+    tags: [{ type: Schema.Types.ObjectId, ref: 'Tag' }],
     isPublished: { type: Boolean, default: false },
     publishedAt: { type: Date },
     seo: {
@@ -691,11 +691,11 @@ const PostSchema = new Schema<IPost>(
       metaDescription: String,
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export default mongoose.models.Post ||
-  mongoose.model<IPost>("Post", PostSchema);
+  mongoose.model<IPost>('Post', PostSchema);
 ```
 
 ---
@@ -703,13 +703,13 @@ export default mongoose.models.Post ||
 #### MediaAsset — `src/models/MediaAsset.ts`
 
 ```typescript
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IMediaAsset extends Document {
   url: string;
   publicId: string; // Cloudinary public_id for deletion/transforms
   altText: string;
-  type: "image" | "video" | "audio";
+  type: 'image' | 'video' | 'audio';
   linkedContentId: mongoose.Types.ObjectId;
   linkedContentType: string; // 'Song' | 'Post' | 'Album' etc.
   tags: mongoose.Types.ObjectId[];
@@ -720,16 +720,16 @@ const MediaAssetSchema = new Schema<IMediaAsset>(
     url: { type: String, required: true },
     publicId: { type: String, required: true },
     altText: { type: String, required: true },
-    type: { type: String, enum: ["image", "video", "audio"], required: true },
+    type: { type: String, enum: ['image', 'video', 'audio'], required: true },
     linkedContentId: { type: Schema.Types.ObjectId },
     linkedContentType: { type: String },
-    tags: [{ type: Schema.Types.ObjectId, ref: "Tag" }],
+    tags: [{ type: Schema.Types.ObjectId, ref: 'Tag' }],
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export default mongoose.models.MediaAsset ||
-  mongoose.model<IMediaAsset>("MediaAsset", MediaAssetSchema);
+  mongoose.model<IMediaAsset>('MediaAsset', MediaAssetSchema);
 ```
 
 ---
@@ -737,7 +737,7 @@ export default mongoose.models.MediaAsset ||
 #### Tag — `src/models/Tag.ts`
 
 ```typescript
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ITag extends Document {
   name: string;
@@ -751,10 +751,10 @@ const TagSchema = new Schema<ITag>(
     slug: { type: String, required: true, unique: true },
     description: { type: String },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
-export default mongoose.models.Tag || mongoose.model<ITag>("Tag", TagSchema);
+export default mongoose.models.Tag || mongoose.model<ITag>('Tag', TagSchema);
 ```
 
 ---
@@ -762,7 +762,7 @@ export default mongoose.models.Tag || mongoose.model<ITag>("Tag", TagSchema);
 #### Event — `src/models/Event.ts`
 
 ```typescript
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IEvent extends Document {
   title: string;
@@ -786,11 +786,11 @@ const EventSchema = new Schema<IEvent>(
     isUpcoming: { type: Boolean, default: true },
     coverImageUrl: { type: String },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export default mongoose.models.Event ||
-  mongoose.model<IEvent>("Event", EventSchema);
+  mongoose.model<IEvent>('Event', EventSchema);
 ```
 
 ---
@@ -798,7 +798,7 @@ export default mongoose.models.Event ||
 #### Booking — `src/models/Booking.ts`
 
 ```typescript
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IBooking extends Document {
   name: string;
@@ -807,7 +807,7 @@ export interface IBooking extends Document {
   eventType: string;
   eventDate: string;
   message: string;
-  status: "pending" | "reviewed" | "accepted" | "declined";
+  status: 'pending' | 'reviewed' | 'accepted' | 'declined';
 }
 
 const BookingSchema = new Schema<IBooking>(
@@ -820,15 +820,15 @@ const BookingSchema = new Schema<IBooking>(
     message: { type: String, required: true },
     status: {
       type: String,
-      enum: ["pending", "reviewed", "accepted", "declined"],
-      default: "pending",
+      enum: ['pending', 'reviewed', 'accepted', 'declined'],
+      default: 'pending',
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export default mongoose.models.Booking ||
-  mongoose.model<IBooking>("Booking", BookingSchema);
+  mongoose.model<IBooking>('Booking', BookingSchema);
 ```
 
 ---
@@ -836,7 +836,7 @@ export default mongoose.models.Booking ||
 #### Initiative — `src/models/Initiative.ts`
 
 ```typescript
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IInitiative extends Document {
   title: string;
@@ -856,13 +856,13 @@ const InitiativeSchema = new Schema<IInitiative>(
     body: { type: String },
     coverImageUrl: { type: String },
     externalLink: { type: String },
-    tags: [{ type: Schema.Types.ObjectId, ref: "Tag" }],
+    tags: [{ type: Schema.Types.ObjectId, ref: 'Tag' }],
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export default mongoose.models.Initiative ||
-  mongoose.model<IInitiative>("Initiative", InitiativeSchema);
+  mongoose.model<IInitiative>('Initiative', InitiativeSchema);
 ```
 
 **Section 5 Checklist:**
@@ -904,18 +904,18 @@ DELETE /api/[resource]/[id]     → delete
 **File:** `src/app/api/songs/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import mongoose from "mongoose";
-import { connectDB } from "@/lib/mongodb";
-import Song from "@/models/Song";
-import slugify from "slugify";
-import { SongSchema } from "@/lib/validators/songValidator";
+import { NextRequest, NextResponse } from 'next/server';
+import mongoose from 'mongoose';
+import { connectDB } from '@/lib/mongodb';
+import Song from '@/models/Song';
+import slugify from 'slugify';
+import { SongSchema } from '@/lib/validators/songValidator';
 
 export async function GET(req: NextRequest) {
   await connectDB();
   const { searchParams } = new URL(req.url);
-  const albumId = searchParams.get("albumId");
-  const tag = searchParams.get("tag");
+  const albumId = searchParams.get('albumId');
+  const tag = searchParams.get('tag');
 
   const query: Record<string, string | boolean | mongoose.Types.ObjectId> = {
     isPublished: true,
@@ -924,8 +924,8 @@ export async function GET(req: NextRequest) {
   if (tag) query.tags = tag;
 
   const songs = await Song.find(query)
-    .populate("albumId", "title slug")
-    .populate("tags", "name slug")
+    .populate('albumId', 'title slug')
+    .populate('tags', 'name slug')
     .sort({ trackNumber: 1 })
     .lean();
 
@@ -939,7 +939,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.flatten().fieldErrors },
-      { status: 422 },
+      { status: 422 }
     );
   }
   const song = await Song.create({
@@ -953,28 +953,28 @@ export async function POST(req: NextRequest) {
 **File:** `src/app/api/songs/[id]/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Song from "@/models/Song";
-import slugify from "slugify";
-import { SongSchema } from "@/lib/validators/songValidator";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Song from '@/models/Song';
+import slugify from 'slugify';
+import { SongSchema } from '@/lib/validators/songValidator';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   const song = await Song.findById(params.id)
-    .populate("albumId", "title slug")
-    .populate("tags", "name slug")
+    .populate('albumId', 'title slug')
+    .populate('tags', 'name slug')
     .lean();
-  if (!song) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!song) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: song });
 }
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   const body = await req.json();
@@ -982,7 +982,7 @@ export async function PATCH(
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.flatten().fieldErrors },
-      { status: 422 },
+      { status: 422 }
     );
   }
   const update = parsed.data.title
@@ -992,13 +992,13 @@ export async function PATCH(
       }
     : parsed.data;
   const song = await Song.findByIdAndUpdate(params.id, update, { new: true });
-  if (!song) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!song) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: song });
 }
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   await Song.findByIdAndDelete(params.id);
@@ -1013,22 +1013,22 @@ export async function DELETE(
 **File:** `src/app/api/albums/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Album from "@/models/Album";
-import slugify from "slugify";
-import { AlbumSchema } from "@/lib/validators/albumValidator";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Album from '@/models/Album';
+import slugify from 'slugify';
+import { AlbumSchema } from '@/lib/validators/albumValidator';
 
 export async function GET(req: NextRequest) {
   await connectDB();
   const { searchParams } = new URL(req.url);
-  const tag = searchParams.get("tag");
+  const tag = searchParams.get('tag');
 
   const query: Record<string, string> = {};
   if (tag) query.tags = tag;
 
   const albums = await Album.find(query)
-    .populate("tags", "name slug")
+    .populate('tags', 'name slug')
     .sort({ releaseYear: -1 })
     .lean();
 
@@ -1042,7 +1042,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.flatten().fieldErrors },
-      { status: 422 },
+      { status: 422 }
     );
   }
   const album = await Album.create({
@@ -1056,27 +1056,27 @@ export async function POST(req: NextRequest) {
 **File:** `src/app/api/albums/[id]/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Album from "@/models/Album";
-import slugify from "slugify";
-import { AlbumSchema } from "@/lib/validators/albumValidator";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Album from '@/models/Album';
+import slugify from 'slugify';
+import { AlbumSchema } from '@/lib/validators/albumValidator';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   const album = await Album.findById(params.id)
-    .populate("tags", "name slug")
+    .populate('tags', 'name slug')
     .lean();
-  if (!album) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!album) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: album });
 }
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   const body = await req.json();
@@ -1084,7 +1084,7 @@ export async function PATCH(
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.flatten().fieldErrors },
-      { status: 422 },
+      { status: 422 }
     );
   }
   const update = parsed.data.title
@@ -1094,13 +1094,13 @@ export async function PATCH(
       }
     : parsed.data;
   const album = await Album.findByIdAndUpdate(params.id, update, { new: true });
-  if (!album) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!album) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: album });
 }
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   await Album.findByIdAndDelete(params.id);
@@ -1115,24 +1115,24 @@ export async function DELETE(
 **File:** `src/app/api/posts/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Post from "@/models/Post";
-import slugify from "slugify";
-import { PostSchema } from "@/lib/validators/postValidator";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Post from '@/models/Post';
+import slugify from 'slugify';
+import { PostSchema } from '@/lib/validators/postValidator';
 
 export async function GET(req: NextRequest) {
   await connectDB();
   const { searchParams } = new URL(req.url);
-  const category = searchParams.get("category");
-  const tag = searchParams.get("tag");
+  const category = searchParams.get('category');
+  const tag = searchParams.get('tag');
 
   const query: Record<string, string | boolean> = { isPublished: true };
   if (category) query.category = category;
   if (tag) query.tags = tag;
 
   const posts = await Post.find(query)
-    .populate("tags", "name slug")
+    .populate('tags', 'name slug')
     .sort({ publishedAt: -1 })
     .lean();
 
@@ -1146,7 +1146,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.flatten().fieldErrors },
-      { status: 422 },
+      { status: 422 }
     );
   }
   const post = await Post.create({
@@ -1161,27 +1161,27 @@ export async function POST(req: NextRequest) {
 **File:** `src/app/api/posts/[id]/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Post from "@/models/Post";
-import slugify from "slugify";
-import { PostSchema } from "@/lib/validators/postValidator";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Post from '@/models/Post';
+import slugify from 'slugify';
+import { PostSchema } from '@/lib/validators/postValidator';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   const post = await Post.findById(params.id)
-    .populate("tags", "name slug")
+    .populate('tags', 'name slug')
     .lean();
-  if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: post });
 }
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   const body = await req.json();
@@ -1189,7 +1189,7 @@ export async function PATCH(
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.flatten().fieldErrors },
-      { status: 422 },
+      { status: 422 }
     );
   }
   const update: Record<string, unknown> = { ...parsed.data };
@@ -1197,13 +1197,13 @@ export async function PATCH(
     update.slug = slugify(parsed.data.title, { lower: true, strict: true });
   if (parsed.data.isPublished) update.publishedAt = new Date();
   const post = await Post.findByIdAndUpdate(params.id, update, { new: true });
-  if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: post });
 }
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   await Post.findByIdAndDelete(params.id);
@@ -1218,20 +1218,20 @@ export async function DELETE(
 **File:** `src/app/api/events/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Event from "@/models/Event";
-import slugify from "slugify";
-import { EventSchema } from "@/lib/validators/eventValidator";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Event from '@/models/Event';
+import slugify from 'slugify';
+import { EventSchema } from '@/lib/validators/eventValidator';
 
 export async function GET(req: NextRequest) {
   await connectDB();
   const { searchParams } = new URL(req.url);
-  const upcoming = searchParams.get("upcoming");
+  const upcoming = searchParams.get('upcoming');
 
   const query: Record<string, boolean> = {};
-  if (upcoming === "true") query.isUpcoming = true;
-  if (upcoming === "false") query.isUpcoming = false;
+  if (upcoming === 'true') query.isUpcoming = true;
+  if (upcoming === 'false') query.isUpcoming = false;
 
   const events = await Event.find(query).sort({ date: 1 }).lean();
   return NextResponse.json({ data: events });
@@ -1244,7 +1244,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.flatten().fieldErrors },
-      { status: 422 },
+      { status: 422 }
     );
   }
   const event = await Event.create({
@@ -1258,25 +1258,25 @@ export async function POST(req: NextRequest) {
 **File:** `src/app/api/events/[id]/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Event from "@/models/Event";
-import slugify from "slugify";
-import { EventSchema } from "@/lib/validators/eventValidator";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Event from '@/models/Event';
+import slugify from 'slugify';
+import { EventSchema } from '@/lib/validators/eventValidator';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   const event = await Event.findById(params.id).lean();
-  if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: event });
 }
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   const body = await req.json();
@@ -1284,7 +1284,7 @@ export async function PATCH(
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.flatten().fieldErrors },
-      { status: 422 },
+      { status: 422 }
     );
   }
   const update = parsed.data.title
@@ -1294,13 +1294,13 @@ export async function PATCH(
       }
     : parsed.data;
   const event = await Event.findByIdAndUpdate(params.id, update, { new: true });
-  if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: event });
 }
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   await Event.findByIdAndDelete(params.id);
@@ -1315,16 +1315,16 @@ export async function DELETE(
 **File:** `src/app/api/initiatives/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Initiative from "@/models/Initiative";
-import slugify from "slugify";
-import { InitiativeSchema } from "@/lib/validators/initiativeValidator";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Initiative from '@/models/Initiative';
+import slugify from 'slugify';
+import { InitiativeSchema } from '@/lib/validators/initiativeValidator';
 
 export async function GET() {
   await connectDB();
   const initiatives = await Initiative.find()
-    .populate("tags", "name slug")
+    .populate('tags', 'name slug')
     .sort({ createdAt: -1 })
     .lean();
   return NextResponse.json({ data: initiatives });
@@ -1337,7 +1337,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.flatten().fieldErrors },
-      { status: 422 },
+      { status: 422 }
     );
   }
   const initiative = await Initiative.create({
@@ -1351,28 +1351,28 @@ export async function POST(req: NextRequest) {
 **File:** `src/app/api/initiatives/[id]/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Initiative from "@/models/Initiative";
-import slugify from "slugify";
-import { InitiativeSchema } from "@/lib/validators/initiativeValidator";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Initiative from '@/models/Initiative';
+import slugify from 'slugify';
+import { InitiativeSchema } from '@/lib/validators/initiativeValidator';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   const initiative = await Initiative.findById(params.id)
-    .populate("tags", "name slug")
+    .populate('tags', 'name slug')
     .lean();
   if (!initiative)
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: initiative });
 }
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   const body = await req.json();
@@ -1380,7 +1380,7 @@ export async function PATCH(
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.flatten().fieldErrors },
-      { status: 422 },
+      { status: 422 }
     );
   }
   const update = parsed.data.title
@@ -1393,13 +1393,13 @@ export async function PATCH(
     new: true,
   });
   if (!initiative)
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: initiative });
 }
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   await Initiative.findByIdAndDelete(params.id);
@@ -1414,11 +1414,11 @@ export async function DELETE(
 **File:** `src/app/api/tags/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Tag from "@/models/Tag";
-import slugify from "slugify";
-import { TagSchema } from "@/lib/validators/tagValidator";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Tag from '@/models/Tag';
+import slugify from 'slugify';
+import { TagSchema } from '@/lib/validators/tagValidator';
 
 export async function GET() {
   await connectDB();
@@ -1433,7 +1433,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.flatten().fieldErrors },
-      { status: 422 },
+      { status: 422 }
     );
   }
   const tag = await Tag.create({
@@ -1447,13 +1447,13 @@ export async function POST(req: NextRequest) {
 **File:** `src/app/api/tags/[id]/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Tag from "@/models/Tag";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Tag from '@/models/Tag';
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   await Tag.findByIdAndDelete(params.id);
@@ -1472,10 +1472,10 @@ No slug. Single artist document — GET returns the first (and only) artist reco
 **File:** `src/app/api/artists/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Artist from "@/models/Artist";
-import { ArtistSchema } from "@/lib/validators/artistValidator";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Artist from '@/models/Artist';
+import { ArtistSchema } from '@/lib/validators/artistValidator';
 
 export async function GET() {
   await connectDB();
@@ -1490,7 +1490,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.flatten().fieldErrors },
-      { status: 422 },
+      { status: 422 }
     );
   }
   const artist = await Artist.create(parsed.data);
@@ -1501,14 +1501,14 @@ export async function POST(req: NextRequest) {
 **File:** `src/app/api/artists/[id]/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Artist from "@/models/Artist";
-import { ArtistSchema } from "@/lib/validators/artistValidator";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Artist from '@/models/Artist';
+import { ArtistSchema } from '@/lib/validators/artistValidator';
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   const body = await req.json();
@@ -1516,14 +1516,14 @@ export async function PATCH(
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.flatten().fieldErrors },
-      { status: 422 },
+      { status: 422 }
     );
   }
   const artist = await Artist.findByIdAndUpdate(params.id, parsed.data, {
     new: true,
   });
   if (!artist)
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: artist });
 }
 ```
@@ -1537,15 +1537,15 @@ No slug. Submissions only come in via POST from the public booking form. Status 
 **File:** `src/app/api/bookings/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Booking from "@/models/Booking";
-import { BookingSchema } from "@/lib/validators/bookingValidator";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Booking from '@/models/Booking';
+import { BookingSchema } from '@/lib/validators/bookingValidator';
 
 export async function GET(req: NextRequest) {
   await connectDB();
   const { searchParams } = new URL(req.url);
-  const status = searchParams.get("status");
+  const status = searchParams.get('status');
 
   const query: Record<string, string> = {};
   if (status) query.status = status;
@@ -1561,7 +1561,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.flatten().fieldErrors },
-      { status: 422 },
+      { status: 422 }
     );
   }
   const booking = await Booking.create(parsed.data);
@@ -1572,31 +1572,31 @@ export async function POST(req: NextRequest) {
 **File:** `src/app/api/bookings/[id]/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Booking from "@/models/Booking";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Booking from '@/models/Booking';
 
-const VALID_STATUSES = ["pending", "reviewed", "accepted", "declined"] as const;
+const VALID_STATUSES = ['pending', 'reviewed', 'accepted', 'declined'] as const;
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   const { status } = await req.json();
   if (!VALID_STATUSES.includes(status)) {
     return NextResponse.json(
-      { error: { status: ["Invalid status value"] } },
-      { status: 422 },
+      { error: { status: ['Invalid status value'] } },
+      { status: 422 }
     );
   }
   const booking = await Booking.findByIdAndUpdate(
     params.id,
     { status },
-    { new: true },
+    { new: true }
   );
   if (!booking)
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: booking });
 }
 ```
@@ -1610,10 +1610,10 @@ Entirely different — handles `FormData`, not JSON. Uploads to Cloudinary befor
 **File:** `src/app/api/media/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import cloudinary from "@/lib/cloudinary";
-import MediaAsset from "@/models/MediaAsset";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import cloudinary from '@/lib/cloudinary';
+import MediaAsset from '@/models/MediaAsset';
 
 export async function GET() {
   await connectDB();
@@ -1624,20 +1624,20 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   await connectDB();
   const formData = await req.formData();
-  const file = formData.get("file") as File;
-  const altText = formData.get("altText") as string;
-  const type = formData.get("type") as string;
+  const file = formData.get('file') as File;
+  const altText = formData.get('altText') as string;
+  const type = formData.get('type') as string;
 
   if (!altText) {
     return NextResponse.json(
-      { error: { altText: ["Alt text is required"] } },
-      { status: 422 },
+      { error: { altText: ['Alt text is required'] } },
+      { status: 422 }
     );
   }
   if (!file) {
     return NextResponse.json(
-      { error: { file: ["File is required"] } },
-      { status: 422 },
+      { error: { file: ['File is required'] } },
+      { status: 422 }
     );
   }
 
@@ -1649,11 +1649,11 @@ export async function POST(req: NextRequest) {
     public_id: string;
   }>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder: "glowreeyah", resource_type: "auto" },
+      { folder: 'glowreeyah', resource_type: 'auto' },
       (err, result) => {
         if (err || !result) return reject(err);
         resolve(result);
-      },
+      }
     );
     stream.end(buffer);
   });
@@ -1672,18 +1672,18 @@ export async function POST(req: NextRequest) {
 **File:** `src/app/api/media/[id]/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import cloudinary from "@/lib/cloudinary";
-import MediaAsset from "@/models/MediaAsset";
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import cloudinary from '@/lib/cloudinary';
+import MediaAsset from '@/models/MediaAsset';
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   await connectDB();
   const asset = await MediaAsset.findById(params.id);
-  if (!asset) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!asset) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   // Delete from Cloudinary first, then remove the DB record
   await cloudinary.uploader.destroy(asset.publicId);
@@ -1702,11 +1702,11 @@ Create one file per resource in `src/lib/validators/`.
 **`albumValidator.ts`**
 
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 export const AlbumSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  releaseYear: z.number({ required_error: "Release year is required" }),
-  coverImageUrl: z.string().url("Must be a valid URL"),
+  title: z.string().min(1, 'Title is required'),
+  releaseYear: z.number({ required_error: 'Release year is required' }),
+  coverImageUrl: z.string().url('Must be a valid URL'),
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
   seo: z
@@ -1722,11 +1722,11 @@ export type AlbumInput = z.infer<typeof AlbumSchema>;
 **`postValidator.ts`**
 
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 export const PostSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  category: z.enum(["blog", "devotional", "story"]).default("blog"),
-  body: z.string().min(1, "Body is required"),
+  title: z.string().min(1, 'Title is required'),
+  category: z.enum(['blog', 'devotional', 'story']).default('blog'),
+  body: z.string().min(1, 'Body is required'),
   excerpt: z.string().max(300).optional(),
   coverImageUrl: z.string().url().optional(),
   tags: z.array(z.string()).optional(),
@@ -1744,11 +1744,11 @@ export type PostInput = z.infer<typeof PostSchema>;
 **`eventValidator.ts`**
 
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 export const EventSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  date: z.string().min(1, "Date is required"),
-  location: z.string().min(1, "Location is required"),
+  title: z.string().min(1, 'Title is required'),
+  date: z.string().min(1, 'Date is required'),
+  location: z.string().min(1, 'Location is required'),
   description: z.string().optional(),
   externalLink: z.string().url().optional(),
   isUpcoming: z.boolean().default(true),
@@ -1760,9 +1760,9 @@ export type EventInput = z.infer<typeof EventSchema>;
 **`initiativeValidator.ts`**
 
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 export const InitiativeSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   body: z.string().optional(),
   coverImageUrl: z.string().url().optional(),
@@ -1775,9 +1775,9 @@ export type InitiativeInput = z.infer<typeof InitiativeSchema>;
 **`tagValidator.ts`**
 
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 export const TagSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
 });
 export type TagInput = z.infer<typeof TagSchema>;
@@ -1786,16 +1786,16 @@ export type TagInput = z.infer<typeof TagSchema>;
 **`artistValidator.ts`**
 
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 export const ArtistSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  slugName: z.string().min(1, "Slug is required"),
-  biographyShort: z.string().max(160, "Max 160 characters"),
-  biographyMedium: z.string().max(500, "Max 500 characters"),
+  name: z.string().min(1, 'Name is required'),
+  slugName: z.string().min(1, 'Slug is required'),
+  biographyShort: z.string().max(160, 'Max 160 characters'),
+  biographyMedium: z.string().max(500, 'Max 500 characters'),
   biographyLong: z.string(),
   achievements: z.array(z.string()).optional(),
   speakingProfile: z.string().optional(),
-  profileImageUrl: z.string().url("Must be a valid URL"),
+  profileImageUrl: z.string().url('Must be a valid URL'),
   socialLinks: z
     .object({
       instagram: z.string().url().optional(),
@@ -1817,14 +1817,14 @@ export type ArtistInput = z.infer<typeof ArtistSchema>;
 **`bookingValidator.ts`**
 
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 export const BookingSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Must be a valid email"),
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Must be a valid email'),
   organisation: z.string().optional(),
   eventType: z.string().optional(),
   eventDate: z.string().optional(),
-  message: z.string().min(1, "Message is required"),
+  message: z.string().min(1, 'Message is required'),
 });
 export type BookingInput = z.infer<typeof BookingSchema>;
 ```
@@ -1832,17 +1832,17 @@ export type BookingInput = z.infer<typeof BookingSchema>;
 **`songValidator.ts`** (updated full version)
 
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 export const SongSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  albumId: z.string().min(1, "Album is required"),
+  title: z.string().min(1, 'Title is required'),
+  albumId: z.string().min(1, 'Album is required'),
   trackNumber: z.number().optional(),
   description: z.string().optional(),
   lyrics: z.string().optional(),
   storyBehindSong: z.string().optional(),
-  audioUrl: z.string().url("Must be a valid URL").optional(),
-  videoUrl: z.string().url("Must be a valid URL").optional(),
-  coverImageUrl: z.string().url("Must be a valid URL").optional(),
+  audioUrl: z.string().url('Must be a valid URL').optional(),
+  videoUrl: z.string().url('Must be a valid URL').optional(),
+  coverImageUrl: z.string().url('Must be a valid URL').optional(),
   tags: z.array(z.string()).optional(),
   isPublished: z.boolean().default(true),
   seo: z
@@ -1947,9 +1947,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 ---
 
-### 7.2 Navbar
+### 7.2 Navbar and Footer
 
-**File:** `src/components/layout/Navbar.tsx`
+**File:** `src/components/layout/Navbar.tsx` `src/components/layout/Footer.tsx`
 
 ```typescript
 'use client'
@@ -2007,6 +2007,96 @@ export default function Navbar() {
 }
 ```
 
+```typescript
+import Link from 'next/link'
+
+const links = [
+  { href: '/about',    label: 'About' },
+  { href: '/music',    label: 'Music' },
+  { href: '/blog',     label: 'Blog' },
+  { href: '/media',    label: 'Media' },
+  { href: '/speaking', label: 'Speaking' },
+  { href: '/impact',   label: 'Impact' },
+  { href: '/booking',  label: 'Book' },
+]
+
+const socials = [
+  { href: 'https://instagram.com', label: 'Instagram' },
+  { href: 'https://youtube.com',   label: 'YouTube' },
+  { href: 'https://spotify.com',   label: 'Spotify' },
+]
+
+export default function Footer() {
+  return (
+    <footer className="bg-brand-deep text-white px-6 py-12">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
+
+        {/* Brand */}
+        <div>
+          <p className="font-serif text-2xl text-brand-teal font-bold mb-3">
+            Glowreeyah
+          </p>
+          <p className="text-white/60 text-sm leading-relaxed">
+            Music. Ministry. Movement.
+          </p>
+        </div>
+
+        {/* Navigation */}
+        <div>
+          <p className="text-xs uppercase tracking-widest text-white/40 mb-4">
+            Navigate
+          </p>
+          <ul className="space-y-2">
+            {links.map(l => (
+              <li key={l.href}>
+                <Link
+                  href={l.href}
+                  className="text-sm text-white/70 hover:text-brand-teal transition-colors"
+                >
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Socials */}
+        <div>
+          <p className="text-xs uppercase tracking-widest text-white/40 mb-4">
+            Connect
+          </p>
+          <ul className="space-y-2">
+            {socials.map(s => (
+              <li key={s.href}>
+
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-white/70 hover:text-brand-teal transition-colors"
+                >
+                  {s.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+      </div>
+
+      {/* Bottom bar */}
+      <div className="max-w-6xl mx-auto mt-10 pt-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-2">
+        <p className="text-xs text-white/30">
+          © {new Date().getFullYear()} Glowreeyah. All rights reserved.
+        </p>
+        <p className="text-xs text-white/30">
+          Built with purpose.
+        </p>
+      </div>
+    </footer>
+  )
+}
+```
+
 ---
 
 ### 7.3 Rendering Strategy
@@ -2021,22 +2111,22 @@ export default function Navbar() {
 
 **Section 7 Checklist:**
 
-- [ ] `src/app/layout.tsx` — root layout with Navbar and Footer wired up
-- [ ] `src/components/layout/Navbar.tsx` — responsive, mobile menu working
-- [ ] `src/components/layout/Footer.tsx` — created
-- [ ] `src/components/layout/PageWrapper.tsx` — created
-- [ ] `src/components/ui/Button.tsx` — created
-- [ ] `src/components/ui/Input.tsx` — created
-- [ ] `src/components/ui/Tag.tsx` — created
-- [ ] `src/components/ui/LoadingSpinner.tsx` — created
-- [ ] `src/components/music/AlbumCard.tsx` — created
-- [ ] `src/components/music/SongCard.tsx` — created
-- [ ] `src/components/music/AudioPlayer.tsx` — created
-- [ ] `src/components/content/PostCard.tsx` — created
-- [ ] `src/components/content/RichText.tsx` — created
-- [ ] `src/components/media/MediaCard.tsx` — created
-- [ ] `src/components/seo/MetaTags.tsx` — created
-- [ ] `npm run dev` renders root layout with Navbar and Footer, no console errors
+- [x] `src/app/layout.tsx` — root layout with Navbar and Footer wired up
+- [x] `src/components/layout/Navbar.tsx` — responsive, mobile menu working
+- [x] `src/components/layout/Footer.tsx` — created
+- [x] `src/components/layout/PageWrapper.tsx` — created
+- [x] `src/components/ui/Button.tsx` — created
+- [x] `src/components/ui/Input.tsx` — created
+- [x] `src/components/ui/Tag.tsx` — created
+- [x] `src/components/ui/LoadingSpinner.tsx` — created
+- [x] `src/components/music/AlbumCard.tsx` — created
+- [x] `src/components/music/SongCard.tsx` — created
+- [x] `src/components/music/AudioPlayer.tsx` — created
+- [x] `src/components/content/PostCard.tsx` — created
+- [x] `src/components/content/RichText.tsx` — created
+- [x] `src/components/media/MediaCard.tsx` — created
+- [x] `src/components/seo/MetaTags.tsx` — created
+- [x] `npm run dev` renders root layout with Navbar and Footer, no console errors
 
 ---
 
@@ -2158,7 +2248,7 @@ export default async function SongPage({ params }: Props) {
 **File:** `src/lib/cloudinary.ts`
 
 ```typescript
-import { v2 as cloudinary } from "cloudinary";
+import { v2 as cloudinary } from 'cloudinary';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -2176,22 +2266,22 @@ export default cloudinary;
 **File:** `src/app/api/media/route.ts`
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import cloudinary from "@/lib/cloudinary";
-import { connectDB } from "@/lib/mongodb";
-import MediaAsset from "@/models/MediaAsset";
+import { NextRequest, NextResponse } from 'next/server';
+import cloudinary from '@/lib/cloudinary';
+import { connectDB } from '@/lib/mongodb';
+import MediaAsset from '@/models/MediaAsset';
 
 export async function POST(req: NextRequest) {
   await connectDB();
   const formData = await req.formData();
-  const file = formData.get("file") as File;
-  const altText = formData.get("altText") as string;
-  const type = formData.get("type") as string;
+  const file = formData.get('file') as File;
+  const altText = formData.get('altText') as string;
+  const type = formData.get('type') as string;
 
   if (!altText) {
     return NextResponse.json(
-      { error: "Alt text is required" },
-      { status: 422 },
+      { error: 'Alt text is required' },
+      { status: 422 }
     );
   }
 
@@ -2200,8 +2290,8 @@ export async function POST(req: NextRequest) {
 
   const uploadResult = await new Promise<any>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder: "glowreeyah", resource_type: "auto" },
-      (err, result) => (err ? reject(err) : resolve(result)),
+      { folder: 'glowreeyah', resource_type: 'auto' },
+      (err, result) => (err ? reject(err) : resolve(result))
     );
     stream.end(buffer);
   });
@@ -2289,32 +2379,32 @@ CMS_ADMIN_PASSWORD=your_secure_password
 **File:** `src/app/api/auth/[...nextauth]/route.ts`
 
 ```typescript
-import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import NextAuth from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
 
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
-      name: "Credentials",
+      name: 'Credentials',
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (
           credentials?.email === process.env.CMS_ADMIN_EMAIL &&
           credentials?.password === process.env.CMS_ADMIN_PASSWORD
         ) {
-          return { id: "1", name: "Admin", email: credentials.email };
+          return { id: '1', name: 'Admin', email: credentials.email };
         }
         return null;
       },
     }),
   ],
   pages: {
-    signIn: "/cms/login",
+    signIn: '/cms/login',
   },
-  session: { strategy: "jwt" },
+  session: { strategy: 'jwt' },
   secret: process.env.NEXTAUTH_SECRET,
 });
 
@@ -2328,14 +2418,14 @@ export { handler as GET, handler as POST };
 **File:** `src/middleware.ts`
 
 ```typescript
-import { withAuth } from "next-auth/middleware";
+import { withAuth } from 'next-auth/middleware';
 
 export default withAuth({
-  pages: { signIn: "/cms/login" },
+  pages: { signIn: '/cms/login' },
 });
 
 export const config = {
-  matcher: ["/cms/((?!login).*)"],
+  matcher: ['/cms/((?!login).*)'],
 };
 ```
 
@@ -3074,10 +3164,10 @@ export async function generateMetadata({ params }): Promise<Metadata> {
       title: seo.metaTitle || content.title,
       description: seo.metaDescription || content.excerpt,
       images: [{ url: content.coverImageUrl }],
-      type: "article",
+      type: 'article',
     },
     twitter: {
-      card: "summary_large_image",
+      card: 'summary_large_image',
       title: seo.metaTitle || content.title,
       description: seo.metaDescription || content.excerpt,
       images: [content.coverImageUrl],
@@ -3096,19 +3186,19 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 **File:** `src/app/sitemap.ts`
 
 ```typescript
-import { MetadataRoute } from "next";
-import { connectDB } from "@/lib/mongodb";
-import Song from "@/models/Song";
-import Post from "@/models/Post";
+import { MetadataRoute } from 'next';
+import { connectDB } from '@/lib/mongodb';
+import Song from '@/models/Song';
+import Post from '@/models/Post';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   await connectDB();
 
   const songs = await Song.find({ isPublished: true })
-    .select("slug updatedAt")
+    .select('slug updatedAt')
     .lean();
   const posts = await Post.find({ isPublished: true })
-    .select("slug updatedAt")
+    .select('slug updatedAt')
     .lean();
 
   const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
@@ -3137,11 +3227,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 **File:** `src/app/robots.ts`
 
 ```typescript
-import { MetadataRoute } from "next";
+import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: { userAgent: "*", allow: "/", disallow: ["/cms/"] },
+    rules: { userAgent: '*', allow: '/', disallow: ['/cms/'] },
     sitemap: `${process.env.NEXT_PUBLIC_SITE_URL}/sitemap.xml`,
   };
 }
@@ -3334,9 +3424,9 @@ npm install wordpress-export-parser
 Write a migration script at `scripts/migrate.ts`:
 
 ```typescript
-import { connectDB } from "../src/lib/mongodb";
-import Post from "../src/models/Post";
-import slugify from "slugify";
+import { connectDB } from '../src/lib/mongodb';
+import Post from '../src/models/Post';
+import slugify from 'slugify';
 // Parse WordPress XML and insert into MongoDB
 ```
 
