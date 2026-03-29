@@ -1,6 +1,6 @@
 import { connectDB } from '@/lib/mongodb';
 import Album from '@/models/Album';
-import AlbumCard from '@/components/music/AlbumCard';
+import AlbumCard, { type AlbumType } from '@/components/music/AlbumCard';
 import PageWrapper from '@/components/layout/PageWrapper';
 import type { Metadata } from 'next';
 
@@ -22,7 +22,7 @@ export default async function MusicPage() {
     <PageWrapper>
       <h1 className="font-serif text-4xl text-brand-deep mb-10">Music</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {albums.map((album: any) => (
+        {albums.map((album: AlbumType) => (
           <AlbumCard key={album._id.toString()} album={album} />
         ))}
       </div>
