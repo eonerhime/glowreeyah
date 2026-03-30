@@ -1,0 +1,195 @@
+'use client';
+import { useState, useEffect } from 'react';
+import MediaPicker from '@/components/cms/MediaPicker';
+
+interface ArtistData {
+  _id?: string;
+  name: string;
+  slugName: string;
+  biographyShort: string;
+  biographyMedium: string;
+  biographyLong: string;
+  achievements: string;
+  speakingProfile: string;
+  profileImageUrl: string;
+  instagram: string;
+  youtube: string;
+  spotify: string;
+  twitter: string;
+}
+
+const empty: ArtistData = {
+  name: '',
+  slugName: '',
+  biographyShort: '',
+  biographyMedium: '',
+  biographyLong: '',
+  achievements: '',
+  speakingProfile: '',
+  profileImageUrl: '',
+  instagram: '',
+  youtube: '',
+  spotify: '',
+  twitter: '',
+};
+
+export default function CMSArtistPage() {
+  const [form, setForm] = useState<ArtistData>(empty);
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetch('/api/artists')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.data) {
+          const a = d.data;
+          setForm({
+            _id: a._id,
+            name: a.name ?? '',
+            slugName: a.slugName ?? '',
+            biographyShort: a.biographyShort ?? '',
+            biographyMedium: a.biographyMedium ?? '',
+            biographyLong: a.biographyLong ?? '',
+            achievements: (a.achievements ?? []).join('\n'),
+            speakingProfile: a.speakingProfile ?? '',
+            profileImageUrl: a.profileImageUrl ?? '',
+            instagram: a.socialLinks?.instagram ?? '',
+            youtube: a.socialLinks?.youtube ?? '',
+            spotify: a.socialLinks?.spotify ?? '',
+            twitter: a.socialLinks?.twitter ?? '',
+          });
+        }
+      });
+  }, []);
+
+  async function handleSave() {
+    setSaving(true);
+    setError('');
+    setSuccess(false);
+
+    const payload = {
+      name: form.name,
+      slugName: form.slugName,
+      biographyShort: form.biographyShort,
+      biographyMedium: form.biographyMedium,
+      biographyLong: form.biographyLong,
+      achievements: form.achievements.split('\n').filter(Boolean),
+      speakingProfile: form.speakingProfile,
+      profileImageUrl: form.profileImageUrl,
+      socialLinks: {
+        instagram: form.instagram,
+        youtube: form.youtube,
+        spotify: form.spotify,
+        twitter: form.twitter,
+      },
+    };
+
+    try {
+      const url = form._id ? `/api/artists/${form._id}` : '/api/artists';
+      const method = form._id ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('Save failed');
+      const data = await res.json();
+      setForm((prev) => ({ ...prev, _id: data.data._id }));
+      setSuccess(true);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Something went wrong');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function field(
+    label: string,
+    key: keyof ArtistData,
+    options?: { rows?: number; hint?: string }
+  ) {
+    return (
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label}
+        </label>
+        {options?.rows ? (
+          <textarea
+            rows={options.rows}
+            value={form[key] as string}
+            onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-teal outline-none"
+          />
+        ) : (
+          <input
+            value={form[key] as string}
+            onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-teal outline-none"
+          />
+        )}
+        {options?.hint && (
+          <p className="text-xs text-gray-400 mt-1">{options.hint}</p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-3xl">
+      <h1 className="text-2xl font-serif font-bold text-brand-deep mb-6">
+        Artist Profile
+      </h1>
+
+      <div className="space-y-6">
+        {field('Name', 'name')}
+        {field('Slug', 'slugName', {
+          hint: 'Used in URLs — lowercase, no spaces',
+        })}
+
+        <MediaPicker
+          value={form.profileImageUrl}
+          onChange={(url: string) =>
+            setForm((f) => ({ ...f, profileImageUrl: url }))
+          }
+        />
+
+        {field('Biography (Short — max 160 chars)', 'biographyShort')}
+        {field('Biography (Medium — max 500 chars)', 'biographyMedium', {
+          rows: 3,
+        })}
+        {field('Biography (Full)', 'biographyLong', { rows: 8 })}
+        {field('Achievements', 'achievements', {
+          rows: 5,
+          hint: 'One achievement per line',
+        })}
+        {field('Speaking Profile', 'speakingProfile', { rows: 4 })}
+
+        <div>
+          <p className="text-sm font-medium text-gray-700 mb-3">Social Links</p>
+          <div className="space-y-3">
+            {field('Instagram URL', 'instagram')}
+            {field('YouTube URL', 'youtube')}
+            {field('Spotify URL', 'spotify')}
+            {field('Twitter URL', 'twitter')}
+          </div>
+        </div>
+
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+        {success && (
+          <p className="text-green-600 text-sm">Profile saved successfully.</p>
+        )}
+
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-brand-teal text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-teal/90 disabled:opacity-50 transition-colors"
+        >
+          {saving ? 'Saving...' : form._id ? 'Save Changes' : 'Create Profile'}
+        </button>
+      </div>
+    </div>
+  );
+}

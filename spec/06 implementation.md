@@ -17,11 +17,11 @@
 | §3      | Environment Setup           | ✅ Complete    |
 | §4      | Project Scaffolding         | ✅ Complete    |
 | §5      | Database Design             | 🔄 In Progress |
-| §6      | API Layer                   | ⬜ Not Started |
+| §6      | API Layer                   | 🔄 In Progress |
 | §7      | UI & Component Layer        | ✅ Complete    |
 | §8      | Page Implementation         | ✅ Complete    |
 | §9      | Media Integration           | 🔄 In Progress |
-| §10     | CMS                         | ⬜ Not Started |
+| §10     | CMS                         | 🔄 In Progress |
 | §11     | SEO Implementation          | ⬜ Not Started |
 | §12     | Performance & Accessibility | ⬜ Not Started |
 | §13     | Testing                     | ⬜ Not Started |
@@ -879,7 +879,7 @@ export default mongoose.models.Initiative ||
 
 ---
 
-## 6. API Layer ⬜
+## 6. API Layer 🔄
 
 ### 6.1 Route Pattern
 
@@ -1871,44 +1871,44 @@ export type SongInput = z.infer<typeof SongSchema>;
 
 **Validators** (`src/lib/validators/`)
 
-- [ ] `songValidator.ts`
-- [ ] `albumValidator.ts`
-- [ ] `postValidator.ts`
-- [ ] `eventValidator.ts`
-- [ ] `initiativeValidator.ts`
-- [ ] `tagValidator.ts`
-- [ ] `artistValidator.ts`
-- [ ] `bookingValidator.ts`
+- [x] `songValidator.ts`
+- [x] `albumValidator.ts`
+- [x] `postValidator.ts`
+- [x] `eventValidator.ts`
+- [x] `initiativeValidator.ts`
+- [x] `tagValidator.ts`
+- [x] `artistValidator.ts`
+- [x] `bookingValidator.ts`
 
 **Route files** (`src/app/api/`)
 
-- [ ] `songs/route.ts` — GET (filters: `albumId`, `tag`, `isPublished`), POST
-- [ ] `songs/[id]/route.ts` — GET, PATCH, DELETE
-- [ ] `albums/route.ts` — GET (filters: `tag`), POST
-- [ ] `albums/[id]/route.ts` — GET, PATCH, DELETE
-- [ ] `posts/route.ts` — GET (filters: `category`, `tag`, `isPublished`), POST
-- [ ] `posts/[id]/route.ts` — GET, PATCH, DELETE
-- [ ] `events/route.ts` — GET (filters: `upcoming`), POST
-- [ ] `events/[id]/route.ts` — GET, PATCH, DELETE
-- [ ] `initiatives/route.ts` — GET, POST
-- [ ] `initiatives/[id]/route.ts` — GET, PATCH, DELETE
-- [ ] `tags/route.ts` — GET, POST
-- [ ] `tags/[id]/route.ts` — DELETE only
-- [ ] `artists/route.ts` — GET (single record), POST
-- [ ] `artists/[id]/route.ts` — PATCH only
-- [ ] `bookings/route.ts` — GET (filters: `status`), POST
-- [ ] `bookings/[id]/route.ts` — PATCH (status update only)
-- [ ] `media/route.ts` — GET, POST (FormData + Cloudinary upload)
-- [ ] `media/[id]/route.ts` — DELETE (removes from Cloudinary + MongoDB)
+- [x] `songs/route.ts` — GET (filters: `albumId`, `tag`, `isPublished`), POST
+- [x] `songs/[id]/route.ts` — GET, PATCH, DELETE
+- [x] `albums/route.ts` — GET (filters: `tag`), POST
+- [x] `albums/[id]/route.ts` — GET, PATCH, DELETE
+- [x] `posts/route.ts` — GET (filters: `category`, `tag`, `isPublished`), POST
+- [x] `posts/[id]/route.ts` — GET, PATCH, DELETE
+- [x] `events/route.ts` — GET (filters: `upcoming`), POST
+- [x] `events/[id]/route.ts` — GET, PATCH, DELETE
+- [x] `initiatives/route.ts` — GET, POST
+- [x] `initiatives/[id]/route.ts` — GET, PATCH, DELETE
+- [x] `tags/route.ts` — GET, POST
+- [x] `tags/[id]/route.ts` — DELETE only
+- [x] `artists/route.ts` — GET (single record), POST
+- [x] `artists/[id]/route.ts` — PATCH only
+- [x] `bookings/route.ts` — GET (filters: `status`), POST
+- [x] `bookings/[id]/route.ts` — PATCH (status update only)
+- [x] `media/route.ts` — GET, POST (FormData + Cloudinary upload)
+- [x] `media/[id]/route.ts` — DELETE (removes from Cloudinary + MongoDB)
 
 **Verification**
 
-- [ ] `npx tsc --noEmit` — zero TypeScript errors across all route files
-- [ ] All routes tested via REST client — correct status codes and response shapes
+- [x] `npx tsc --noEmit` — zero TypeScript errors across all route files
+- [x] All routes tested via REST client — correct status codes and response shapes
 
 ---
 
-## 7. UI & Component Layer ⬜
+## 7. UI & Component Layer 🔄
 
 ### 7.1 Root Layout
 
@@ -2036,7 +2036,7 @@ export default function Navbar() {
 
 ---
 
-## 8. Page Implementation ⬜
+## 8. Page Implementation 🔄
 
 ### 8.1 Home Page — `src/app/(public)/page.tsx`
 
@@ -2151,7 +2151,7 @@ export default async function SongPage({ params }: Props) {
 
 ---
 
-## 9. Media Integration ⬜
+## 9. Media Integration 🔄
 
 ### 9.1 Cloudinary Configuration
 
@@ -2197,7 +2197,7 @@ The complete implementation is in §6.10. The `src/app/api/media/route.ts` file 
 - [x] `src/app/api/media/[id]/route.ts` — DELETE implemented (see §6.10)
 - [x] `next.config.ts` updated with Cloudinary `remotePatterns`
 - [x] `next/image` used in `AlbumCard`, `PostCard`, `MediaCard` — no raw `<img>` tags in those components
-- [x] Cloudinary env vars added to `.env.local` (`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`)
+- [ ] Cloudinary env vars added to `.env.local` (`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`)
 - [ ] `MediaAsset` document created in MongoDB after upload — verified via MongoDB Atlas or Compass
 - [ ] Upload blocked with `422` when `altText` is missing — verified via REST client
 - [ ] Test upload end-to-end: file → Cloudinary → URL resolves in browser
@@ -2206,7 +2206,7 @@ The complete implementation is in §6.10. The `src/app/api/media/route.ts` file 
 
 ---
 
-## 10. CMS — Content Management System ⬜
+## 10. CMS — Content Management System 🔄
 
 The CMS is a protected section of the same Next.js application, served at `/cms/*`. It shares the MongoDB database, models, API routes, and Cloudinary config with the public frontend — no separate service, no separate deployment.
 
@@ -2854,17 +2854,17 @@ export default function RichTextEditor({ value, onChange }: Props) {
 }
 ```
 
-On the public frontend, render markdown with:
+On the public frontend, `ReactMarkdown` is used in exactly one place — the blog post detail page. It is already implemented in `src/app/(public)/blog/[slug]/page.tsx`:
 
-```bash
-npm install react-markdown
+```tsx
+import ReactMarkdown from 'react-markdown';
+
+<article className="prose prose-gray max-w-none">
+  <ReactMarkdown>{post.body}</ReactMarkdown>
+</article>;
 ```
 
-```typescript
-import ReactMarkdown from 'react-markdown'
-// ...
-<ReactMarkdown>{post.body}</ReactMarkdown>
-```
+If initiative body content is also written in markdown via the CMS, apply the same pattern in `src/app/(public)/impact/page.tsx`. No other public pages require markdown rendering.
 
 ---
 
@@ -2989,37 +2989,65 @@ export default async function CMSBookingsPage() {
 
 **Section 10 Checklist:**
 
-- [ ] `next-auth`, `@uiw/react-md-editor`, `react-markdown` installed
-- [ ] `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `CMS_ADMIN_EMAIL`, `CMS_ADMIN_PASSWORD` added to `.env.local`
-- [ ] `src/app/api/auth/[...nextauth]/route.ts` created
-- [ ] `src/middleware.ts` updated to use `withAuth`
-- [ ] `src/app/(cms)/layout.tsx` created
-- [ ] `src/components/cms/CMSSidebar.tsx` created — all nav links present, active state highlights
-- [ ] `src/components/cms/CMSTopbar.tsx` created — logout works, "View site" link opens public site
-- [ ] `src/components/cms/CMSPageHeader.tsx` created
-- [ ] `src/components/cms/StatusBadge.tsx` created
-- [ ] `src/components/cms/ConfirmDialog.tsx` created
-- [ ] `src/components/cms/SlugField.tsx` created — auto-generates from title
-- [ ] `src/components/cms/PublishToggle.tsx` created
-- [ ] `src/components/cms/TagSelector.tsx` created
-- [ ] `src/components/cms/RichTextEditor.tsx` created — renders markdown editor
-- [ ] `src/components/cms/MediaPicker.tsx` created
-- [ ] `src/components/cms/MediaUploader.tsx` created
-- [ ] `src/app/(cms)/login/page.tsx` — login form works with correct credentials
-- [ ] `src/app/(cms)/dashboard/page.tsx` — stat counts render correctly
-- [ ] `src/components/cms/PostForm.tsx` + posts list/new/[id] pages — full CRUD working
-- [ ] `src/components/cms/SongForm.tsx` + songs list/new/[id] pages — full CRUD working
-- [ ] `src/components/cms/AlbumForm.tsx` + albums list/new/[id] pages — full CRUD working
-- [ ] `src/components/cms/EventForm.tsx` + events list/new/[id] pages — full CRUD working
-- [ ] `src/components/cms/InitiativeForm.tsx` + initiatives list/new/[id] pages — full CRUD working
-- [ ] `src/app/(cms)/media/page.tsx` — upload works, grid renders, URL copyable
-- [ ] `src/app/(cms)/bookings/page.tsx` — submission list renders with status colours
-- [ ] `src/app/(cms)/tags/page.tsx` — tag create and delete working
-- [ ] `src/app/(cms)/artist/page.tsx` — artist profile editable and saves to DB
-- [ ] Unauthenticated visit to `/cms/dashboard` redirects to `/cms/login` ✓
-- [ ] Logout clears session and redirects to `/cms/login` ✓
-- [ ] Content created in CMS appears on public frontend ✓
-- [ ] `/cms/*` confirmed disallowed in `robots.txt` ✓
+**Dependencies & Auth**
+
+- [x] `next-auth`, `@uiw/react-md-editor`, `react-markdown` installed
+- [x] `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `CMS_ADMIN_EMAIL`, `CMS_ADMIN_PASSWORD` added to `.env.local`
+- [x] `src/app/api/auth/[...nextauth]/route.ts` created
+- [x] `src/middleware.ts` updated to use `withAuth`
+
+**CMS Shell**
+
+- [x] `src/app/cms/layout.tsx` created
+- [x] `src/components/cms/CMSSidebar.tsx` created
+- [x] `src/components/cms/CMSTopbar.tsx` created
+- [x] `src/components/cms/CMSPageHeader.tsx` created
+- [x] `src/components/cms/StatusBadge.tsx` created
+- [x] `src/components/cms/ConfirmDialog.tsx` created
+
+**Shared Form Components**
+
+- [x] `src/components/cms/SlugField.tsx` created
+- [x] `src/components/cms/PublishToggle.tsx` created
+- [x] `src/components/cms/TagSelector.tsx` created
+- [x] `src/components/cms/RichTextEditor.tsx` created
+- [x] `src/components/cms/MediaPicker.tsx` created
+- [x] `src/components/cms/MediaUploader.tsx` created
+
+**CMS Pages — Files Created**
+
+- [x] `src/app/cms/login/page.tsx`
+- [x] `src/app/cms/dashboard/page.tsx`
+- [x] `src/app/cms/posts/page.tsx` + `new/` + `[id]/`
+- [x] `src/app/cms/songs/page.tsx` + `new/` + `[id]/`
+- [x] `src/app/cms/albums/page.tsx` + `new/` + `[id]/`
+- [x] `src/app/cms/events/page.tsx` + `new/` + `[id]/`
+- [x] `src/app/cms/initiatives/page.tsx` + `new/` + `[id]/`
+- [x] `src/app/cms/media/page.tsx`
+- [x] `src/app/cms/bookings/page.tsx`
+- [x] `src/app/cms/tags/page.tsx`
+- [x] `src/app/cms/artist/page.tsx`
+- [x] Route conflict resolved — `(cms)` route group replaced with real `cms/` directory
+
+**Deferred — requires MongoDB Atlas + Cloudinary configured**
+
+- [ ] Login form authenticates with correct credentials
+- [ ] Dashboard stat counts render from DB
+- [ ] Posts CRUD — create, edit, delete, publish/unpublish
+- [ ] Songs CRUD — create, edit, delete, publish/unpublish
+- [ ] Albums CRUD — create, edit, delete
+- [ ] Events CRUD — create, edit, delete, upcoming toggle
+- [ ] Initiatives CRUD — create, edit, delete
+- [ ] Media upload → Cloudinary → URL stored in MongoDB → appears in grid
+- [ ] Booking submissions list renders with status colours
+- [ ] Tags create and delete working
+- [ ] Artist profile saves to DB and reflects on public `/about` page
+- [ ] Unauthenticated visit to `/cms/dashboard` redirects to `/cms/login`
+- [ ] Logout clears session and redirects to `/cms/login`
+- [ ] Content created in CMS appears on public frontend
+- [ ] `/cms/*` confirmed disallowed in `robots.txt`
+
+> All deferred items will be completed in §14 Deployment after MongoDB Atlas and Cloudinary are configured with production credentials.
 
 ---
 
