@@ -8,6 +8,19 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: 'Speaking',
   description: 'Speaking engagements and upcoming events.',
+  openGraph: {
+    title: 'Speaking — Glowreeyah',
+    description: 'Speaking engagements and upcoming events.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Speaking — Glowreeyah',
+    description: 'Speaking engagements and upcoming events.',
+  },
+  alternates: {
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/speaking`,
+  },
 };
 
 interface EventType {

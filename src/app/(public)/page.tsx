@@ -1,6 +1,7 @@
 import { connectDB } from '@/lib/mongodb';
 import Song from '@/models/Song';
 import Post from '@/models/Post';
+import Image from 'next/image';
 
 export const revalidate = 3600;
 
@@ -21,9 +22,16 @@ export default async function HomePage() {
       {/* Hero section */}
       <section className="min-h-[90vh] flex items-center justify-center bg-brand-deep text-white text-center px-6">
         <div>
-          <h1 className="font-serif text-5xl md:text-7xl text-brand-teal mb-4">
+          {/* <h1 className="font-serif text-5xl md:text-7xl text-brand-teal mb-4">
             Glowreeyah
-          </h1>
+          </h1> */}
+          <Image
+            src="/glowreeyah.png"
+            alt="Glowreeyah logo"
+            width={400}
+            height={300}
+            priority
+          />
           <p className="text-xl md:text-2xl text-brand-warm">
             Music. Ministry. Movement.
           </p>

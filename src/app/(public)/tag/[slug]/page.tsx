@@ -31,7 +31,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!tag) return {};
   return {
     title: `#${tag.name}`,
-    description: `All content tagged with ${tag.name}.`,
+    description: tag.description || `All content tagged with ${tag.name}.`,
+    openGraph: {
+      title: `#${tag.name}`,
+      description: tag.description || `All content tagged with ${tag.name}.`,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title: `#${tag.name}`,
+      description: tag.description || `All content tagged with ${tag.name}.`,
+    },
+    alternates: {
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/tag/${params.slug}`,
+    },
   };
 }
 

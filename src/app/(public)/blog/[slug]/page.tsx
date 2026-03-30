@@ -18,6 +18,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: post.seo?.metaTitle || post.title,
     description: post.seo?.metaDescription || post.excerpt,
+    openGraph: {
+      title: post.seo?.metaTitle || post.title,
+      description: post.seo?.metaDescription || post.excerpt,
+      images: post.coverImageUrl ? [{ url: post.coverImageUrl }] : [],
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.seo?.metaTitle || post.title,
+      description: post.seo?.metaDescription || post.excerpt,
+      images: post.coverImageUrl ? [post.coverImageUrl] : [],
+    },
+    alternates: {
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/blog/${params.slug}`,
+    },
   };
 }
 

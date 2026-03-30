@@ -9,6 +9,19 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: 'Blog',
   description: 'Thoughts, devotionals and stories from Glowreeyah.',
+  openGraph: {
+    title: 'Blog — Glowreeyah',
+    description: 'Thoughts, devotionals and stories from Glowreeyah.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Blog — Glowreeyah',
+    description: 'Thoughts, devotionals and stories from Glowreeyah.',
+  },
+  alternates: {
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/blog`,
+  },
 };
 
 export default async function BlogPage() {

@@ -9,6 +9,19 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: 'Media',
   description: 'TV features, interviews and press appearances.',
+  openGraph: {
+    title: 'Media — Glowreeyah',
+    description: 'TV features, interviews and press appearances.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Media — Glowreeyah',
+    description: 'TV features, interviews and press appearances.',
+  },
+  alternates: {
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/media`,
+  },
 };
 
 export default async function MediaPage() {

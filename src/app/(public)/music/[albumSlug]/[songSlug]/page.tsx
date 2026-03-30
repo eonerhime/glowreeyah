@@ -8,13 +8,28 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  await connectDB();
-  const song = await Song.findOne({ slug: params.songSlug }).lean();
-  if (!song) return {};
+  await connectDB()
+  const song = await Song.findOne({ slug: params.songSlug }).lean()
+  if (!song) return {}
   return {
-    title: song.seo?.metaTitle || song.title,
+    title:       song.seo?.metaTitle       || song.title,
     description: song.seo?.metaDescription || song.description,
-  };
+    openGraph: {
+      title:       song.seo?.metaTitle       || song.title,
+      description: song.seo?.metaDescription || song.description,
+      images:      song.coverImageUrl ? [{ url: song.coverImageUrl }] : [],
+      type:        'music.song',
+    },
+    twitter: {
+      card:        'summary_large_image',
+      title:       song.seo?.metaTitle       || song.title,
+      description: song.seo?.metaDescription || song.description,
+      images:      song.coverImageUrl ? [song.coverImageUrl] : [],
+    },
+    alternates: {
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/music/${params.albumSlug}/${params.songSlug}`,
+    },
+  }
 }
 
 export default async function SongPage({ params }: Props) {

@@ -17,8 +17,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const album = await Album.findOne({ slug: params.albumSlug }).lean();
   if (!album) return {};
   return {
-    title: album.title,
-    description: album.description,
+    title: album.seo?.metaTitle || album.title,
+    description: album.seo?.metaDescription || album.description,
+    openGraph: {
+      title: album.seo?.metaTitle || album.title,
+      description: album.seo?.metaDescription || album.description,
+      images: album.coverImageUrl ? [{ url: album.coverImageUrl }] : [],
+      type: 'music.album',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: album.seo?.metaTitle || album.title,
+      description: album.seo?.metaDescription || album.description,
+      images: album.coverImageUrl ? [album.coverImageUrl] : [],
+    },
+    alternates: {
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/music/${params.albumSlug}`,
+    },
   };
 }
 

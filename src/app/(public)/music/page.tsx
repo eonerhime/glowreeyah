@@ -9,6 +9,19 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: 'Music',
   description: 'Browse all albums and songs by Glowreeyah.',
+  openGraph: {
+    title: 'Music — Glowreeyah',
+    description: 'Browse all albums and songs by Glowreeyah.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Music — Glowreeyah',
+    description: 'Browse all albums and songs by Glowreeyah.',
+  },
+  alternates: {
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/music`,
+  },
 };
 
 export default async function MusicPage() {

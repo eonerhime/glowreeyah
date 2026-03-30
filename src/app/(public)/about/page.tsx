@@ -8,10 +8,24 @@ export const revalidate = 3600;
 export async function generateMetadata(): Promise<Metadata> {
   await connectDB();
   const artist = await Artist.findOne().lean();
-  if (!artist) return {};
   return {
     title: 'About',
-    description: artist.biographyShort,
+    description: artist?.biographyShort ?? 'Learn more about Glowreeyah.',
+    openGraph: {
+      title: 'About Glowreeyah',
+      description: artist?.biographyShort ?? 'Learn more about Glowreeyah.',
+      images: artist?.profileImageUrl ? [{ url: artist.profileImageUrl }] : [],
+      type: 'profile',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'About Glowreeyah',
+      description: artist?.biographyShort ?? 'Learn more about Glowreeyah.',
+      images: artist?.profileImageUrl ? [artist.profileImageUrl] : [],
+    },
+    alternates: {
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/about`,
+    },
   };
 }
 

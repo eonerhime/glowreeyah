@@ -10,6 +10,19 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: 'Impact',
   description: 'Social impact initiatives and foundations by Glowreeyah.',
+  openGraph: {
+    title: 'Impact — Glowreeyah',
+    description: 'Social impact initiatives and foundations by Glowreeyah.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Impact — Glowreeyah',
+    description: 'Social impact initiatives and foundations by Glowreeyah.',
+  },
+  alternates: {
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/impact`,
+  },
 };
 
 interface InitiativeType {

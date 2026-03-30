@@ -3124,7 +3124,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
 ---
 
-### 11.3 Robots.txt
+### 11.3 Robots.ts
 
 **File:** `src/app/robots.ts`
 
