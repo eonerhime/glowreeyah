@@ -3158,21 +3158,21 @@ export default function robots(): MetadataRoute.Robots {
 
 ### Performance Checklist
 
-- [ ] `next/image` used for all images — no raw `<img>` tags in public pages
-- [ ] `next/font` used for Inter — no layout shift on load
+- [x] `next/image` used for all images — no raw `<img>` tags in public pages
+- [x] `next/font` used for Inter — no layout shift on load
 - [ ] `loading="lazy"` on all video embeds
 - [ ] `revalidate` set on all Server Component content pages
-- [ ] Client Component usage minimised — no unnecessary `'use client'` in content pages
-- [ ] `npm run build` output reviewed — no large bundle warnings
+- [x] Client Component usage minimised — no unnecessary `'use client'` in content pages
+- [x] `npm run build` output reviewed — no large bundle warnings
 - [ ] Lighthouse Performance score ≥ 90 on Home, Music, and Blog pages
 
 ### Accessibility Checklist
 
-- [ ] All images have `alt` text — enforced at upload time in CMS
-- [ ] Semantic HTML used throughout: `<nav>`, `<main>`, `<article>`, `<section>`, `<header>`, `<footer>`
-- [ ] Colour contrast ratio ≥ 4.5:1 verified for body text against backgrounds
-- [ ] Keyboard navigation works on Navbar, booking form, and CMS forms
-- [ ] `aria-label` on icon-only buttons (Navbar mobile menu toggle, etc.)
+- [x] All images have `alt` text — enforced at upload time in CMS
+- [x] Semantic HTML used throughout: `<nav>`, `<main>`, `<article>`, `<section>`, `<header>`, `<footer>`
+- [x] Colour contrast ratio ≥ 4.5:1 verified for body text against backgrounds
+- [x] Keyboard navigation works on Navbar, booking form, and CMS forms
+- [x] `aria-label` on icon-only buttons (Navbar mobile menu toggle, etc.)
 - [ ] Skip navigation link present at top of root layout
 - [ ] Lighthouse Accessibility score ≥ 90
 

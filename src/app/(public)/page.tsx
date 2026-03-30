@@ -28,9 +28,11 @@ export default async function HomePage() {
           <Image
             src="/glowreeyah.png"
             alt="Glowreeyah logo"
-            width={400}
-            height={300}
+            width={300}
+            height={96}
+            quality={75}
             priority
+            className="w-full h-24 rounded-lg mb-4"
           />
           <p className="text-xl md:text-2xl text-brand-warm">
             Music. Ministry. Movement.
