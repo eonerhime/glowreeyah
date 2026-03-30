@@ -3,6 +3,7 @@ import Initiative from '@/models/Initiative';
 import PageWrapper from '@/components/layout/PageWrapper';
 import type { Metadata } from 'next';
 import Image from 'next/image';
+import ReactMarkdown from 'react-markdown';
 
 export const revalidate = 3600;
 
@@ -55,6 +56,11 @@ export default async function ImpactPage() {
               <p className="text-gray-600 text-sm leading-relaxed mb-4">
                 {item.description}
               </p>
+            )}
+            {item.body && (
+              <article className="prose prose-gray max-w-none mb-4">
+                <ReactMarkdown>{item.body}</ReactMarkdown>
+              </article>
             )}
             {item.externalLink && (
               <a

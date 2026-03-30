@@ -10,9 +10,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@uiw/react-md-editor": "^4.1.0",
     "cloudinary": "^2.9.0",
     "mongoose": "^9.3.3",
     "next": "16.2.1",
+    "next-auth": "^4.24.13",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-markdown": "^10.1.0",
