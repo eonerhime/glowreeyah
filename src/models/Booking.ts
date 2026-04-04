@@ -8,6 +8,8 @@ export interface IBooking extends Document {
   eventDate: string;
   message: string;
   status: 'pending' | 'reviewed' | 'accepted' | 'declined';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const BookingSchema = new Schema<IBooking>(

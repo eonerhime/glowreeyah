@@ -1,85 +1,87 @@
-import { connectDB } from '@/lib/mongodb'
-import Image from 'next/image'
-import Link from 'next/link'
-import SiteSettings from '@/models/SiteSettings'
-import Artist from '@/models/Artist'
-import Album from '@/models/Album'
-import Song from '@/models/Song'
-import Post from '@/models/Post'
-import Event from '@/models/Event'
-import Initiative from '@/models/Initiative'
-import AlbumCard from '@/components/music/AlbumCard'
-import PostCard, { type PostType } from '@/components/content/PostCard'
-import type { Metadata } from 'next'
+import ContactForm from '@/components/contact/ContactForm';
+import PostCard, { type PostType } from '@/components/content/PostCard';
+import AlbumCard from '@/components/music/AlbumCard';
+import { connectDB } from '@/lib/mongodb';
+import Album from '@/models/Album';
+import Artist from '@/models/Artist';
+import Event from '@/models/Event';
+import Initiative from '@/models/Initiative';
+import Post from '@/models/Post';
+import SiteSettings from '@/models/SiteSettings';
+import type { Metadata } from 'next';
+import Image from 'next/image';
+import Link from 'next/link';
 
-export const revalidate = 3600
+export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
-  await connectDB()
-  const settings = await SiteSettings.findOne().lean()
+  await connectDB();
+  const settings = await SiteSettings.findOne().lean();
   return {
-    title:       settings?.heroTitle       ?? 'Glowreeyah',
-    description: settings?.heroSubtitle    ?? 'Music. Ministry. Movement.',
+    title: settings?.heroTitle ?? 'Glowreeyah',
+    description: settings?.heroSubtitle ?? 'Music. Ministry. Movement.',
     openGraph: {
-      title:       settings?.heroTitle    ?? 'Glowreeyah',
+      title: settings?.heroTitle ?? 'Glowreeyah',
       description: settings?.heroSubtitle ?? 'Music. Ministry. Movement.',
-      images:      settings?.heroImageUrl ? [{ url: settings.heroImageUrl }] : [],
-      type:        'website',
+      images: settings?.heroImageUrl ? [{ url: settings.heroImageUrl }] : [],
+      type: 'website',
     },
     twitter: {
-      card:        'summary_large_image',
-      title:       settings?.heroTitle    ?? 'Glowreeyah',
+      card: 'summary_large_image',
+      title: settings?.heroTitle ?? 'Glowreeyah',
       description: settings?.heroSubtitle ?? 'Music. Ministry. Movement.',
-      images:      settings?.heroImageUrl ? [settings.heroImageUrl] : [],
+      images: settings?.heroImageUrl ? [settings.heroImageUrl] : [],
     },
     alternates: {
       canonical: process.env.NEXT_PUBLIC_SITE_URL,
     },
-  }
+  };
 }
 
 interface AlbumType {
-  _id:           string
-  title:         string
-  slug:          string
-  releaseYear:   number
-  coverImageUrl: string
-  description?:  string
+  _id: string;
+  title: string;
+  slug: string;
+  releaseYear: number;
+  coverImageUrl: string;
+  description?: string;
 }
 
 interface EventType {
-  _id:          string
-  title:        string
-  date:         string
-  location:     string
-  description?: string
-  externalLink?: string
+  _id: string;
+  title: string;
+  date: string;
+  location: string;
+  description?: string;
+  externalLink?: string;
 }
 
 interface InitiativeType {
-  _id:           string
-  title:         string
-  description?:  string
-  coverImageUrl?: string
-  externalLink?:  string
+  _id: string;
+  title: string;
+  description?: string;
+  coverImageUrl?: string;
+  externalLink?: string;
 }
 
 export default async function HomePage() {
-  await connectDB()
+  await connectDB();
 
   const [settings, artist, albums, latestPosts, upcomingEvent, initiatives] =
     await Promise.all([
       SiteSettings.findOne().lean(),
       Artist.findOne().lean(),
       Album.find().sort({ releaseYear: -1 }).limit(3).lean(),
-      Post.find({ isPublished: true }).sort({ publishedAt: -1 }).limit(3).lean(),
+      Post.find({ isPublished: true })
+        .sort({ publishedAt: -1 })
+        .limit(3)
+        .lean(),
       Event.findOne({ isUpcoming: true }).sort({ date: 1 }).lean(),
       Initiative.find().limit(2).lean(),
-    ])
+    ]);
 
   return (
     <div>
-
       {/* ── HERO ── */}
       <section className="relative min-h-[90vh] flex items-center justify-center bg-brand-deep text-white text-center px-6">
         {settings?.heroImageUrl && (
@@ -93,7 +95,7 @@ export default async function HomePage() {
           />
         )}
         {/* <div className="relative z-10 flex flex-col items-center"> */}
-          {/* <Image
+        {/* <Image
             src={settings?.heroLogoUrl ?? '/glowreeyah.png'}
             alt={settings?.heroTitle ?? 'Glowreeyah'}
             width={300}
@@ -102,28 +104,28 @@ export default async function HomePage() {
             priority
             className="h-24 w-auto object-contain mb-6"
           /> */}
-          <p className="text-xl md:text-2xl text-brand-warm mb-8">
-            {settings?.heroSubtitle ?? 'Music. Ministry. Movement.'}
+        <p className="text-xl md:text-2xl text-brand-warm mb-8">
+          {settings?.heroSubtitle ?? 'Music. Ministry. Movement.'}
+        </p>
+        {settings?.homeIntro && (
+          <p className="max-w-xl text-white/70 text-base leading-relaxed mb-8">
+            {settings.homeIntro}
           </p>
-          {settings?.homeIntro && (
-            <p className="max-w-xl text-white/70 text-base leading-relaxed mb-8">
-              {settings.homeIntro}
-            </p>
-          )}
-          <div className="flex gap-4 flex-wrap justify-center">
-            <Link
-              href="/music"
-              className="bg-brand-teal text-white px-6 py-3 rounded-full text-sm font-medium hover:bg-brand-teal/90 transition-colors"
-            >
-              Listen Now
-            </Link>
-            <Link
-              href="/booking"
-              className="border border-black/40 text-white px-6 py-3 rounded-full text-sm font-medium hover:border-brand-teal hover:text-brand-teal transition-colors"
-            >
-              Book Glowreeyah
-            </Link>
-          </div>
+        )}
+        <div className="flex gap-4 flex-wrap justify-center">
+          <Link
+            href="/music"
+            className="bg-brand-teal text-white px-6 py-3 rounded-full text-sm font-medium hover:bg-brand-teal/90 transition-colors"
+          >
+            Listen Now
+          </Link>
+          <Link
+            href="/booking"
+            className="border border-black/40 text-white px-6 py-3 rounded-full text-sm font-medium hover:border-brand-teal hover:text-brand-teal transition-colors"
+          >
+            Book Glowreeyah
+          </Link>
+        </div>
         {/* </div> */}
       </section>
 
@@ -216,9 +218,14 @@ export default async function HomePage() {
               {(upcomingEvent as EventType).title}
             </h2>
             <p className="text-white/60 mb-2">
-              {new Date((upcomingEvent as EventType).date).toLocaleDateString('en-GB', {
-                day: 'numeric', month: 'long', year: 'numeric',
-              })}
+              {new Date((upcomingEvent as EventType).date).toLocaleDateString(
+                'en-GB',
+                {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                }
+              )}
             </p>
             <p className="text-white/60 mb-8">
               {(upcomingEvent as EventType).location}
@@ -281,6 +288,28 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* ── CONTACT ── */}
+      <section className="py-16 px-6 bg-brand-warm">
+        <div className="max-w-3xl mx-auto text-center mb-10">
+          <p className="text-xs uppercase tracking-widest text-brand-teal mb-3">
+            Get in touch
+          </p>
+          <h2 className="font-serif text-3xl text-brand-deep mb-3">Contact</h2>
+          <p className="text-gray-500 text-sm leading-relaxed">
+            Have a question, a collaboration idea, or just want to say hello?
+          </p>
+        </div>
+        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+          <ContactForm />
+        </div>
+        <p className="text-center mt-6 text-sm text-gray-400">
+          Or visit the{' '}
+          <Link href="/contact" className="text-brand-teal hover:underline">
+            full contact page
+          </Link>{' '}
+          for social handles and more.
+        </p>
+      </section>
     </div>
-  )
+  );
 }

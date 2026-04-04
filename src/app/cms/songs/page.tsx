@@ -1,10 +1,8 @@
-import { connectDB } from '@/lib/mongodb'
-import Song from '@/models/Song'
-import Album from '@/models/Album' 
-import Link from 'next/link'
-import CMSPageHeader from '@/components/cms/CMSPageHeader'
-import StatusBadge from '@/components/cms/StatusBadge'
-import CMSRowActions from '@/components/cms/CMSRowActions'
+import CMSPageHeader from '@/components/cms/CMSPageHeader';
+import CMSRowActions from '@/components/cms/CMSRowActions';
+import StatusBadge from '@/components/cms/StatusBadge';
+import { connectDB } from '@/lib/mongodb';
+import Song from '@/models/Song';
 
 interface CMSSongType {
   _id: string;
@@ -57,14 +55,14 @@ export default async function CMSSongsPage() {
                 <td className="px-4 py-3">
                   <StatusBadge published={song.isPublished} />
                 </td>
-               <td className="px-4 py-3 text-right">
-                <CMSRowActions
-                  id={song._id.toString()}
-                  editHref={`/cms/songs/${song._id}`}
-                  apiRoute="/api/songs"
-                  resourceName="song"
-                />
-              </td>
+                <td className="px-4 py-3 text-right">
+                  <CMSRowActions
+                    id={song._id.toString()}
+                    editHref={`/cms/songs/${song._id}`}
+                    apiRoute="/api/songs"
+                    resourceName="song"
+                  />
+                </td>
               </tr>
             ))}
           </tbody>

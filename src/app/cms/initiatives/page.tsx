@@ -1,7 +1,7 @@
+import CMSPageHeader from '@/components/cms/CMSPageHeader';
+import CMSRowActions from '@/components/cms/CMSRowActions';
 import { connectDB } from '@/lib/mongodb';
 import Initiative from '@/models/Initiative';
-import Link from 'next/link';
-import CMSPageHeader from '@/components/cms/CMSPageHeader';
 
 interface CMSInitiativeType {
   _id: string;
@@ -42,12 +42,18 @@ export default async function CMSInitiativesPage() {
                   {item.description ?? '—'}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <Link
+                  <CMSRowActions
+                    id={item._id.toString()}
+                    editHref={`/cms/initiatives/${item._id}`}
+                    apiRoute="/api/initiatives"
+                    resourceName="initiatives"
+                  />
+                  {/* <Link
                     href={`/cms/initiatives/${item._id}`}
                     className="text-brand-teal hover:underline text-xs"
                   >
                     Edit
-                  </Link>
+                  </Link> */}
                 </td>
               </tr>
             ))}

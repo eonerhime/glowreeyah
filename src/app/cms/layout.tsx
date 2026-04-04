@@ -1,19 +1,23 @@
-'use client';
+import { connectDB } from '@/lib/mongodb';
+import Booking from '@/models/Booking';
+import CMSShell from '@/components/cms/CMSShell';
+import { cookies } from 'next/headers';
 
-import { SessionProvider } from 'next-auth/react';
-import CMSSidebar from '@/components/cms/CMSSidebar';
-import CMSTopbar from '@/components/cms/CMSTopbar';
+export default async function CMSLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  await connectDB();
 
-export default function CMSLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <SessionProvider>
-      <div className="flex h-screen bg-gray-100 overflow-hidden">
-        <CMSSidebar />
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <CMSTopbar />
-          <main className="flex-1 overflow-y-auto p-6">{children}</main>
-        </div>
-      </div>
-    </SessionProvider>
-  );
+  const cookieStore = await cookies();
+  const lastSeen = cookieStore.get('bookings_last_seen')?.value;
+  const lastSeenDate = lastSeen ? new Date(lastSeen) : new Date(0);
+
+  const pendingBookings = await Booking.countDocuments({
+    status: 'pending',
+    createdAt: { $gt: lastSeenDate },
+  });
+
+  return <CMSShell pendingBookings={pendingBookings}>{children}</CMSShell>;
 }

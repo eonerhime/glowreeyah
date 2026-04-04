@@ -1,4 +1,5 @@
 'use client';
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -16,7 +17,11 @@ const nav = [
   { href: '/cms/settings', label: 'Site Settings', icon: '⚙' },
 ];
 
-export default function CMSSidebar() {
+interface Props {
+  pendingBookings?: number;
+}
+
+export default function CMSSidebar({ pendingBookings = 0 }: Props) {
   const pathname = usePathname();
 
   return (
@@ -30,6 +35,7 @@ export default function CMSSidebar() {
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {nav.map((item) => {
           const active = pathname.startsWith(item.href);
+          const isBookings = item.href === '/cms/bookings';
           return (
             <Link
               key={item.href}
@@ -42,7 +48,12 @@ export default function CMSSidebar() {
                 }`}
             >
               <span>{item.icon}</span>
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {isBookings && pendingBookings > 0 && (
+                <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                  {pendingBookings > 99 ? '99+' : pendingBookings}
+                </span>
+              )}
             </Link>
           );
         })}

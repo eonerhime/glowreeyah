@@ -9,8 +9,10 @@ interface Props {
 }
 
 export default async function EditEventPage({ params }: Props) {
+  const { id } = await params;
+
   await connectDB();
-  const event = await Event.findById(params.id).lean();
+  const event = await Event.findById(id).lean();
   if (!event) notFound();
 
   const serialisedEvent = {

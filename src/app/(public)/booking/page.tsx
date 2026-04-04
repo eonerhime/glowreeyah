@@ -25,6 +25,7 @@ export default function BookingPage() {
       });
       if (!res.ok) throw new Error();
       setStatus('success');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       setForm({
         name: '',
         email: '',
@@ -48,8 +49,21 @@ export default function BookingPage() {
       </p>
 
       {status === 'success' ? (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-green-700">
-          Your request has been submitted. We will be in touch soon.
+        <div className="bg-green-50 border border-green-200 rounded-xl p-8 text-center">
+          <p className="text-3xl mb-3">🎉</p>
+          <h2 className="font-serif text-2xl text-brand-deep mb-2">
+            Request submitted!
+          </h2>
+          <p className="text-gray-600 text-sm leading-relaxed mb-6">
+            Thank you for reaching out. We&apos;ll review your request and get
+            back to you shortly.
+          </p>
+          <button
+            onClick={() => setStatus('idle')}
+            className="bg-brand-teal text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-brand-teal/90 transition-colors cursor-pointer"
+          >
+            Make another booking request
+          </button>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">

@@ -2,6 +2,7 @@ import { connectDB } from '@/lib/mongodb';
 import Event from '@/models/Event';
 import Link from 'next/link';
 import CMSPageHeader from '@/components/cms/CMSPageHeader';
+import CMSRowActions from '@/components/cms/CMSRowActions';
 
 interface CMSEventType {
   _id: string;
@@ -63,12 +64,18 @@ export default async function CMSEventsPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <Link
+                  <CMSRowActions
+                    id={event._id.toString()}
+                    editHref={`/cms/events/${event._id}`}
+                    apiRoute="/api/posts"
+                    resourceName="event"
+                  />
+                  {/* <Link
                     href={`/cms/events/${event._id}`}
                     className="text-brand-teal hover:underline text-xs"
                   >
                     Edit
-                  </Link>
+                  </Link> */}
                 </td>
               </tr>
             ))}

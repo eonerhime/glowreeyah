@@ -7,6 +7,7 @@ const links = [
   { href: '/media', label: 'Media' },
   { href: '/speaking', label: 'Speaking' },
   { href: '/impact', label: 'Impact' },
+  { href: '/contact', label: 'Contact' },
   { href: '/booking', label: 'Book' },
 ];
 

@@ -11,10 +11,12 @@ interface Props {
 }
 
 export default async function EditInitiativePage({ params }: Props) {
+  const { id } = await params;
+
   await connectDB();
 
   const [initiative, tags] = await Promise.all([
-    Initiative.findById(params.id).lean(),
+    Initiative.findById(id).lean(),
     Tag.find().sort({ name: 1 }).lean(),
   ]);
 
