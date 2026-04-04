@@ -1,8 +1,10 @@
-import { connectDB } from '@/lib/mongodb';
-import Song from '@/models/Song';
-import Link from 'next/link';
-import CMSPageHeader from '@/components/cms/CMSPageHeader';
-import StatusBadge from '@/components/cms/StatusBadge';
+import { connectDB } from '@/lib/mongodb'
+import Song from '@/models/Song'
+import Album from '@/models/Album' 
+import Link from 'next/link'
+import CMSPageHeader from '@/components/cms/CMSPageHeader'
+import StatusBadge from '@/components/cms/StatusBadge'
+import CMSRowActions from '@/components/cms/CMSRowActions'
 
 interface CMSSongType {
   _id: string;
@@ -16,7 +18,7 @@ export default async function CMSSongsPage() {
   await connectDB();
   const songs = await Song.find()
     .populate('albumId', 'title')
-    .sort({ createdAt: -1 })
+    .sort({ trackNumber: 1 })
     .lean();
 
   return (
@@ -34,7 +36,7 @@ export default async function CMSSongsPage() {
               <th className="px-4 py-3 text-left">Title</th>
               <th className="px-4 py-3 text-left">Album</th>
               <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3" />
+              <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -55,14 +57,14 @@ export default async function CMSSongsPage() {
                 <td className="px-4 py-3">
                   <StatusBadge published={song.isPublished} />
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <Link
-                    href={`/cms/songs/${song._id}`}
-                    className="text-brand-teal hover:underline text-xs"
-                  >
-                    Edit
-                  </Link>
-                </td>
+               <td className="px-4 py-3 text-right">
+                <CMSRowActions
+                  id={song._id.toString()}
+                  editHref={`/cms/songs/${song._id}`}
+                  apiRoute="/api/songs"
+                  resourceName="song"
+                />
+              </td>
               </tr>
             ))}
           </tbody>

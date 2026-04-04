@@ -25,9 +25,9 @@ export interface IArtist extends Document {
 const ArtistSchema = new Schema<IArtist>(
   {
     name: { type: String, required: true },
-    slugName: { type: String, required: true, unique: true },
-    biographyShort: { type: String, required: true, maxlength: 160 },
-    biographyMedium: { type: String, required: true, maxlength: 500 },
+    slugName: { type: String, unique: true },
+    biographyShort: { type: String, maxlength: 160 },
+    biographyMedium: { type: String, maxlength: 500 },
     biographyLong: { type: String, required: true },
     achievements: [{ type: String }],
     speakingProfile: { type: String },
@@ -46,5 +46,8 @@ const ArtistSchema = new Schema<IArtist>(
   { timestamps: true }
 );
 
-export default mongoose.models.Artist ||
-  mongoose.model<IArtist>('Artist', ArtistSchema);
+// Delete cached model before recompiling
+delete (mongoose.models as Record<string, unknown>).Artist;
+export default mongoose.model<IArtist>('Artist', ArtistSchema);
+
+// export default mongoose.models.Artist ||  mongoose.model<IArtist>('Artist', ArtistSchema);

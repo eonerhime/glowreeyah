@@ -2,6 +2,7 @@ import { connectDB } from '@/lib/mongodb';
 import Post from '@/models/Post';
 import Link from 'next/link';
 import CMSPageHeader from '@/components/cms/CMSPageHeader';
+import CMSRowActions from '@/components/cms/CMSRowActions';
 import StatusBadge from '@/components/cms/StatusBadge';
 
 interface CMSPostType {
@@ -59,12 +60,18 @@ export default async function CMSPostsPage() {
                     : '—'}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <Link
+                  <CMSRowActions
+                    id={post._id.toString()}
+                    editHref={`/cms/posts/${post._id}`}
+                    apiRoute="/api/posts"
+                    resourceName="post"
+                  />
+                  {/* <Link
                     href={`/cms/posts/${post._id}`}
                     className="text-brand-teal hover:underline text-xs"
                   >
                     Edit
-                  </Link>
+                  </Link> */}
                 </td>
               </tr>
             ))}

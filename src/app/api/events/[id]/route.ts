@@ -8,8 +8,10 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id }  = await params;
+
   await connectDB();
-  const event = await Event.findById(params.id).lean();
+  const event = await Event.findById(id).lean();
   if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: event });
 }
@@ -18,6 +20,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id }  = await params;
+
   await connectDB();
   const body = await req.json();
   const parsed = EventSchema.partial().safeParse(body);
@@ -33,7 +37,7 @@ export async function PATCH(
         slug: slugify(parsed.data.title, { lower: true, strict: true }),
       }
     : parsed.data;
-  const event = await Event.findByIdAndUpdate(params.id, update, { new: true });
+  const event = await Event.findByIdAndUpdate(id, update, { new: true });
   if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: event });
 }
@@ -42,7 +46,9 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id }  = await params;
+
   await connectDB();
-  await Event.findByIdAndDelete(params.id);
+  await Event.findByIdAndDelete(id);
   return NextResponse.json({ ok: true });
 }

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import slugify from 'slugify';
 
 interface Props {
@@ -9,11 +9,15 @@ interface Props {
 }
 
 export default function SlugField({ sourceValue, value, onChange }: Props) {
+  const prevSource = useRef('');
+
   useEffect(() => {
-    if (!value) {
+    // Only auto-generate if sourceValue changed and slug hasn't been manually edited
+    if (sourceValue !== prevSource.current) {
+      prevSource.current = sourceValue;
       onChange(slugify(sourceValue, { lower: true, strict: true }));
     }
-  }, [sourceValue, onChange, value]);
+  }, [sourceValue, onChange]);
 
   return (
     <div>

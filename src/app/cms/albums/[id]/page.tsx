@@ -10,10 +10,11 @@ interface Props {
 }
 
 export default async function EditAlbumPage({ params }: Props) {
+  const { id } = await params;
   await connectDB();
 
   const [album, tags] = await Promise.all([
-    Album.findById(params.id).lean(),
+    Album.findById(id).lean(),
     Tag.find().sort({ name: 1 }).lean(),
   ]);
 

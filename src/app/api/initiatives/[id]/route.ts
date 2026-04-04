@@ -8,8 +8,10 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id } = await params;
+
   await connectDB();
-  const initiative = await Initiative.findById(params.id)
+  const initiative = await Initiative.findById(id)
     .populate('tags', 'name slug')
     .lean();
   if (!initiative)
@@ -21,6 +23,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id } = await params;
+
   await connectDB();
   const body = await req.json();
   const parsed = InitiativeSchema.partial().safeParse(body);
@@ -36,7 +40,7 @@ export async function PATCH(
         slug: slugify(parsed.data.title, { lower: true, strict: true }),
       }
     : parsed.data;
-  const initiative = await Initiative.findByIdAndUpdate(params.id, update, {
+  const initiative = await Initiative.findByIdAndUpdate(id, update, {
     new: true,
   });
   if (!initiative)
@@ -48,7 +52,9 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id } = await params;
+
   await connectDB();
-  await Initiative.findByIdAndDelete(params.id);
+  await Initiative.findByIdAndDelete(id);
   return NextResponse.json({ ok: true });
 }

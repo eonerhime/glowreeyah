@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 export const BookingSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Must be a valid email'),

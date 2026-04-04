@@ -23,7 +23,7 @@ const handler = NextAuth({
     }),
   ],
   pages: {
-    signIn: '/cms/login',
+    signIn: '/cms-login',
   },
   session: { strategy: 'jwt' },
   secret: process.env.NEXTAUTH_SECRET,

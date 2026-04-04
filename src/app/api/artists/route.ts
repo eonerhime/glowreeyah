@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Artist from '@/models/Artist';
 import { ArtistSchema } from '@/lib/validators/artistValidator';
+import slugify from 'slugify';
 
 export async function GET() {
   await connectDB();
@@ -19,6 +20,9 @@ export async function POST(req: NextRequest) {
       { status: 422 }
     );
   }
-  const artist = await Artist.create(parsed.data);
+  const artist = await Artist.create({
+    ...parsed.data,
+    slugName: slugify(parsed.data.name, { lower: true, strict: true }),
+  });
   return NextResponse.json({ data: artist }, { status: 201 });
 }

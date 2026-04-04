@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Artist from '@/models/Artist';
 import { ArtistSchema } from '@/lib/validators/artistValidator';
+import slugify from 'slugify';
 
 export async function PATCH(
   req: NextRequest,
@@ -16,7 +17,13 @@ export async function PATCH(
       { status: 422 }
     );
   }
-  const artist = await Artist.findByIdAndUpdate(params.id, parsed.data, {
+  const update = {
+    ...parsed.data,
+    ...(parsed.data.name && {
+      slugName: slugify(parsed.data.name, { lower: true, strict: true }),
+    }),
+  };
+  const artist = await Artist.findByIdAndUpdate(params.id, update, {
     new: true,
   });
   if (!artist)

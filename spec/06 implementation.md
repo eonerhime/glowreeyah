@@ -3187,9 +3187,9 @@ Before each deployment, verify:
 - [ ] All public pages load without errors
 - [ ] Dynamic routes resolve correctly (music, blog, tags)
 - [ ] API routes return correct status codes
-- [ ] Media uploads succeed and URLs resolve
+- [x] Media uploads succeed and URLs resolve
 - [ ] CMS CRUD operations work for all content types
-- [ ] CMS login, logout, and session expiry work correctly
+- [x] CMS login, logout, and session expiry work correctly
 - [ ] Mobile layout renders correctly at 375px width
 - [ ] Sitemap accessible at `/sitemap.xml`
 - [ ] Robots.txt accessible at `/robots.txt`

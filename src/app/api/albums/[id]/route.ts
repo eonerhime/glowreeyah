@@ -8,8 +8,10 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id }  = await params;
+
   await connectDB();
-  const album = await Album.findById(params.id)
+  const album = await Album.findById(id)
     .populate('tags', 'name slug')
     .lean();
   if (!album) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -20,6 +22,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id }  = await params;
+
   await connectDB();
   const body = await req.json();
   const parsed = AlbumSchema.partial().safeParse(body);
@@ -35,7 +39,7 @@ export async function PATCH(
         slug: slugify(parsed.data.title, { lower: true, strict: true }),
       }
     : parsed.data;
-  const album = await Album.findByIdAndUpdate(params.id, update, { new: true });
+  const album = await Album.findByIdAndUpdate(id, update, { new: true });
   if (!album) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: album });
 }
@@ -44,7 +48,9 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id }  = await params;
+
   await connectDB();
-  await Album.findByIdAndDelete(params.id);
+  await Album.findByIdAndDelete(id);
   return NextResponse.json({ ok: true });
 }

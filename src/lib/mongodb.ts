@@ -1,29 +1,50 @@
-import mongoose from 'mongoose';
+import mongoose from 'mongoose'
+import '@/lib/models'
 
-const MONGODB_URI = process.env.MONGODB_URI!;
+const MONGODB_URI = process.env.MONGODB_URI!
 
 if (!MONGODB_URI) {
-  throw new Error('MONGODB_URI environment variable is not defined');
+  throw new Error('MONGODB_URI environment variable is not defined')
 }
 
-const cached = (
-  global as {
-    mongoose?: {
-      conn: typeof mongoose | null;
-      promise: Promise<typeof mongoose> | null;
-    };
-  }
-).mongoose ?? { conn: null, promise: null };
+interface MongooseCache {
+  conn: typeof mongoose | null
+  promise: Promise<typeof mongoose> | null
+}
+
+declare global {
+  // eslint-disable-next-line no-var
+  var mongoose: MongooseCache | undefined
+}
+
+const cached: MongooseCache = global.mongoose ?? { conn: null, promise: null }
+global.mongoose = cached
 
 export async function connectDB() {
-  if (cached.conn) return cached.conn;
+  if (cached.conn) {
+    // Verify the connection is still alive
+    if (mongoose.connection.readyState === 1) {
+      return cached.conn
+    }
+    // Connection dropped — reset and reconnect
+    cached.conn     = null
+    cached.promise  = null
+  }
 
   if (!cached.promise) {
     cached.promise = mongoose.connect(MONGODB_URI, {
-      bufferCommands: false,
-    });
+      bufferCommands:   false,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS:          45000,
+    })
   }
 
-  cached.conn = await cached.promise;
-  return cached.conn;
+  try {
+    cached.conn = await cached.promise
+  } catch (e) {
+    cached.promise = null
+    throw e
+  }
+
+  return cached.conn
 }

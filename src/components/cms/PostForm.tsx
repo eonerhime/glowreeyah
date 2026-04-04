@@ -1,11 +1,11 @@
 'use client';
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import SlugField from './SlugField';
-import PublishToggle from './PublishToggle';
-import TagSelector from './TagSelector';
-import RichTextEditor from './RichTextEditor';
+import { useState } from 'react';
+import slugify from 'slugify';
 import MediaPicker from './MediaPicker';
+import PublishToggle from './PublishToggle';
+import RichTextEditor from './RichTextEditor';
+import TagSelector from './TagSelector';
 
 interface TagType {
   _id: string;
@@ -30,6 +30,17 @@ interface Props {
   tags: TagType[];
 }
 
+function generateExcerpt(body: string, maxLength = 300): string {
+  return body
+    .replace(/#{1,6}\s+/g, '')      // headings
+    .replace(/\*\*?(.*?)\*\*?/g, '$1') // bold/italic
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links
+    .replace(/`{1,3}[^`]*`{1,3}/g, '') // code
+    .replace(/\n+/g, ' ')
+    .trim()
+    .slice(0, maxLength)
+}
+
 export default function PostForm({ post, tags }: Props) {
   const router = useRouter();
   const isEdit = !!post?._id;
@@ -38,7 +49,7 @@ export default function PostForm({ post, tags }: Props) {
     title: post?.title ?? '',
     slug: post?.slug ?? '',
     category: post?.category ?? 'blog',
-    excerpt: post?.excerpt ?? '',
+    excerpt: post?.excerpt || generateExcerpt(post?.body ?? ''),
     body: post?.body ?? '',
     coverImageUrl: post?.coverImageUrl ?? '',
     tags: post?.tags ?? [],
@@ -48,22 +59,40 @@ export default function PostForm({ post, tags }: Props) {
   const [error, setError] = useState('');
 
   async function handleSubmit() {
+     if (!form.coverImageUrl) {
+        setError('A cover image is required before saving.');
+        return;
+     }
+
     setSaving(true);
     setError('');
     try {
-      const res = await fetch(
-        isEdit ? `/api/posts/${post!._id}` : '/api/posts',
-        {
-          method: isEdit ? 'PATCH' : 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
-        }
-      );
-      if (!res.ok) throw new Error('Save failed');
+      const url = isEdit ? `/api/posts/${post!._id}` : '/api/posts';
+      const method = isEdit ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          slug: slugify(form.title, { lower: true, strict: true }),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const message = data?.error
+          ? JSON.stringify(data.error)
+          : `HTTP ${res.status} — ${res.statusText}`;
+        throw new Error(message);
+      }
+
       router.push('/cms/posts');
       router.refresh();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Something went wrong');
+      console.error('Post save error:', e);
     } finally {
       setSaving(false);
     }
@@ -91,11 +120,19 @@ export default function PostForm({ post, tags }: Props) {
       </div>
 
       {/* Slug */}
-      <SlugField
-        sourceValue={form.title}
-        value={form.slug}
-        onChange={(slug: string) => setForm((f) => ({ ...f, slug }))}
-      />
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Slug
+        </label>
+        <input
+          value={slugify(form.title, { lower: true, strict: true })}
+          disabled
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-400 cursor-not-allowed font-mono"
+        />
+        <p className="text-xs text-gray-400 mt-1">
+          Auto-generated from title — not editable
+        </p>
+      </div>
 
       {/* Category */}
       <div>
@@ -117,9 +154,13 @@ export default function PostForm({ post, tags }: Props) {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Excerpt
+          <span className="ml-2 text-xs font-normal text-gray-400">
+            Auto-generated from body — edit to override
+          </span>
         </label>
         <textarea
           rows={2}
+          disabled
           value={form.excerpt}
           onChange={(e) => setForm((f) => ({ ...f, excerpt: e.target.value }))}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-teal outline-none"
@@ -129,16 +170,31 @@ export default function PostForm({ post, tags }: Props) {
       {/* Body */}
       <RichTextEditor
         value={form.body}
-        onChange={(body: string) => setForm((f) => ({ ...f, body }))}
+        onChange={(body: string) =>
+          setForm((f) => ({
+            ...f,
+            body,
+            excerpt: f.excerpt && f.excerpt !== generateExcerpt(f.body)
+              ? f.excerpt                // user has manually overridden — keep it
+              : generateExcerpt(body),   // still auto — update it
+          }))
+        }
       />
 
       {/* Cover Image */}
-      <MediaPicker
-        value={form.coverImageUrl}
-        onChange={(url: string) =>
-          setForm((f) => ({ ...f, coverImageUrl: url }))
-        }
-      />
+      <div>
+        <MediaPicker
+          value={form.coverImageUrl}
+          onChange={(url: string) =>
+            setForm((f) => ({ ...f, coverImageUrl: url }))
+          }
+        />
+        {!form.coverImageUrl && (
+          <p className="text-amber-600 text-xs mt-1">
+            A cover image is required to publish this post.
+          </p>
+        )}
+      </div>
 
       {/* Tags */}
       <TagSelector
@@ -157,18 +213,25 @@ export default function PostForm({ post, tags }: Props) {
 
       {/* Actions */}
       {error && <p className="text-red-500 text-sm">{error}</p>}
-      <div className="flex gap-3">
+      <div className="flex items-center gap-3">
         <button
           onClick={handleSubmit}
           disabled={saving}
-          className="bg-brand-teal text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-teal/90 disabled:opacity-50 transition-colors"
+          className="bg-brand-teal text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-teal/90 disabled:opacity-50 transition-colors cursor-pointer"
         >
           {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Post'}
+        </button>
+        <button
+          onClick={() => router.push('/cms/posts')}
+          disabled={saving}
+          className="px-5 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors cursor-pointer"
+        >
+          Cancel
         </button>
         {isEdit && (
           <button
             onClick={handleDelete}
-            className="text-red-500 text-sm hover:underline"
+            className="ml-auto text-red-500 text-sm hover:underline cursor-pointer"
           >
             Delete
           </button>

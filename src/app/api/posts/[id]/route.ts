@@ -8,8 +8,10 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id }  = await params;
+
   await connectDB();
-  const post = await Post.findById(params.id)
+  const post = await Post.findById(id)
     .populate('tags', 'name slug')
     .lean();
   if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -20,6 +22,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id }  = await params;
+
   await connectDB();
   const body = await req.json();
   const parsed = PostSchema.partial().safeParse(body);
@@ -33,7 +37,7 @@ export async function PATCH(
   if (parsed.data.title)
     update.slug = slugify(parsed.data.title, { lower: true, strict: true });
   if (parsed.data.isPublished) update.publishedAt = new Date();
-  const post = await Post.findByIdAndUpdate(params.id, update, { new: true });
+  const post = await Post.findByIdAndUpdate(id, update, { new: true });
   if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: post });
 }
@@ -42,7 +46,9 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id }  = await params;
+
   await connectDB();
-  await Post.findByIdAndDelete(params.id);
+  await Post.findByIdAndDelete(id);
   return NextResponse.json({ ok: true });
 }

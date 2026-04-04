@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import MediaPicker from '@/components/cms/MediaPicker';
+import CharCountInput from '@/components/cms/CharCountInput';
+import slugify from 'slugify';
 
 interface ArtistData {
   _id?: string;
@@ -71,7 +73,7 @@ export default function CMSArtistPage() {
 
     const payload = {
       name: form.name,
-      slugName: form.slugName,
+      slugName: slugify(form.name, { lower: true, strict: true }),
       biographyShort: form.biographyShort,
       biographyMedium: form.biographyMedium,
       biographyLong: form.biographyLong,
@@ -95,8 +97,17 @@ export default function CMSArtistPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('Save failed');
+
       const data = await res.json();
+
+      if (!res.ok) {
+        // Surface the actual error from the API response
+        const message = data?.error
+          ? JSON.stringify(data.error)
+          : `HTTP ${res.status} — ${res.statusText}`;
+        throw new Error(message);
+      }
+
       setForm((prev) => ({ ...prev, _id: data.data._id }));
       setSuccess(true);
     } catch (e: unknown) {
@@ -145,9 +156,19 @@ export default function CMSArtistPage() {
 
       <div className="space-y-6">
         {field('Name', 'name')}
-        {field('Slug', 'slugName', {
-          hint: 'Used in URLs — lowercase, no spaces',
-        })}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Slug
+          </label>
+          <input
+            value={slugify(form.name, { lower: true, strict: true })}
+            disabled
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-400 cursor-not-allowed font-mono"
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            Auto-generated from name — not editable
+          </p>
+        </div>
 
         <MediaPicker
           value={form.profileImageUrl}
@@ -156,10 +177,20 @@ export default function CMSArtistPage() {
           }
         />
 
-        {field('Biography (Short — max 160 chars)', 'biographyShort')}
-        {field('Biography (Medium — max 500 chars)', 'biographyMedium', {
-          rows: 3,
-        })}
+        <CharCountInput
+          label="Biography (Short)"
+          value={form.biographyShort}
+          maxLength={160}
+          onChange={(v) => setForm((f) => ({ ...f, biographyShort: v }))}
+        />
+
+        <CharCountInput
+          label="Biography (Medium)"
+          value={form.biographyMedium}
+          maxLength={500}
+          rows={3}
+          onChange={(v) => setForm((f) => ({ ...f, biographyMedium: v }))}
+        />
         {field('Biography (Full)', 'biographyLong', { rows: 8 })}
         {field('Achievements', 'achievements', {
           rows: 5,

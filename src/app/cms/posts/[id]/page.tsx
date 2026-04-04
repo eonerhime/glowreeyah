@@ -6,14 +6,15 @@ import CMSPageHeader from '@/components/cms/CMSPageHeader';
 import { notFound } from 'next/navigation';
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function EditPostPage({ params }: Props) {
+  const {id} = await params;
   await connectDB();
 
   const [post, tags] = await Promise.all([
-    Post.findById(params.id).lean(),
+    Post.findById(id).lean(),
     Tag.find().sort({ name: 1 }).lean(),
   ]);
 

@@ -13,6 +13,7 @@ const nav = [
   { href: '/cms/bookings', label: 'Bookings', icon: '✉' },
   { href: '/cms/tags', label: 'Tags', icon: '#' },
   { href: '/cms/artist', label: 'Artist Profile', icon: '✦' },
+  { href: '/cms/settings', label: 'Site Settings', icon: '⚙' },
 ];
 
 export default function CMSSidebar() {

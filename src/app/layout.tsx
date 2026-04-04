@@ -19,6 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-brand-warm text-brand-deep`}>
+        <a href="#main-content" className="sr-only focus:not-sr-only ...">Skip to content</a>
         <Navbar />
         <main>{children}</main>
         <Footer />

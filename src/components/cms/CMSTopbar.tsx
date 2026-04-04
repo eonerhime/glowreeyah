@@ -18,7 +18,7 @@ export default function CMSTopbar() {
         </Link>
         <span className="text-sm text-gray-600">{session?.user?.email}</span>
         <button
-          onClick={() => signOut({ callbackUrl: '/cms/login' })}
+          onClick={() => signOut({ callbackUrl: '/cms-login' })}
           className="text-sm text-red-500 hover:text-red-700 transition-colors"
         >
           Logout

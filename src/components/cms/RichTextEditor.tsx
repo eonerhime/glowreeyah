@@ -1,10 +1,12 @@
 'use client';
+
 import dynamic from 'next/dynamic';
 import type { MDEditorProps } from '@uiw/react-md-editor';
 
-const MDEditor = dynamic<MDEditorProps>(() => import('@uiw/react-md-editor'), {
-  ssr: false,
-});
+const MDEditor = dynamic<MDEditorProps>(
+  () => import('@uiw/react-md-editor').then((mod) => mod.default),
+  { ssr: false }
+);
 
 interface Props {
   value: string;

@@ -2,6 +2,7 @@ import { connectDB } from '@/lib/mongodb';
 import Album from '@/models/Album';
 import Link from 'next/link';
 import CMSPageHeader from '@/components/cms/CMSPageHeader';
+import CMSRowActions from '@/components/cms/CMSRowActions';
 
 interface CMSAlbumType {
   _id: string;
@@ -41,12 +42,18 @@ export default async function CMSAlbumsPage() {
                 </td>
                 <td className="px-4 py-3 text-gray-500">{album.releaseYear}</td>
                 <td className="px-4 py-3 text-right">
-                  <Link
+                  <CMSRowActions
+                    id={album._id.toString()}
+                    editHref={`/cms/albums/${album._id}`}
+                    apiRoute="/api/albums"
+                    resourceName="album"
+                  />
+                  {/* <Link
                     href={`/cms/albums/${album._id}`}
                     className="text-brand-teal hover:underline text-xs"
                   >
                     Edit
-                  </Link>
+                  </Link> */}
                 </td>
               </tr>
             ))}

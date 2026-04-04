@@ -1,10 +1,10 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import SlugField from './SlugField';
 import TagSelector from './TagSelector';
 import RichTextEditor from './RichTextEditor';
 import MediaPicker from './MediaPicker';
+import slugify from 'slugify';
 
 interface TagType {
   _id: string;
@@ -48,19 +48,34 @@ export default function InitiativeForm({ initiative, tags }: Props) {
     setSaving(true);
     setError('');
     try {
-      const res = await fetch(
-        isEdit ? `/api/initiatives/${initiative!._id}` : '/api/initiatives',
-        {
-          method: isEdit ? 'PATCH' : 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
-        }
-      );
-      if (!res.ok) throw new Error('Save failed');
+      const url = isEdit
+        ? `/api/initiatives/${initiative!._id}`
+        : '/api/initiatives';
+      const method = isEdit ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          slug: slugify(form.title, { lower: true, strict: true }),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const message = data?.error
+          ? JSON.stringify(data.error)
+          : `HTTP ${res.status} — ${res.statusText}`;
+        throw new Error(message);
+      }
+
       router.push('/cms/initiatives');
       router.refresh();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Something went wrong');
+      console.error('Initiative save error:', e);
     } finally {
       setSaving(false);
     }
@@ -88,11 +103,19 @@ export default function InitiativeForm({ initiative, tags }: Props) {
       </div>
 
       {/* Slug */}
-      <SlugField
-        sourceValue={form.title}
-        value={form.slug}
-        onChange={(slug: string) => setForm((f) => ({ ...f, slug }))}
-      />
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Slug
+        </label>
+        <input
+          value={slugify(form.title, { lower: true, strict: true })}
+          disabled
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-400 cursor-not-allowed font-mono"
+        />
+        <p className="text-xs text-gray-400 mt-1">
+          Auto-generated from title — not editable
+        </p>
+      </div>
 
       {/* Description */}
       <div>
