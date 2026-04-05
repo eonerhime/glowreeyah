@@ -1,20 +1,23 @@
 import { connectDB } from '@/lib/mongodb';
 import Event from '@/models/Event';
-import Link from 'next/link';
 import CMSPageHeader from '@/components/cms/CMSPageHeader';
 import CMSRowActions from '@/components/cms/CMSRowActions';
+import type { Types } from 'mongoose';
 
 interface CMSEventType {
-  _id: string;
+  _id: Types.ObjectId;
   title: string;
-  date: string;
+  date: Date;
   location: string;
-  isUpcoming: boolean;
 }
 
 export default async function CMSEventsPage() {
   await connectDB();
-  const events = await Event.find().sort({ date: -1 }).lean();
+  const events = (await Event.find()
+    .sort({ date: -1 })
+    .lean()) as CMSEventType[];
+
+  const now = new Date();
 
   return (
     <div>
@@ -35,50 +38,43 @@ export default async function CMSEventsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {events.map((event: CMSEventType) => (
-              <tr
-                key={event._id.toString()}
-                className="hover:bg-gray-50 transition-colors"
-              >
-                <td className="px-4 py-3 font-medium text-brand-deep">
-                  {event.title}
-                </td>
-                <td className="px-4 py-3 text-gray-500">
-                  {new Date(event.date).toLocaleDateString('en-GB', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
-                </td>
-                <td className="px-4 py-3 text-gray-500">{event.location}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                    ${
-                      event.isUpcoming
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-500'
-                    }`}
-                  >
-                    {event.isUpcoming ? 'Upcoming' : 'Past'}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <CMSRowActions
-                    id={event._id.toString()}
-                    editHref={`/cms/events/${event._id}`}
-                    apiRoute="/api/posts"
-                    resourceName="event"
-                  />
-                  {/* <Link
-                    href={`/cms/events/${event._id}`}
-                    className="text-brand-teal hover:underline text-xs"
-                  >
-                    Edit
-                  </Link> */}
-                </td>
-              </tr>
-            ))}
+            {events.map((event) => {
+              const isUpcoming = new Date(event.date) >= now;
+              return (
+                <tr
+                  key={event._id.toString()}
+                  className="hover:bg-gray-50 transition-colors"
+                >
+                  <td className="px-4 py-3 font-medium text-brand-deep">
+                    {event.title}
+                  </td>
+                  <td className="px-4 py-3 text-gray-500">
+                    {new Date(event.date).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </td>
+                  <td className="px-4 py-3 text-gray-500">{event.location}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                      ${isUpcoming ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
+                    >
+                      {isUpcoming ? 'Upcoming' : 'Past'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <CMSRowActions
+                      id={event._id.toString()}
+                      editHref={`/cms/events/${event._id}`}
+                      apiRoute="/api/events"
+                      resourceName="event"
+                    />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
         {events.length === 0 && (

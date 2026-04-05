@@ -6,10 +6,9 @@ import { InitiativeSchema } from '@/lib/validators/initiativeValidator';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-
   await connectDB();
   const initiative = await Initiative.findById(id)
     .populate('tags', 'name slug')
@@ -21,10 +20,9 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-
   await connectDB();
   const body = await req.json();
   const parsed = InitiativeSchema.partial().safeParse(body);
@@ -50,10 +48,9 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-
   await connectDB();
   await Initiative.findByIdAndDelete(id);
   return NextResponse.json({ ok: true });

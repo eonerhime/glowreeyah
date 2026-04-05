@@ -6,8 +6,9 @@ import slugify from 'slugify';
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
   const body = await req.json();
   const parsed = ArtistSchema.partial().safeParse(body);
@@ -23,9 +24,7 @@ export async function PATCH(
       slugName: slugify(parsed.data.name, { lower: true, strict: true }),
     }),
   };
-  const artist = await Artist.findByIdAndUpdate(params.id, update, {
-    new: true,
-  });
+  const artist = await Artist.findByIdAndUpdate(id, update, { new: true });
   if (!artist)
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: artist });

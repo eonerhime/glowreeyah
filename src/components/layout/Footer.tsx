@@ -1,14 +1,15 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 const links = [
   { href: '/about', label: 'About' },
   { href: '/music', label: 'Music' },
   { href: '/blog', label: 'Blog' },
-  { href: '/media', label: 'Media' },
-  { href: '/speaking', label: 'Speaking' },
+  { href: '/gallery', label: 'Gallery' },
+  { href: '/events', label: 'Events' },
   { href: '/impact', label: 'Impact' },
-  { href: '/contact', label: 'Contact' },
   { href: '/booking', label: 'Book' },
+  { href: '/contact', label: 'Contact' },
 ];
 
 const socials = [
@@ -23,9 +24,15 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
         {/* Brand */}
         <div>
-          <p className="font-serif text-2xl text-brand-teal font-bold mb-3">
-            Glowreeyah
-          </p>
+          <Image
+            src="/glowreeyah.png"
+            alt="Glowreeyah Braimah Logo"
+            width={100}
+            height={20}
+            quality={75}
+            priority
+            className="dark:invert h-12 w-auto object-contain mb-6 z-50"
+          />
           <p className="text-white/60 text-sm leading-relaxed">
             Music. Ministry. Movement.
           </p>

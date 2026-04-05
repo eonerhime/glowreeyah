@@ -1,9 +1,14 @@
 'use client';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import PublishToggle from './PublishToggle';
 import MediaPicker from './MediaPicker';
 import slugify from 'slugify';
+
+function deriveIsUpcoming(dateStr: string): boolean {
+  if (!dateStr) return true;
+  return new Date(dateStr) >= new Date();
+}
 
 interface EventData {
   _id?: string;
@@ -35,6 +40,7 @@ export default function EventForm({ event }: Props) {
     coverImageUrl: event?.coverImageUrl ?? '',
     isUpcoming: event?.isUpcoming ?? true,
   });
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -93,7 +99,6 @@ export default function EventForm({ event }: Props) {
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-teal outline-none"
         />
       </div>
-
       {/* Slug */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -108,7 +113,6 @@ export default function EventForm({ event }: Props) {
           Auto-generated from title — not editable
         </p>
       </div>
-
       {/* Date */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -117,11 +121,16 @@ export default function EventForm({ event }: Props) {
         <input
           type="date"
           value={form.date}
-          onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+          onChange={(e) =>
+            setForm((f) => ({
+              ...f,
+              date: e.target.value,
+              isUpcoming: deriveIsUpcoming(e.target.value),
+            }))
+          }
           className="w-48 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-teal outline-none"
         />
       </div>
-
       {/* Location */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -133,7 +142,6 @@ export default function EventForm({ event }: Props) {
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-teal outline-none"
         />
       </div>
-
       {/* Description */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -148,7 +156,6 @@ export default function EventForm({ event }: Props) {
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-teal outline-none"
         />
       </div>
-
       {/* External Link */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -164,7 +171,6 @@ export default function EventForm({ event }: Props) {
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-teal outline-none"
         />
       </div>
-
       {/* Cover Image */}
       <MediaPicker
         value={form.coverImageUrl}
@@ -174,28 +180,48 @@ export default function EventForm({ event }: Props) {
       />
 
       {/* Is Upcoming */}
-      <PublishToggle
-        value={form.isUpcoming}
-        onChange={(val: boolean) => setForm((f) => ({ ...f, isUpcoming: val }))}
-      />
-      <p className="text-xs text-gray-400 -mt-4">
-        Toggle off when the event has passed.
+      <div className="flex items-center gap-3">
+        <span
+          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+            form.isUpcoming
+              ? 'bg-green-100 text-green-700'
+              : 'bg-gray-100 text-gray-500'
+          }`}
+        >
+          {form.isUpcoming ? 'Upcoming' : 'Past event'}
+        </span>
+        <button
+          type="button"
+          onClick={() => setForm((f) => ({ ...f, isUpcoming: !f.isUpcoming }))}
+          className="text-xs text-brand-teal hover:underline"
+        >
+          Mark as {form.isUpcoming ? 'past' : 'upcoming'}
+        </button>
+      </div>
+      <p className="text-xs text-gray-400">
+        Auto-set from the date — override manually if needed.
       </p>
-
       {/* Actions */}
       {error && <p className="text-red-500 text-sm">{error}</p>}
-      <div className="flex gap-3">
+      <div className="flex items-center gap-3">
         <button
           onClick={handleSubmit}
           disabled={saving}
-          className="bg-brand-teal text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-teal/90 disabled:opacity-50 transition-colors"
+          className="bg-brand-teal text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-teal/90 disabled:opacity-50 transition-colors cursor-pointer"
         >
           {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Event'}
+        </button>
+        <button
+          onClick={() => router.push('/cms/events')}
+          disabled={saving}
+          className="px-5 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors cursor-pointer"
+        >
+          Cancel
         </button>
         {isEdit && (
           <button
             onClick={handleDelete}
-            className="text-red-500 text-sm hover:underline"
+            className="ml-auto text-red-500 text-sm hover:underline cursor-pointer"
           >
             Delete
           </button>

@@ -1,93 +1,77 @@
-import { connectDB } from '@/lib/mongodb';
-import Initiative from '@/models/Initiative';
-import PageWrapper from '@/components/layout/PageWrapper';
-import type { Metadata } from 'next';
-import Image from 'next/image';
-import ReactMarkdown from 'react-markdown';
+import { connectDB } from '@/lib/mongodb'
+import Initiative from '@/models/Initiative'
+import PageWrapper from '@/components/layout/PageWrapper'
+import InitiativeCard from '@/components/content/InitiativeCard'
+import type { Metadata } from 'next'
+import type { Types } from 'mongoose'
 
-export const revalidate = 3600;
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'Impact',
   description: 'Social impact initiatives and foundations by Glowreeyah.',
   openGraph: {
-    title: 'Impact — Glowreeyah',
+    title:       'Impact — Glowreeyah',
     description: 'Social impact initiatives and foundations by Glowreeyah.',
-    type: 'website',
+    type:        'website',
   },
   twitter: {
-    card: 'summary_large_image',
-    title: 'Impact — Glowreeyah',
+    card:        'summary_large_image',
+    title:       'Impact — Glowreeyah',
     description: 'Social impact initiatives and foundations by Glowreeyah.',
   },
   alternates: {
     canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/impact`,
   },
-};
+}
 
-interface InitiativeType {
-  _id: string;
-  title: string;
-  description?: string;
-  body?: string;
-  coverImageUrl?: string;
-  externalLink?: string;
+interface LeanInitiative {
+  _id:           Types.ObjectId
+  title:         string
+  slug:          string
+  description?:  string
+  body?:         string
+  coverImageUrl?: string
+  externalLink?:  string
 }
 
 export default async function ImpactPage() {
-  await connectDB();
+  await connectDB()
   const initiatives = await Initiative.find()
-    .populate('tags', 'name slug')
     .sort({ createdAt: -1 })
-    .lean();
+    .lean() as LeanInitiative[]
 
   return (
     <PageWrapper>
-      <h1 className="font-serif text-4xl text-brand-deep mb-10">
-        Impact & Initiatives
-      </h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {initiatives.map((item: InitiativeType) => (
-          <div
-            key={item._id.toString()}
-            className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"
-          >
-            {item.coverImageUrl && (
-              <Image
-                src={item.coverImageUrl}
-                alt={item.title}
-                width={600}
-                height={192}
-                quality={75}
-                className="w-full h-48 object-cover rounded-lg mb-4"
-              />
-            )}
-            <h2 className="font-serif text-xl text-brand-deep mb-2">
-              {item.title}
-            </h2>
-            {item.description && (
-              <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                {item.description}
-              </p>
-            )}
-            {item.body && (
-              <article className="prose prose-gray max-w-none mb-4">
-                <ReactMarkdown>{item.body}</ReactMarkdown>
-              </article>
-            )}
-            {item.externalLink && (
-              <a
-                href={item.externalLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-brand-teal hover:underline"
-              >
-                Learn more &rarr;
-              </a>
-            )}
-          </div>
-        ))}
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-10">
+          <p className="text-xs uppercase tracking-widest text-brand-teal mb-2">
+            Making a difference
+          </p>
+          <h1 className="font-serif text-4xl text-brand-deep">
+            Impact & Initiatives
+          </h1>
+        </div>
+
+        {initiatives.length === 0 && (
+          <p className="text-gray-400 text-sm">No initiatives yet.</p>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {initiatives.map((item) => (
+            <InitiativeCard
+              key={item._id.toString()}
+              item={{
+                _id:           item._id.toString(),
+                title:         item.title,
+                slug:          item.slug,
+                description:   item.description,
+                coverImageUrl: item.coverImageUrl,
+              }}
+            />
+          ))}
+        </div>
       </div>
     </PageWrapper>
-  );
+  )
 }

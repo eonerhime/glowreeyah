@@ -8,8 +8,8 @@ const links = [
   { href: '/about', label: 'About' },
   { href: '/music', label: 'Music' },
   { href: '/blog', label: 'Blog' },
-  { href: '/media', label: 'Media' },
-  { href: '/speaking', label: 'Speaking' },
+  { href: '/gallery', label: 'Gallery' },
+  { href: '/events', label: 'Events' },
   { href: '/impact', label: 'Impact' },
   { href: '/booking', label: 'Book' },
 ];
@@ -21,12 +21,13 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 bg-brand-deep text-white px-6 py-4 flex items-center justify-between">
       <Link href="/" className="text-brand-teal font-serif text-xl font-bold">
         <Image
-          className="dark:invert"
           src="/glowreeyah.png"
-          alt="Glowreeyah logo"
+          alt="Glowreeyah Braimah Logo"
           width={100}
           height={20}
+          quality={75}
           priority
+          className="dark:invert h-12 w-auto object-contain mb-6 z-50"
         />
       </Link>
       <ul className="hidden md:flex gap-6 text-sm">

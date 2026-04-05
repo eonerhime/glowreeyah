@@ -6,10 +6,9 @@ import { EventSchema } from '@/lib/validators/eventValidator';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id }  = await params;
-
+  const { id } = await params;
   await connectDB();
   const event = await Event.findById(id).lean();
   if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -18,10 +17,9 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id }  = await params;
-
+  const { id } = await params;
   await connectDB();
   const body = await req.json();
   const parsed = EventSchema.partial().safeParse(body);
@@ -44,10 +42,9 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id }  = await params;
-
+  const { id } = await params;
   await connectDB();
   await Event.findByIdAndDelete(id);
   return NextResponse.json({ ok: true });

@@ -1,0 +1,25 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import GalleryVideo from '@/models/GalleryVideo';
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  await connectDB();
+  const body = await req.json();
+  const video = await GalleryVideo.findByIdAndUpdate(id, body, { new: true });
+  if (!video) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ data: video });
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  await connectDB();
+  await GalleryVideo.findByIdAndDelete(id);
+  return NextResponse.json({ ok: true });
+}
