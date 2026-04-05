@@ -21,18 +21,23 @@ const socials = [
 export default function Footer() {
   return (
     <footer className="bg-brand-deep text-white px-6 py-12">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
+      <div className="max-w-6xl md:mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
         {/* Brand */}
         <div>
-          <Image
-            src="/glowreeyah.png"
-            alt="Glowreeyah Braimah Logo"
-            width={100}
-            height={20}
-            quality={75}
-            priority
-            className="dark:invert h-12 w-auto object-contain mb-6 z-50"
-          />
+          <Link
+            href="/"
+            className="text-brand-teal font-serif text-xl font-bold"
+          >
+            <Image
+              src="/glowreeyah.png"
+              alt="Glowreeyah Braimah Logo"
+              width={100}
+              height={20}
+              quality={75}
+              priority
+              className="dark:invert h-12 w-auto object-contain mb-6 z-50"
+            />
+          </Link>
           <p className="text-white/60 text-sm leading-relaxed">
             Music. Ministry. Movement.
           </p>

@@ -1,10 +1,19 @@
 # Constitution
 
 **Project:** Glowreeyah Digital Platform
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Document Type:** Architectural & Brand Governance
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-04-05
 **Status:** Active — All decisions in this document are binding
+
+---
+
+## Change Log
+
+| Version | Date       | Change                                                                                                                       |
+| ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1.0.0   | 2026-03-28 | Initial constitution                                                                                                         |
+| 1.1.0   | 2026-04-05 | Updated stack to Next.js 15 + Tailwind v4; added Resend, Tawk.to, gallery system, contact system, and `/events` route rename |
 
 ---
 
@@ -45,7 +54,7 @@ Every feature, page, component, and piece of content must reflect:
 
 All content must be database-driven:
 
-- **No hardcoded page copy.** Biography, song titles, blog posts, and event details must be stored in MongoDB and rendered dynamically.
+- **No hardcoded page copy.** Biography, song titles, blog posts, event details, and site settings must be stored in MongoDB and rendered dynamically.
 - **Reusable content blocks.** Components receive data as props; they never contain inline content strings.
 - **Dynamic rendering.** All content pages use Server Components with data fetched from MongoDB at render time (ISR where appropriate).
 
@@ -63,9 +72,11 @@ All content must be database-driven:
 Non-technical team members must be able to — via the built-in CMS at `/cms`:
 
 - Create, update, and delete songs, albums, posts, events, and initiatives
-- Upload and manage media
+- Upload and manage media assets
+- Manage gallery photos and videos per event/initiative
 - Publish and unpublish content
-- Manage booking submissions
+- Manage booking submissions and update their status
+- Edit site settings (hero content, headings)
 
 No content operation should require a developer or a code deployment. The CMS is a first-class part of the application, not an afterthought.
 
@@ -94,7 +105,6 @@ SEO is not a post-development concern — it is baked into the architecture:
 
 The system must support future addition of the following without architectural rework:
 
-- Bookings (foundation in v1.0)
 - Courses module
 - Newsletter subscription
 - Gated / premium content
@@ -102,53 +112,90 @@ The system must support future addition of the following without architectural r
 
 These are defined in `features.md` as P3 (Future). No v1.0 component should be designed in a way that prevents these additions.
 
+### 3.7 Naming Conventions (Enforced)
+
+- The public event/speaking page is `/events` — the `/speaking` route redirects to `/events` permanently
+- "Events" is the canonical term for what was previously called "Speaking & Events"
+- Gallery photos and videos are scoped to events or initiatives — there is no free-floating gallery content
+
 ---
 
 ## 4. Technical Constraints
 
 ### 4.1 Approved Stack
 
-| Layer         | Technology             | Version   |
-| ------------- | ---------------------- | --------- |
-| Framework     | Next.js (App Router)   | 14.x      |
-| Styling       | Tailwind CSS           | 3.x       |
-| Language      | TypeScript             | 5.x       |
-| Database      | MongoDB (via Mongoose) | Atlas M0+ |
-| Media Storage | Cloudinary             | 2.x       |
-| Hosting       | Vercel                 | —         |
-| Validation    | Zod                    | 3.x       |
+| Layer         | Technology                         | Version                                  |
+| ------------- | ---------------------------------- | ---------------------------------------- |
+| Framework     | Next.js (App Router)               | 15.x                                     |
+| Styling       | Tailwind CSS                       | 4.x (CSS-first, no `tailwind.config.ts`) |
+| Language      | TypeScript                         | 5.x                                      |
+| Database      | MongoDB (via Mongoose)             | Atlas M0+                                |
+| Media Storage | Cloudinary                         | 2.x                                      |
+| Hosting       | Vercel                             | —                                        |
+| Validation    | Zod                                | 3.x                                      |
+| Auth          | NextAuth.js (Credentials provider) | 4.x                                      |
+| Email         | Resend                             | latest                                   |
+| Live Chat     | Tawk.to (client-side embed)        | —                                        |
 
 **No deviations from this stack without a documented architectural decision.** Replacing any approved technology requires updating this document and `implementation.md` before development proceeds.
 
-### 4.2 MongoDB Rules
+### 4.2 Next.js 15 Route Handler Rules
 
-| Rule                                                            | Rationale                                                             |
-| --------------------------------------------------------------- | --------------------------------------------------------------------- |
-| No binary data in BSON documents                                | MongoDB is not a file store; large BSON documents degrade performance |
-| Store only URL references to media                              | Object storage is designed for this; MongoDB is not                   |
-| GridFS only as last resort                                      | If offline/airgapped storage is required, document the decision       |
-| All collections use Mongoose schemas with TypeScript interfaces | Type safety and consistent validation                                 |
+All `[id]` route handlers must type `params` as `Promise<{ id: string }>` and await before use:
 
-### 4.3 Storage Decision Matrix
+```typescript
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  // ...
+}
+```
 
-| Data Type                                  | Storage Location                |
-| ------------------------------------------ | ------------------------------- |
-| Structured content (posts, songs, events)  | MongoDB                         |
-| Metadata about media (URL, alt text, type) | MongoDB                         |
-| Images                                     | Cloudinary (object storage)     |
-| Audio files                                | Cloudinary (object storage)     |
-| Video files                                | Cloudinary or YouTube embed URL |
-| Session data                               | HTTP-only cookies (server-side) |
-| Secrets and credentials                    | Environment variables only      |
+This is a hard requirement. Using `params.id` directly without awaiting will cause 404 errors at runtime.
 
-### 4.4 Security Rules
+### 4.3 MongoDB Rules
 
-- CMS routes (`/cms/*`) protected by NextAuth.js middleware — unauthenticated requests redirect to `/cms/login`
-- `NEXTAUTH_SECRET`, `CMS_ADMIN_EMAIL`, `CMS_ADMIN_PASSWORD` and all API credentials stored as environment variables only
+| Rule                                                            | Rationale                                                                          |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| No binary data in BSON documents                                | MongoDB is not a file store; large BSON documents degrade performance              |
+| Store only URL references to media                              | Object storage is designed for this; MongoDB is not                                |
+| GridFS only as last resort                                      | If offline/airgapped storage is required, document the decision                    |
+| All collections use Mongoose schemas with TypeScript interfaces | Type safety and consistent validation                                              |
+| `.lean()` returns plain objects — type accordingly              | Never use `IModel` interfaces directly on `.lean()` results; use `LeanModel` types |
+
+### 4.4 Storage Decision Matrix
+
+| Data Type                                  | Storage Location                                      |
+| ------------------------------------------ | ----------------------------------------------------- |
+| Structured content (posts, songs, events)  | MongoDB                                               |
+| Metadata about media (URL, alt text, type) | MongoDB                                               |
+| Images                                     | Cloudinary (object storage)                           |
+| Audio files                                | Cloudinary (object storage)                           |
+| Video files                                | YouTube/Vimeo embed URL (stored as string in MongoDB) |
+| Gallery photos                             | Cloudinary (uploaded via gallery API)                 |
+| Session data                               | HTTP-only cookies (server-side)                       |
+| Secrets and credentials                    | Environment variables only                            |
+
+### 4.5 Security Rules
+
+- CMS routes (`/cms/*`) protected by NextAuth.js middleware — unauthenticated requests redirect to `/cms-login`
+- `NEXTAUTH_SECRET`, `CMS_ADMIN_EMAIL`, `CMS_ADMIN_PASSWORD`, `RESEND_API_KEY` and all API credentials stored as environment variables only
 - No credentials committed to Git under any circumstances
 - All form inputs validated server-side with Zod before persistence
-- `Content-Security-Policy` header configured at Vercel level before launch
 - `/cms/*` disallowed in `robots.txt` — CMS must never be indexed
+- Tawk.to embed IDs are public (client-side script) — no env vars required
+
+### 4.6 Zod Validator Rules
+
+All URL fields in Zod schemas must use `.optional().or(z.literal(''))` to allow empty strings from forms:
+
+```typescript
+coverImageUrl: z.string().url().optional().or(z.literal('')),
+```
+
+Exception: `coverImageUrl` on posts is required (`z.string().url('A cover image is required')`) — posts cannot be saved without a cover image.
 
 ---
 
@@ -185,3 +232,4 @@ A feature is complete when:
 - [ ] Page loads in < 2 seconds on a standard connection
 - [ ] Mobile layout correct at 375px
 - [ ] Admin can create, update, and delete the content type
+- [ ] No TypeScript or ESLint errors (`npx tsc --noEmit` and `npm run lint` pass clean)

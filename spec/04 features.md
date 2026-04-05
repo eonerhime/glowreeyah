@@ -1,39 +1,46 @@
 # Features
 
 **Project:** Glowreeyah Digital Platform
-**Version:** 1.0.0
-**Status:** Pre-Development
-**Last Updated:** 2026-03-28
+**Version:** 1.1.0
+**Status:** In Progress
+**Last Updated:** 2026-04-05
 
 ---
 
-## Overview
+## Change Log
 
-This document catalogues all platform features grouped by functional domain. Each feature is assigned a unique ID, priority, status, and traceability reference back to the Specification (`specification.md`) and Implementation (`implementation.md`).
+| Version | Date       | Change                                                                                                                                                                                                                                                                      |
+| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0.0   | 2026-03-28 | Initial feature catalogue                                                                                                                                                                                                                                                   |
+| 1.1.0   | 2026-04-05 | Added F-018 Contact System, F-019 Gallery System, F-020 Live Chat, F-021 Site Settings; updated F-007 to reflect Events rename and expandable card pattern; updated F-008 with email notification; updated F-012/F-013 with new CMS capabilities; marked completed features |
 
 ---
 
 ## Feature Index
 
-| Feature ID | Name                    | Domain       | Priority | Status  |
-| ---------- | ----------------------- | ------------ | -------- | ------- |
-| F-001      | Artist Profile          | Artist       | P1       | Planned |
-| F-002      | Music Catalogue         | Music        | P1       | Planned |
-| F-003      | Audio / Video Playback  | Music        | P1       | Planned |
-| F-004      | Lyrics & Song Stories   | Music        | P2       | Planned |
-| F-005      | Blog & Devotionals      | Content      | P1       | Planned |
-| F-006      | Media & Press Gallery   | Media        | P2       | Planned |
-| F-007      | Speaking & Events       | Booking      | P2       | Planned |
-| F-008      | Booking / Contact Form  | Booking      | P2       | Planned |
-| F-009      | Impact & Initiatives    | Impact       | P2       | Planned |
-| F-010      | Tag & Category System   | SEO          | P1       | Planned |
-| F-011      | Search & Filtering      | Discovery    | P2       | Planned |
-| F-012      | CMS Content Dashboard   | CMS          | P1       | Planned |
-| F-013      | CMS Media Library       | CMS          | P1       | Planned |
-| F-014      | SEO Metadata System     | SEO          | P1       | Planned |
-| F-015      | Newsletter Subscription | CRM          | P3       | Future  |
-| F-016      | Gated / Premium Content | Monetisation | P3       | Future  |
-| F-017      | Courses Module          | Education    | P3       | Future  |
+| Feature ID | Name                    | Domain        | Priority | Status         |
+| ---------- | ----------------------- | ------------- | -------- | -------------- |
+| F-001      | Artist Profile          | Artist        | P1       | ✅ Complete    |
+| F-002      | Music Catalogue         | Music         | P1       | ✅ Complete    |
+| F-003      | Audio / Video Playback  | Music         | P1       | ✅ Complete    |
+| F-004      | Lyrics & Song Stories   | Music         | P2       | ✅ Complete    |
+| F-005      | Blog & Devotionals      | Content       | P1       | ✅ Complete    |
+| F-006      | Media & Press Gallery   | Media         | P2       | ✅ Complete    |
+| F-007      | Events                  | Events        | P2       | ✅ Complete    |
+| F-008      | Booking Form            | Booking       | P2       | ✅ Complete    |
+| F-009      | Impact & Initiatives    | Impact        | P2       | ✅ Complete    |
+| F-010      | Tag & Category System   | SEO           | P1       | ✅ Complete    |
+| F-011      | Search & Filtering      | Discovery     | P2       | ⬜ Not Started |
+| F-012      | CMS Content Dashboard   | CMS           | P1       | ✅ Complete    |
+| F-013      | CMS Media Library       | CMS           | P1       | ✅ Complete    |
+| F-014      | SEO Metadata System     | SEO           | P1       | 🔄 In Progress |
+| F-015      | Newsletter Subscription | CRM           | P3       | Future         |
+| F-016      | Gated / Premium Content | Monetisation  | P3       | Future         |
+| F-017      | Courses Module          | Education     | P3       | Future         |
+| F-018      | Contact System          | Communication | P1       | ✅ Complete    |
+| F-019      | Gallery System          | Media         | P1       | ✅ Complete    |
+| F-020      | Live Chat               | Communication | P2       | ✅ Complete    |
+| F-021      | Site Settings CMS       | CMS           | P1       | ✅ Complete    |
 
 **Priority Legend:** P1 = Must Have · P2 = Should Have · P3 = Future / Nice to Have
 
@@ -43,327 +50,258 @@ This document catalogues all platform features grouped by functional domain. Eac
 
 ---
 
-### F-001 — Artist Profile
+### F-001 — Artist Profile ✅
 
-**Domain:** Artist
-**Priority:** P1
-**Spec Ref:** §3.1
-**Description:** Dynamic artist biography page rendered from database content. Supports short, medium, and long biography variants for different contexts (social cards, press kits, full page).
-
-**Acceptance Criteria:**
-
-- Biography exists in three length variants in the database
-- Achievements list is editable via Admin
-- Speaking profile section is independently manageable
-- Page generates Open Graph and Twitter Card metadata automatically
-
-**Data:** `artists` collection
+**Domain:** Artist | **Priority:** P1
 **Route:** `/about`
 
----
+Dynamic artist biography page rendered from database. Supports short, medium, and long biography variants. Full-width hero image with name overlay. Social links as pill buttons. Back link to `/#about` when arriving from homepage.
 
-### F-002 — Music Catalogue
+**Completed:**
 
-**Domain:** Music
-**Priority:** P1
-**Spec Ref:** §3.2
-**Description:** Browsable catalogue of albums and individual songs. Albums contain ordered song listings. All content is database-driven with no hardcoded entries.
-
-**Acceptance Criteria:**
-
-- Albums list page shows cover art, title, release year
-- Album detail page shows track listing
-- Song detail page accessible from track listing
-- Filtering by album, tag, or release year works correctly
-
-**Data:** `albums`, `songs` collections
-**Routes:** `/music`, `/music/[albumSlug]`, `/music/[albumSlug]/[songSlug]`
+- Three biography variants in DB
+- Achievements list
+- Speaking profile section
+- Social links (Instagram, YouTube, Spotify, Twitter)
+- Open Graph and Twitter Card metadata
+- Referer-based back link
 
 ---
 
-### F-003 — Audio / Video Playback
+### F-002 — Music Catalogue ✅
 
-**Domain:** Music
-**Priority:** P1
-**Spec Ref:** §3.2
-**Description:** Embedded audio and video players on song and media pages. Audio served from object storage via URL; video embedded from YouTube / Vimeo or stored in object storage.
+**Domain:** Music | **Priority:** P1
+**Routes:** `/music`, `/music/[albumSlug]`
 
-**Acceptance Criteria:**
-
-- Audio player renders on song detail pages when `audioUrl` is present
-- Video player (embed or native) renders when `videoUrl` is present
-- Players do not block page rendering (lazy loaded)
-- Mobile playback functions correctly
-
-**Data:** `audioUrl`, `videoUrl` fields on `songs`
-**Storage:** Object storage (Cloudinary / S3)
+Browsable album catalogue. Album detail page shows track listing. Hero image on album detail pages. Back link to `/#music` when arriving from homepage.
 
 ---
 
-### F-004 — Lyrics & Song Stories
+### F-003 — Audio / Video Playback ✅
 
-**Domain:** Music
-**Priority:** P2
-**Spec Ref:** §3.2
-**Description:** Each song may optionally include full lyrics and a narrative "story behind the song." Rich text rendered as semantic HTML.
+**Domain:** Music | **Priority:** P1
+**Route:** `/music/[albumSlug]/[songSlug]`
 
-**Acceptance Criteria:**
-
-- Lyrics displayed in structured, readable format
-- Story behind the song renders as rich text
-- Both fields are optional and page renders gracefully without them
-
-**Data:** `lyrics`, `description` fields on `songs`
+Audio player on song pages when `audioUrl` present. Video embed when `videoUrl` present.
 
 ---
 
-### F-005 — Blog & Devotionals
+### F-004 — Lyrics & Song Stories ✅
 
-**Domain:** Content
-**Priority:** P1
-**Spec Ref:** §3.3
-**Description:** Long-form content system supporting blog posts, devotionals, and inspirational stories. Each post has category, tags, author, and publication date.
+**Domain:** Music | **Priority:** P2
 
-**Acceptance Criteria:**
+Lyrics and story behind the song on song detail pages. Both optional — page renders gracefully without them.
 
-- Posts list page renders with pagination
-- Individual post pages render from database
-- Category and tag filtering works
-- Posts support rich text with embedded media
-- RSS-compatible structure (slug, date, description)
+---
 
-**Data:** `posts` collection
+### F-005 — Blog & Devotionals ✅
+
+**Domain:** Content | **Priority:** P1
 **Routes:** `/blog`, `/blog/[slug]`
 
+Post listing and individual post pages. Cover image required. Excerpt auto-generated from body markdown with manual override. Hero image on post detail. Back link to `/#blog` when arriving from homepage.
+
 ---
 
-### F-006 — Media & Press Gallery
+### F-006 — Media & Press Gallery ✅
 
-**Domain:** Media
-**Priority:** P2
-**Spec Ref:** §3.4
-**Description:** Gallery and listing of TV features, interviews, and press appearances. Each entry links to external source or hosted media file.
-
-**Acceptance Criteria:**
-
-- Media items filterable by type (TV, Interview, Print, Radio)
-- Thumbnail images served from object storage
-- External links open in new tab
-- Alt text required on all images
-
-**Data:** `mediaAssets` collection
+**Domain:** Media | **Priority:** P2
 **Route:** `/media`
 
----
-
-### F-007 — Speaking & Events
-
-**Domain:** Booking
-**Priority:** P2
-**Spec Ref:** §3.5
-**Description:** Public-facing page listing upcoming and past speaking engagements and events. Events sourced from database.
-
-**Acceptance Criteria:**
-
-- Upcoming events displayed prominently
-- Past events archived and browsable
-- Each event has: title, date, location, description, optional link
-
-**Data:** `events` collection
-**Route:** `/speaking`
+Grid of press and media appearances. External links open in new tab.
 
 ---
 
-### F-008 — Booking / Contact Form
+### F-007 — Events ✅ (formerly Speaking & Events)
 
-**Domain:** Booking
-**Priority:** P2
-**Spec Ref:** §3.5
-**Description:** Form allowing event organisers or collaborators to submit booking requests. Submissions stored in database and optionally trigger an email notification.
+**Domain:** Events | **Priority:** P2
+**Route:** `/events` (permanent redirect from `/speaking`)
 
-**Acceptance Criteria:**
+Two-column layout: Upcoming (left) and Past Events (right). Upcoming/Past status derived from date at render time — not from stored `isUpcoming` flag. Expandable cards — click to reveal cover image, full description, and external link. Upcoming count badge on column heading. Back link to `/#events` when arriving from homepage.
 
-- Form validates required fields client-side and server-side
-- Submission saved to `bookings` collection
-- Confirmation message shown on successful submission
-- Admin can view and manage submissions in dashboard
+**CMS:** Full CRUD at `/cms/events`. Status badge auto-set from date picker with manual override toggle.
 
-**Data:** `bookings` collection
+---
+
+### F-008 — Booking Form ✅
+
+**Domain:** Booking | **Priority:** P2
 **Route:** `/booking`
 
----
+Booking request form with fields: name, email, phone, organisation, event type, preferred date, message. Client-side and server-side validation. Scroll-to-top on success. "Make another booking" button on success state.
 
-### F-009 — Impact & Initiatives
-
-**Domain:** Impact
-**Priority:** P2
-**Spec Ref:** §3.6
-**Description:** Dedicated section highlighting social impact projects such as ZIDATA, foundations, and outreach programmes. Content fully database-driven.
-
-**Acceptance Criteria:**
-
-- Each initiative has: title, description, images, links
-- Page renders initiative cards dynamically
-- Rich text supported per initiative
-
-**Data:** `initiatives` collection
-**Route:** `/impact`
+**CMS:** Expandable booking cards at `/cms/bookings`. Status update buttons (pending → reviewed → accepted → declined). Email notification sent to requestor via Resend on status change. Pending count badge on sidebar, clears on page visit.
 
 ---
 
-### F-010 — Tag & Category System
+### F-009 — Impact & Initiatives ✅
 
-**Domain:** SEO
-**Priority:** P1
-**Spec Ref:** §3.7
-**Description:** Unified tagging system applied across songs, posts, media, and events. Tags drive discoverability and internal linking.
+**Domain:** Impact | **Priority:** P2
+**Routes:** `/impact`, `/impact/[slug]`
 
-**Acceptance Criteria:**
-
-- Tags stored in dedicated `tags` collection
-- Tags reusable across all content types
-- Tag pages aggregate all content sharing that tag
-- Tags surfaced in page metadata
-
-**Data:** `tags` collection
-**Routes:** `/tag/[slug]`
+Initiative cards on listing page link to full detail pages. Hero image on detail page. Back link derived from referer (homepage `/#impact` or `/impact`). Content managed via CMS at `/cms/initiatives`.
 
 ---
 
-### F-011 — Search & Filtering
+### F-010 — Tag & Category System ✅
 
-**Domain:** Discovery
-**Priority:** P2
-**Spec Ref:** §FR4
-**Description:** Site-wide search and per-section filtering allowing users to find songs, posts, and media by keyword or tag.
+**Domain:** SEO | **Priority:** P1
+**Route:** `/tag/[slug]`
 
-**Acceptance Criteria:**
-
-- Search input on music and blog pages
-- Results update without full page reload (client component)
-- Filter by tag works on all content list pages
-- Empty state handled gracefully
+Unified tagging across all content types. Tags creatable inline from any content form — no need to visit the Tags section separately. Tag archive pages aggregate all tagged content.
 
 ---
 
-### F-012 — CMS Content Dashboard
+### F-011 — Search & Filtering ⬜
 
-**Domain:** CMS
-**Priority:** P1
-**Spec Ref:** §FR3
-**Description:** Built-in Content Management System served at `/cms/*` within the same Next.js application. Shares the MongoDB database and API layer with the public frontend. Allows non-technical editors to manage all content types without developer involvement.
+**Domain:** Discovery | **Priority:** P2
 
-**Acceptance Criteria:**
+Site-wide search and per-section filtering. Not yet implemented. Planned for a future sprint.
 
-- Authentication via NextAuth.js — unauthenticated requests redirect to `/cms/login`
-- Persistent sidebar navigation to all content sections
-- Dashboard overview showing counts for songs, posts, albums, pending bookings, upcoming events
-- CRUD operations for: songs, albums, posts, events, initiatives, tags, artist profile
-- Slug auto-generated from title; editable before save
-- Published/Draft toggle on all content types
-- Confirmation dialog before any delete operation
-- "View site ↗" link in topbar opens public frontend in new tab
+---
 
+### F-012 — CMS Content Dashboard ✅
+
+**Domain:** CMS | **Priority:** P1
 **Route:** `/cms/*`
 
+Full CMS with:
+
+- NextAuth.js Credentials authentication — unauthenticated requests redirect to `/cms-login`
+- Collapsible sidebar navigation (mobile drawer on small screens)
+- Pending bookings badge on Bookings nav item
+- Dashboard stats overview
+- CRUD for: posts, songs, albums, events, initiatives, gallery, tags, artist profile, site settings
+- Cancel buttons on all create/edit forms
+- Delete confirmation on all destructive actions
+- Inline tag creation from all content forms
+- `MediaPicker` with Library and Upload New tabs — no need to leave the form to upload images
+- CMS fully mobile-responsive
+
 ---
 
-### F-013 — CMS Media Upload & Library
+### F-013 — CMS Media Library ✅
 
-**Domain:** CMS
-**Priority:** P1
-**Spec Ref:** §3 (Media Governance)
-**Description:** Media library within the CMS for uploading images and files to Cloudinary. MongoDB stores only metadata. Media browser allows selection when creating or editing content.
-
-**Acceptance Criteria:**
-
-- Upload interface at `/cms/media` accepts image, audio, and video files
-- Files uploaded directly to Cloudinary via server-side route
-- MongoDB `MediaAsset` record created with URL, `publicId`, altText, type
-- Alt text required — form blocks save without it
-- Media browser displays all uploaded assets in a grid
-- "Copy URL" available on each asset for manual use
-- `MediaPicker` component allows selecting an existing asset when editing content
-
+**Domain:** CMS | **Priority:** P1
 **Route:** `/cms/media`
 
+Upload interface accepts image, audio, and video files. Files uploaded to Cloudinary server-side. MongoDB `MediaAsset` record created with URL, `publicId`, altText, type. Alt text required. Grid browser with copy URL (+ checkmark feedback). Inline upload available from `MediaPicker` on all content forms.
+
 ---
 
-### F-014 — SEO Metadata System
+### F-014 — SEO Metadata System 🔄
 
-**Domain:** SEO
-**Priority:** P1
-**Spec Ref:** §NFR (SEO), §FR1
-**Description:** Every page generates title, description, canonical URL, Open Graph, and Twitter Card metadata from database content. No hardcoded meta tags.
+**Domain:** SEO | **Priority:** P1
 
-**Acceptance Criteria:**
+- [x] `generateMetadata()` on all dynamic routes
+- [x] Open Graph + Twitter Card on all content pages
+- [x] Canonical URLs on all pages
+- [x] `sitemap.ts` and `robots.ts`
+- [x] ISR revalidation on all content pages
+- [ ] JSON-LD structured data on song pages
+- [ ] JSON-LD structured data on post pages
+- [ ] JSON-LD structured data on event pages
 
-- `generateMetadata()` implemented on all dynamic routes
-- Open Graph image defaults to artist photo if no content image available
-- Structured data (JSON-LD) present on song, event, and post pages
-- Canonical URLs correct on all pages
+---
+
+### F-018 — Contact System ✅
+
+**Domain:** Communication | **Priority:** P1
+**Routes:** `/contact` (dedicated page), homepage contact section
+
+Contact form with fields: name, email, phone, social handle, subject, message. Saves submission to `contactMessages` collection. Sends email notification via Resend to configured `CONTACT_EMAIL`. Success state with scroll-to-top. Dedicated `/contact` page also shows social handles and link to booking form.
+
+---
+
+### F-019 — Gallery System ✅
+
+**Domain:** Media | **Priority:** P1
+**Routes:** `/gallery` (public), `/cms/gallery` (CMS)
+
+Photos and videos organised by event or initiative.
+
+**Public:** `/gallery` with Events and Initiatives tabs. Each tab shows gallery cards. Clicking opens the full gallery for that event/initiative. Photos open in a lightbox (keyboard navigable). Videos show thumbnail + platform badge and open YouTube/Vimeo in new tab. Clear visual distinction between photos and videos.
+
+**CMS:** Select event or initiative, bulk upload photos with per-photo captions, add YouTube/Vimeo video links, delete photos and videos. Captions editable inline.
+
+---
+
+### F-020 — Live Chat ✅
+
+**Domain:** Communication | **Priority:** P2
+
+Tawk.to floating chat widget on all public pages. Hidden from CMS pages entirely (loaded only in `(public)` layout). Configured via embed URL in `src/components/ui/TawkChat.tsx`.
+
+---
+
+### F-021 — Site Settings CMS ✅
+
+**Domain:** CMS | **Priority:** P1
+**Route:** `/cms/settings`
+
+CMS page for editing site-wide content stored in the `SiteSettings` collection:
+
+- Hero title, subtitle, image URL, logo URL
+- Home intro text
+- Blog page heading
+- Impact page heading
+
+Changes reflect on next ISR revalidation (3600s).
 
 ---
 
 ### F-015 — Newsletter Subscription _(Future)_
 
-**Domain:** CRM
-**Priority:** P3
-**Spec Ref:** §2.7 (Extensibility)
-**Description:** Email capture with integration to a newsletter provider (Mailchimp / ConvertKit). Not in v1.0 scope.
+**Domain:** CRM | **Priority:** P3
+
+Email capture with integration to a newsletter provider. Not in v1.0 scope.
 
 ---
 
 ### F-016 — Gated / Premium Content _(Future)_
 
-**Domain:** Monetisation
-**Priority:** P3
-**Spec Ref:** §2.7 (Extensibility)
-**Description:** Access-controlled content for subscribers or purchasers. Not in v1.0 scope.
+**Domain:** Monetisation | **Priority:** P3
+
+Access-controlled content for subscribers or purchasers. Not in v1.0 scope.
 
 ---
 
 ### F-017 — Courses Module _(Future)_
 
-**Domain:** Education
-**Priority:** P3
-**Spec Ref:** §2.7 (Extensibility)
-**Description:** Structured course delivery with lessons, progress tracking, and completion certificates. Not in v1.0 scope.
+**Domain:** Education | **Priority:** P3
+
+Structured course delivery. Not in v1.0 scope.
 
 ---
 
 ## Feature-to-Route Matrix
 
-| Route                                                               | Feature(s)                       |
-| ------------------------------------------------------------------- | -------------------------------- |
-| `/`                                                                 | F-001, F-002, F-005 (highlights) |
-| `/about`                                                            | F-001                            |
-| `/music`                                                            | F-002, F-011                     |
-| `/music/[albumSlug]`                                                | F-002, F-003                     |
-| `/music/[albumSlug]/[songSlug]`                                     | F-003, F-004                     |
-| `/blog`                                                             | F-005, F-011                     |
-| `/blog/[slug]`                                                      | F-005                            |
-| `/media`                                                            | F-006                            |
-| `/speaking`                                                         | F-007                            |
-| `/booking`                                                          | F-008                            |
-| `/impact`                                                           | F-009                            |
-| `/tag/[slug]`                                                       | F-010                            |
-| `/cms/login`                                                        | F-012                            |
-| `/cms/dashboard`                                                    | F-012                            |
-| `/cms/posts`, `/cms/posts/new`, `/cms/posts/[id]`                   | F-012                            |
-| `/cms/songs`, `/cms/songs/new`, `/cms/songs/[id]`                   | F-012                            |
-| `/cms/albums`, `/cms/albums/new`, `/cms/albums/[id]`                | F-012                            |
-| `/cms/events`, `/cms/events/new`, `/cms/events/[id]`                | F-012                            |
-| `/cms/initiatives`, `/cms/initiatives/new`, `/cms/initiatives/[id]` | F-012                            |
-| `/cms/media`                                                        | F-013                            |
-| `/cms/bookings`                                                     | F-012                            |
-| `/cms/tags`                                                         | F-012                            |
-| `/cms/artist`                                                       | F-012                            |
-
----
-
-## Change Log
-
-| Version | Date       | Change                            |
-| ------- | ---------- | --------------------------------- |
-| 1.0.0   | 2026-03-28 | Initial feature catalogue created |
+| Route                           | Feature(s)                               |
+| ------------------------------- | ---------------------------------------- |
+| `/`                             | F-001, F-002, F-005, F-007, F-009, F-018 |
+| `/about`                        | F-001                                    |
+| `/music`                        | F-002                                    |
+| `/music/[albumSlug]`            | F-002, F-003                             |
+| `/music/[albumSlug]/[songSlug]` | F-003, F-004                             |
+| `/blog`                         | F-005                                    |
+| `/blog/[slug]`                  | F-005                                    |
+| `/events`                       | F-007                                    |
+| `/booking`                      | F-008                                    |
+| `/impact`                       | F-009                                    |
+| `/impact/[slug]`                | F-009                                    |
+| `/contact`                      | F-018                                    |
+| `/gallery`                      | F-019                                    |
+| `/media`                        | F-006                                    |
+| `/tag/[slug]`                   | F-010                                    |
+| `/cms/dashboard`                | F-012                                    |
+| `/cms/posts/**`                 | F-012                                    |
+| `/cms/songs/**`                 | F-012                                    |
+| `/cms/albums/**`                | F-012                                    |
+| `/cms/events/**`                | F-012                                    |
+| `/cms/initiatives/**`           | F-012                                    |
+| `/cms/gallery`                  | F-019                                    |
+| `/cms/media`                    | F-013                                    |
+| `/cms/bookings`                 | F-008, F-012                             |
+| `/cms/tags`                     | F-010, F-012                             |
+| `/cms/artist`                   | F-001, F-012                             |
+| `/cms/settings`                 | F-021                                    |

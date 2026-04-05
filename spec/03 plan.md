@@ -1,278 +1,168 @@
 # Project Plan
 
 **Project:** Glowreeyah Digital Platform
-**Version:** 1.0.0
-**Last Updated:** 2026-03-28
-**Status:** Pre-Development
+**Version:** 1.1.0
+**Last Updated:** 2026-04-05
+**Status:** In Progress
+
+---
+
+## Change Log
+
+| Version | Date       | Change                                                                                                                                |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0.0   | 2026-03-28 | Initial plan                                                                                                                          |
+| 1.1.0   | 2026-04-05 | Updated to reflect actual delivery progress; phases 3–6 complete; phases 7–8 in progress; added new features built during development |
 
 ---
 
 ## Overview
 
-This document defines the delivery phases, milestones, and sequencing for the Glowreeyah Digital Platform. It is a roadmap document — detailed implementation instructions live in `implementation.md`.
-
----
-
-## Delivery Phases
-
----
-
-### Phase 1 — Discovery & Structuring
-
-**Goal:** Understand all existing content and define a complete data architecture before writing code.
-
-**Activities:**
-
-- Analyse WordPress XML backup export
-- Catalogue all existing content types (posts, pages, media)
-- Count total posts, media assets, and custom fields
-- Identify content that maps to new data models
-- Flag orphaned or low-quality content for exclusion
-
-**Outputs:**
-
-- Content inventory spreadsheet
-- Confirmed list of data models (cross-referenced with `specification.md` §6)
-- Migration scope decision (what to migrate vs. what to start fresh)
-
-**Dependency:** Access to WordPress admin or export file
-**Estimated Duration:** 2–3 days
-
----
-
-### Phase 2 — Specification Finalization
-
-**Goal:** Lock all design decisions before development begins. No schemas should change after this phase without a formal decision.
-
-**Activities:**
-
-- Finalize all MongoDB schemas (reference `implementation.md` §5)
-- Confirm all API routes (`implementation.md` §6.1)
-- Map all UI pages to routes (`specification.md` §7)
-- Confirm media storage strategy (Cloudinary selected as primary)
-- Review `features.md` and confirm P1 scope for v1.0
-
-**Outputs:**
-
-- Signed-off `specification.md`
-- Signed-off `features.md`
-- Signed-off `implementation.md`
-
-**Estimated Duration:** 1–2 days
-
----
-
-### Phase 3 — Environment Setup
-
-**Goal:** Full local development environment operational; all external services connected.
-
-**Activities (in order):**
-
-1. Create accounts: MongoDB Atlas, Cloudinary, Vercel, GitHub
-2. Create and configure MongoDB Atlas M0 cluster
-3. Create GitHub repository
-4. Scaffold Next.js application (follow `implementation.md` §4)
-5. Configure Tailwind CSS
-6. Create `.env.local` with all required variables
-7. Verify MongoDB connection via `connectDB()`
-8. Verify Cloudinary connection via test upload
-9. Confirm `npm run dev` starts without errors
-
-**Reference:** `implementation.md` §3 and §4
-**Estimated Duration:** 1 day
-
----
-
-### Phase 4 — Core Development
-
-**Goal:** Functioning data layer and foundational UI in place.
-
-#### Step 4.1 — Data Layer
-
-**File creation order:**
-
-1. `src/lib/mongodb.ts`
-2. `src/lib/cloudinary.ts`
-3. `src/lib/utils.ts`
-4. All models in `src/models/*.ts`
-5. All API route handlers in `src/app/api/**/*.ts`
-6. Zod validators in `src/lib/validators/*.ts`
-
-**Verification:** Test all API routes using a REST client (curl, Postman, or VS Code REST Client extension). Confirm correct response shapes and status codes for GET, POST, PATCH, DELETE.
-
-#### Step 4.2 — UI Layer
-
-1. `src/app/layout.tsx` (root layout with Navbar and Footer)
-2. `src/components/layout/Navbar.tsx`
-3. `src/components/layout/Footer.tsx`
-4. Core UI primitives: `Button`, `Input`, `Tag`, `LoadingSpinner`
-5. Content components: `AlbumCard`, `SongCard`, `PostCard`, `MediaCard`
-
-#### Step 4.3 — Public Pages
-
-Build pages in this order (each depends on the previous):
-
-1. `/` (Home)
-2. `/about`
-3. `/music` and `/music/[albumSlug]` and `/music/[albumSlug]/[songSlug]`
-4. `/blog` and `/blog/[slug]`
-5. `/media`
-6. `/speaking`
-7. `/booking`
-8. `/impact`
-9. `/tag/[slug]`
-
-**Reference:** `implementation.md` §7 and §8
-**Estimated Duration:** 5–7 days
-
----
-
-### Phase 5 — Media Integration
-
-**Goal:** Object storage connected; upload and retrieval working end-to-end.
-
-**Activities:**
-
-1. Configure Cloudinary client (`src/lib/cloudinary.ts`)
-2. Implement upload API route (`src/app/api/media/route.ts`)
-3. Test image upload → Cloudinary → URL stored in `MediaAsset`
-4. Implement `next/image` with Cloudinary domain in `next.config.ts`
-5. Confirm alt text validation enforced on upload
-
-Add to `next.config.ts`:
-
-```typescript
-const nextConfig = {
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
-      },
-    ],
-  },
-};
-```
-
-**Reference:** `implementation.md` §9
-**Estimated Duration:** 1–2 days
-
----
-
-### Phase 6 — CMS Build
-
-**Goal:** Fully functional Content Management System operational — editors can manage all content without developer involvement.
-
-**Activities:**
-
-1. Install NextAuth.js: `npm install next-auth`
-2. Install rich text and markdown packages: `npm install @uiw/react-md-editor react-markdown`
-3. Add NextAuth env vars to `.env.local` (`NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `CMS_ADMIN_EMAIL`, `CMS_ADMIN_PASSWORD`)
-4. Create `src/app/api/auth/[...nextauth]/route.ts` (Credentials provider)
-5. Update `src/middleware.ts` to use `withAuth` from NextAuth
-6. Create `(cms)` route group and `src/app/(cms)/layout.tsx`
-7. Build `CMSSidebar`, `CMSTopbar`, `CMSPageHeader` components
-8. Build shared form components: `SlugField`, `PublishToggle`, `StatusBadge`, `ConfirmDialog`, `TagSelector`, `RichTextEditor`, `MediaPicker`, `MediaUploader`
-9. Build `src/app/(cms)/login/page.tsx`
-10. Build `src/app/(cms)/dashboard/page.tsx`
-11. Build list + new + edit pages for: posts, songs, albums, events, initiatives
-12. Build `src/app/(cms)/media/page.tsx` (upload + browser)
-13. Build `src/app/(cms)/bookings/page.tsx`
-14. Build `src/app/(cms)/tags/page.tsx`
-15. Build `src/app/(cms)/artist/page.tsx`
-16. Test all CRUD operations end-to-end for every content type
-17. Test auth — confirm unauthenticated requests redirect to `/cms/login`
-18. Test media upload → Cloudinary → URL stored in MongoDB
-
-**Reference:** `implementation.md` §10
-**Estimated Duration:** 4–6 days
-
----
-
-### Phase 7 — SEO & Optimisation
-
-**Goal:** All pages meet performance and SEO targets.
-
-**Activities:**
-
-1. Implement `generateMetadata()` on all dynamic routes
-2. Implement `src/app/sitemap.ts`
-3. Implement `src/app/robots.ts`
-4. Add JSON-LD structured data to song, post, and event pages
-5. Replace all `<img>` tags with `next/image`
-6. Implement ISR (`revalidate`) on all content pages
-7. Run Lighthouse audit — resolve any issues below targets
-8. Accessibility pass: alt text, heading hierarchy, keyboard nav, colour contrast
-
-**Reference:** `implementation.md` §11 and §12
-**Estimated Duration:** 2–3 days
-
----
-
-### Phase 8 — Deployment
-
-**Goal:** Application live on production URL with all services connected.
-
-**Activities (in order):**
-
-1. Confirm `npm run build` completes without errors locally
-2. Push all code to `main` branch on GitHub
-3. Import repository to Vercel
-4. Add all environment variables in Vercel dashboard
-5. Deploy and verify production URL loads
-6. Configure custom domain (if available)
-7. Confirm MongoDB Atlas network access allows Vercel
-8. Run post-deployment checklist (`implementation.md` §16)
-
-**Reference:** `implementation.md` §14
-**Estimated Duration:** 1 day
-
----
-
-### Phase 9 — Content Migration
-
-**Goal:** All WordPress content accurately imported and validated in MongoDB.
-
-**Activities:**
-
-1. Export WordPress content as XML
-2. Parse XML and map to MongoDB schema
-3. Upload all media assets to Cloudinary
-4. Create `MediaAsset` records with new Cloudinary URLs
-5. Update content body references to use new URLs
-6. Import posts, pages, and other content to MongoDB
-7. Validate: count documents, spot-check 10+ records, verify images
-
-**Reference:** `implementation.md` §15
-**Estimated Duration:** 2–4 days (depends on content volume)
+This document defines the delivery phases, milestones, and sequencing for the Glowreeyah Digital Platform. Detailed implementation instructions live in `implementation.md`.
 
 ---
 
 ## Phase Summary
 
-| Phase     | Name                       | Duration       | Dependencies     |
-| --------- | -------------------------- | -------------- | ---------------- |
-| 1         | Discovery & Structuring    | 2–3 days       | WordPress access |
-| 2         | Specification Finalization | 1–2 days       | Phase 1 complete |
-| 3         | Environment Setup          | 1 day          | Accounts created |
-| 4         | Core Development           | 5–7 days       | Phase 3 complete |
-| 5         | Media Integration          | 1–2 days       | Phase 4 partial  |
-| 6         | CMS Build                  | 4–6 days       | Phase 4 complete |
-| 7         | SEO & Optimisation         | 2–3 days       | Phase 6 complete |
-| 8         | Deployment                 | 1 day          | Phase 7 complete |
-| 9         | Content Migration          | 2–4 days       | Phase 8 complete |
-| **Total** |                            | **18–28 days** |                  |
+| Phase | Name                       | Duration | Status         |
+| ----- | -------------------------- | -------- | -------------- |
+| 1     | Discovery & Structuring    | 2–3 days | ✅ Complete    |
+| 2     | Specification Finalization | 1–2 days | ✅ Complete    |
+| 3     | Environment Setup          | 1 day    | ✅ Complete    |
+| 4     | Core Development           | 5–7 days | ✅ Complete    |
+| 5     | Media Integration          | 1–2 days | ✅ Complete    |
+| 6     | CMS Build                  | 4–6 days | ✅ Complete    |
+| 7     | SEO & Optimisation         | 2–3 days | 🔄 In Progress |
+| 8     | Testing                    | 1–2 days | ⬜ Not Started |
+| 9     | Deployment                 | 1 day    | ⬜ Not Started |
+| 10    | Content Migration          | 2–4 days | ⬜ Not Started |
+
+---
+
+## Phase 1 — Discovery & Structuring ✅ Complete
+
+WordPress export analysed, content types catalogued, data models confirmed, migration scope defined.
+
+---
+
+## Phase 2 — Specification Finalization ✅ Complete
+
+All MongoDB schemas finalized, API routes confirmed, UI pages mapped, Cloudinary selected as media storage provider, P1 feature scope confirmed.
+
+---
+
+## Phase 3 — Environment Setup ✅ Complete
+
+Full local development environment operational. MongoDB Atlas M0, Cloudinary, Vercel, and GitHub all connected. `npm run dev` starts without errors.
+
+---
+
+## Phase 4 — Core Development ✅ Complete
+
+All public pages built including several added beyond original scope:
+
+**Original scope (all complete):**
+
+- Home, About, Music (catalogue + album + song), Blog, Events, Booking, Impact, Media, Tag archive
+
+**Added during development:**
+
+- `/contact` — Dedicated contact page with form + social handles
+- `/gallery` — Photo and video gallery with lightbox, tabbed by Events/Initiatives
+- `/impact/[slug]` — Individual initiative detail pages
+- `/events` — Renamed from `/speaking`; permanent redirect added
+
+**Additional models added:**
+
+- `SiteSettings` — CMS-managed homepage configuration
+- `ContactMessage` — Contact form submissions
+- `GalleryPhoto` — Event/initiative photos
+- `GalleryVideo` — Event/initiative video links
+
+---
+
+## Phase 5 — Media Integration ✅ Complete
+
+Cloudinary fully integrated. `next/image` used throughout. Alt text validation enforced. `MediaPicker` component extended with inline upload tab so editors can upload images directly from content forms without visiting the Media section.
+
+---
+
+## Phase 6 — CMS Build ✅ Complete
+
+Full CMS operational at `/cms`. All content types manageable. Key additions beyond original spec:
+
+- **Gallery CMS** (`/cms/gallery`) — bulk photo upload and video links per event/initiative
+- **Site Settings** (`/cms/settings`) — homepage hero and heading configuration
+- **Inline tag creation** — tags creatable from any content form
+- **Inline media upload** — `MediaPicker` has Library + Upload New tabs
+- **Booking management** — expandable cards with status updates and email notifications via Resend
+- **Pending bookings badge** — real-time notification in sidebar, clears on page visit
+- **Mobile-responsive CMS** — collapsible sidebar drawer
+- **Cancel buttons** on all create/edit forms
+- **Auto-excerpt** on posts — generated from body markdown with manual override
+- **Cover image required** on posts — form and API enforce this
+
+---
+
+## Phase 7 — SEO & Optimisation 🔄 In Progress
+
+**Complete:**
+
+- `generateMetadata()` on all dynamic routes
+- Open Graph + Twitter Card metadata
+- Canonical URLs
+- `sitemap.ts` and `robots.ts`
+- ISR revalidation (`revalidate = 3600`) on all content pages
+- Skip navigation link
+- `next/image` throughout
+
+**Remaining:**
+
+- JSON-LD structured data on song, post, and event pages
+- Lighthouse audit — target Performance ≥ 90, Accessibility ≥ 90
+
+---
+
+## Phase 8 — Testing ⬜ Not Started
+
+Manual testing checklist covering all public routes, API routes, CMS CRUD, mobile layout, contact form, booking flow, gallery, and redirect from `/speaking` to `/events`.
+
+---
+
+## Phase 9 — Deployment ⬜ Not Started
+
+**Pre-flight checklist:**
+
+1. `npm run build` — zero errors
+2. `npx tsc --noEmit` — zero TypeScript errors
+3. `npm run lint` — zero ESLint errors
+4. Push to `main` on GitHub
+5. Import to Vercel
+6. Add all 13 environment variables
+7. Update `NEXTAUTH_URL` and `NEXT_PUBLIC_SITE_URL` to production domain
+8. Deploy
+9. MongoDB Atlas Network Access → `0.0.0.0/0`
+10. Verify Tawk.to embed URL in `TawkChat.tsx`
+11. Verify Resend domain or use `onboarding@resend.dev` for testing
+
+---
+
+## Phase 10 — Content Migration ⬜ Not Started
+
+WordPress XML export → parse → import posts to MongoDB → upload media to Cloudinary → create `MediaAsset` records → update content body image references → validate.
 
 ---
 
 ## Future Phases (v1.1+)
 
-| Phase | Feature                                                | Spec Ref |
-| ----- | ------------------------------------------------------ | -------- |
-| v1.1  | Newsletter subscription integration                    | F-015    |
-| v1.1  | Multi-user CMS with role-based access (Editor / Admin) | §10.2    |
-| v1.2  | Gated / premium content                                | F-016    |
-| v1.3  | Courses module                                         | F-017    |
+| Phase | Feature                                           | Priority |
+| ----- | ------------------------------------------------- | -------- |
+| v1.1  | JSON-LD structured data (song, post, event pages) | P1       |
+| v1.1  | Search & filtering (F-011)                        | P2       |
+| v1.1  | Newsletter subscription integration               | P3       |
+| v1.2  | Multi-user CMS with role-based access             | P3       |
+| v1.2  | Gated / premium content                           | P3       |
+| v1.3  | Courses module                                    | P3       |
 
 ---
 

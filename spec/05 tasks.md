@@ -1,263 +1,241 @@
 # Tasks
 
 **Project:** Glowreeyah Digital Platform
-**Version:** 1.0.0
-**Last Updated:** 2026-03-28
+**Version:** 1.1.0
+**Last Updated:** 2026-04-05
 
-> Detailed instructions for every task below are in `implementation.md`.
+> Detailed instructions for every task are in `implementation.md`.
 > Phase definitions and sequencing are in `plan.md`.
 
 ---
 
-## Phase 3 — Environment Setup
+## Phase 3 — Environment Setup ✅ Complete
 
-- [ ] Create MongoDB Atlas account and M0 cluster
-- [ ] Create Cloudinary account and note credentials
-- [ ] Create Vercel account and link GitHub
-- [ ] Create GitHub repository `glowreeyah-platform`
-- [ ] Scaffold Next.js app with TypeScript + Tailwind + App Router
-- [ ] Install dependencies: `mongoose`, `slugify`, `zod`, `cloudinary`
-- [ ] Create `.env.local` with all required variables
-- [ ] Add `.env.local` to `.gitignore`
-- [ ] Verify `npm run dev` starts without errors
+- [x] Create MongoDB Atlas account and M0 cluster
+- [x] Create Cloudinary account and note credentials
+- [x] Create Vercel account and link GitHub
+- [x] Create GitHub repository `glowreeyah-platform`
+- [x] Scaffold Next.js app with TypeScript + Tailwind + App Router
+- [x] Install all dependencies
+- [x] Create `.env.local` with all required variables
+- [x] Add `.env.local` to `.gitignore`
+- [x] Verify `npm run dev` starts without errors
 
 ---
 
-## Phase 4 — Core Development
+## Phase 4 — Core Development ✅ Complete
 
 ### Data Layer
 
-- [ ] Create `src/lib/mongodb.ts`
-- [ ] Create `src/lib/cloudinary.ts`
-- [ ] Create `src/lib/utils.ts`
-- [ ] Create `src/models/Artist.ts`
-- [ ] Create `src/models/Album.ts`
-- [ ] Create `src/models/Song.ts`
-- [ ] Create `src/models/Post.ts`
-- [ ] Create `src/models/MediaAsset.ts`
-- [ ] Create `src/models/Event.ts`
-- [ ] Create `src/models/Initiative.ts`
-- [ ] Create `src/models/Booking.ts`
-- [ ] Create `src/models/Tag.ts`
+- [x] `src/lib/mongodb.ts`
+- [x] `src/lib/cloudinary.ts`
+- [x] `src/lib/utils.ts`
+- [x] All models: `Artist`, `Album`, `Song`, `Post`, `MediaAsset`, `Event`, `Initiative`, `Booking`, `Tag`, `SiteSettings`, `ContactMessage`, `GalleryPhoto`, `GalleryVideo`
+- [x] All Zod validators with `.optional().or(z.literal(''))` on URL fields
+- [x] `coverImageUrl` required on `PostSchema` (blocks save without image)
 
 ### API Routes
 
-- [ ] Create `src/app/api/artists/route.ts`
-- [ ] Create `src/app/api/albums/route.ts`
-- [ ] Create `src/app/api/songs/route.ts`
-- [ ] Create `src/app/api/posts/route.ts`
-- [ ] Create `src/app/api/media/route.ts`
-- [ ] Create `src/app/api/events/route.ts`
-- [ ] Create `src/app/api/initiatives/route.ts`
-- [ ] Create `src/app/api/bookings/route.ts`
-- [ ] Create `src/app/api/tags/route.ts`
-- [ ] Add Zod validators for all POST/PATCH routes
+- [x] All collection routes (GET, POST)
+- [x] All `[id]` routes (GET, PATCH, DELETE) — typed as `Promise<{ id: string }>` for Next.js 15
+- [x] `src/app/api/contact/route.ts`
+- [x] `src/app/api/settings/route.ts`
+- [x] `src/app/api/gallery/photos/route.ts` and `[id]/route.ts`
+- [x] `src/app/api/gallery/videos/route.ts` and `[id]/route.ts`
+- [x] `src/app/api/bookings/[id]/route.ts` with Resend email notification
+- [x] `src/app/api/cms/bookings-seen/route.ts`
 
 ### UI Layer
 
-- [ ] Create `src/app/layout.tsx`
-- [ ] Create `src/components/layout/Navbar.tsx`
-- [ ] Create `src/components/layout/Footer.tsx`
-- [ ] Create `src/components/layout/PageWrapper.tsx`
-- [ ] Create `src/components/ui/Button.tsx`
-- [ ] Create `src/components/ui/Input.tsx`
-- [ ] Create `src/components/ui/Tag.tsx`
-- [ ] Create `src/components/ui/LoadingSpinner.tsx`
-- [ ] Create `src/components/music/AlbumCard.tsx`
-- [ ] Create `src/components/music/SongCard.tsx`
-- [ ] Create `src/components/music/AudioPlayer.tsx`
-- [ ] Create `src/components/content/PostCard.tsx`
-- [ ] Create `src/components/content/RichText.tsx`
-- [ ] Create `src/components/media/MediaCard.tsx`
+- [x] Root layout with Navbar, Footer, TawkChat
+- [x] All layout components: `Navbar`, `Footer`, `PageWrapper`
+- [x] All UI components: `Button`, `Input`, `Tag`, `LoadingSpinner`, `TawkChat`
+- [x] Music components: `AlbumCard`, `SongCard`, `AudioPlayer`
+- [x] Content components: `PostCard`, `RichText`, `InitiativeCard`, `EventCard`
+- [x] Gallery components: `GalleryGrid`, `GalleryTabs`, `Lightbox`
+- [x] Contact component: `ContactForm`
 
 ### Public Pages
 
-- [ ] Create `src/app/(public)/page.tsx` (Home)
-- [ ] Create `src/app/(public)/about/page.tsx`
-- [ ] Create `src/app/(public)/music/page.tsx`
-- [ ] Create `src/app/(public)/music/[albumSlug]/page.tsx`
-- [ ] Create `src/app/(public)/music/[albumSlug]/[songSlug]/page.tsx`
-- [ ] Create `src/app/(public)/blog/page.tsx`
-- [ ] Create `src/app/(public)/blog/[slug]/page.tsx`
-- [ ] Create `src/app/(public)/media/page.tsx`
-- [ ] Create `src/app/(public)/speaking/page.tsx`
-- [ ] Create `src/app/(public)/booking/page.tsx`
-- [ ] Create `src/app/(public)/impact/page.tsx`
-- [ ] Create `src/app/(public)/tag/[slug]/page.tsx`
+- [x] `/` — Home (hero, music, about, blog, events, impact, contact sections)
+- [x] `/about` — Artist profile with hero image and back link
+- [x] `/music` — Album catalogue
+- [x] `/music/[albumSlug]` — Album detail with hero image and back link
+- [x] `/music/[albumSlug]/[songSlug]` — Song detail
+- [x] `/blog` — Blog listing
+- [x] `/blog/[slug]` — Post detail with hero image and back link
+- [x] `/events` — Two-column expandable event cards (was `/speaking`)
+- [x] `/booking` — Booking form with success state and scroll-to-top
+- [x] `/impact` — Initiative card grid
+- [x] `/impact/[slug]` — Initiative detail with hero image and back link
+- [x] `/contact` — Contact form + social handles
+- [x] `/gallery` — Gallery with Events/Initiatives tabs and lightbox
+- [x] `/media` — Press gallery
+- [x] `/tag/[slug]` — Tag archive
 
 ---
 
-## Phase 5 — Media Integration
+## Phase 5 — Media Integration ✅ Complete
 
-- [ ] Configure Cloudinary in `src/lib/cloudinary.ts`
-- [ ] Implement upload API route `src/app/api/media/route.ts`
-- [ ] Add Cloudinary domain to `next.config.ts` `remotePatterns`
-- [ ] Replace all `<img>` with `next/image` using Cloudinary URLs
-- [ ] Test image upload end-to-end (upload → Cloudinary → URL in MongoDB)
-- [ ] Confirm alt text validation blocks saves without alt text
+- [x] Cloudinary configured in `src/lib/cloudinary.ts`
+- [x] Upload API route implemented
+- [x] Cloudinary domain added to `next.config.ts` `remotePatterns`
+- [x] `next/image` used throughout all public pages
+- [x] Alt text validation enforced on upload
+- [x] `MediaPicker` component has inline upload tab (Library + Upload new)
 
 ---
 
-## Phase 6 — CMS Build
-
-### Dependencies
-
-- [ ] Install `next-auth`
-- [ ] Install `@uiw/react-md-editor` and `react-markdown`
-- [ ] Add `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `CMS_ADMIN_EMAIL`, `CMS_ADMIN_PASSWORD` to `.env.local`
-- [ ] Add same vars to Vercel environment variables dashboard
+## Phase 6 — CMS ✅ Complete
 
 ### Authentication
 
-- [ ] Create `src/app/api/auth/[...nextauth]/route.ts` (Credentials provider)
-- [ ] Update `src/middleware.ts` to use `withAuth` from `next-auth/middleware`
-- [ ] Create `src/app/(cms)/login/page.tsx`
-- [ ] Test: unauthenticated visit to `/cms/dashboard` redirects to `/cms/login`
-- [ ] Test: valid credentials grant access and persist session
+- [x] NextAuth.js Credentials provider
+- [x] `src/middleware.ts` with `withAuth` protecting `/cms/*`
+- [x] Login page at `/cms-login`
+- [x] Session provider in `CMSShell` client component
 
 ### CMS Shell
 
-- [ ] Create `src/app/(cms)/layout.tsx`
-- [ ] Create `src/components/cms/CMSSidebar.tsx`
-- [ ] Create `src/components/cms/CMSTopbar.tsx`
-- [ ] Create `src/components/cms/CMSPageHeader.tsx`
-- [ ] Create `src/components/cms/StatusBadge.tsx`
-- [ ] Create `src/components/cms/ConfirmDialog.tsx`
+- [x] `src/app/cms/layout.tsx` — async server component fetching pending booking count
+- [x] `CMSShell` client component wrapping `SessionProvider`
+- [x] `CMSSidebar` with pending bookings badge and mobile drawer
+- [x] `CMSTopbar` with hamburger button for mobile
+- [x] Mobile-responsive — sidebar collapses to drawer on small screens
 
 ### Shared Form Components
 
-- [ ] Create `src/components/cms/SlugField.tsx` (auto-generates slug from title)
-- [ ] Create `src/components/cms/PublishToggle.tsx`
-- [ ] Create `src/components/cms/TagSelector.tsx`
-- [ ] Create `src/components/cms/RichTextEditor.tsx` (wraps `@uiw/react-md-editor`)
-- [ ] Create `src/components/cms/MediaPicker.tsx` (select existing asset)
-- [ ] Create `src/components/cms/MediaUploader.tsx` (upload new file)
-- [ ] Create `src/components/cms/ContentForm.tsx` (generic form wrapper)
-- [ ] Create `src/components/cms/ContentTable.tsx` (reusable list table)
+- [x] `SlugField` — auto-generates slug from title
+- [x] `PublishToggle`
+- [x] `TagSelector` — with inline tag creation (POST /api/tags)
+- [x] `RichTextEditor` — dynamic import of `@uiw/react-md-editor`
+- [x] `MediaPicker` — library tab + inline upload tab
+- [x] `MediaUploader` — standalone uploader for `/cms/media`
+- [x] `StatusBadge`, `CMSRowActions`, `ConfirmDialog`, `CMSPageHeader`
+- [x] `CharCountInput`, `PublishToggle`
 
-### Dashboard
+### CMS Pages
 
-- [ ] Create `src/app/(cms)/dashboard/page.tsx` (stats: songs, posts, albums, pending bookings, upcoming events)
+- [x] `/cms/dashboard` — stats overview
+- [x] `/cms/posts` + `new` + `[id]` — with Cancel button, auto-excerpt, cover image required
+- [x] `/cms/songs` + `new` + `[id]` — with Cancel button
+- [x] `/cms/albums` + `new` + `[id]`
+- [x] `/cms/events` + `new` + `[id]` — status derived from date, Cancel button
+- [x] `/cms/initiatives` + `new` + `[id]`
+- [x] `/cms/gallery` — bulk photo upload + video links per event/initiative
+- [x] `/cms/media` — upload + grid browser with copy URL
+- [x] `/cms/bookings` — expandable booking cards with status update + email notification
+- [x] `/cms/tags` — create/delete tags
+- [x] `/cms/artist` — artist profile editor
+- [x] `/cms/settings` — site settings editor
 
-### Posts
+### Booking Notifications
 
-- [ ] Create `src/app/(cms)/posts/page.tsx` (list)
-- [ ] Create `src/components/cms/PostForm.tsx`
-- [ ] Create `src/app/(cms)/posts/new/page.tsx`
-- [ ] Create `src/app/(cms)/posts/[id]/page.tsx`
-- [ ] Test: create → list shows new post → edit → delete
-
-### Songs
-
-- [ ] Create `src/app/(cms)/songs/page.tsx`
-- [ ] Create `src/components/cms/SongForm.tsx`
-- [ ] Create `src/app/(cms)/songs/new/page.tsx`
-- [ ] Create `src/app/(cms)/songs/[id]/page.tsx`
-- [ ] Test: create → list → edit → delete
-
-### Albums
-
-- [ ] Create `src/app/(cms)/albums/page.tsx`
-- [ ] Create `src/components/cms/AlbumForm.tsx`
-- [ ] Create `src/app/(cms)/albums/new/page.tsx`
-- [ ] Create `src/app/(cms)/albums/[id]/page.tsx`
-
-### Events
-
-- [ ] Create `src/app/(cms)/events/page.tsx`
-- [ ] Create `src/components/cms/EventForm.tsx`
-- [ ] Create `src/app/(cms)/events/new/page.tsx`
-- [ ] Create `src/app/(cms)/events/[id]/page.tsx`
-
-### Initiatives
-
-- [ ] Create `src/app/(cms)/initiatives/page.tsx`
-- [ ] Create `src/components/cms/InitiativeForm.tsx`
-- [ ] Create `src/app/(cms)/initiatives/new/page.tsx`
-- [ ] Create `src/app/(cms)/initiatives/[id]/page.tsx`
-
-### Media Library
-
-- [ ] Create `src/app/(cms)/media/page.tsx` (upload + grid browser)
-- [ ] Test: upload image → appears in grid → URL copyable
-- [ ] Test: alt text missing → save blocked with error message
-
-### Bookings
-
-- [ ] Create `src/app/(cms)/bookings/page.tsx` (list submissions with status)
-- [ ] Add status update (PATCH `/api/bookings/[id]`) callable from bookings page
-
-### Tags & Artist Profile
-
-- [ ] Create `src/app/(cms)/tags/page.tsx` (create / delete tags)
-- [ ] Create `src/app/(cms)/artist/page.tsx` (edit artist biography, images, social links)
-
-### Final CMS Checks
-
-- [ ] Confirm `/cms/*` is disallowed in `robots.txt`
-- [ ] Confirm "View site ↗" link in topbar opens public frontend correctly
-- [ ] Confirm logout clears session and redirects to `/cms/login`
-- [ ] Confirm all content created in CMS appears correctly on public frontend
+- [x] Pending bookings count badge on sidebar
+- [x] `MarkBookingsSeen` client component sets cookie via `/api/cms/bookings-seen`
+- [x] Layout reads cookie to compute unseen count
+- [x] `router.refresh()` after marking seen clears badge immediately
 
 ---
 
-## Phase 7 — SEO & Optimisation
+## Phase 7 — SEO Implementation 🔄 In Progress
 
-- [ ] Add `generateMetadata()` to all dynamic route pages
-- [ ] Create `src/app/sitemap.ts`
-- [ ] Create `src/app/robots.ts`
-- [ ] Add JSON-LD structured data to song pages
-- [ ] Add JSON-LD structured data to post pages
-- [ ] Add JSON-LD structured data to event pages
-- [ ] Add `revalidate` to all Server Component pages
-- [ ] Run Lighthouse audit (target: Performance ≥ 90, SEO = 100)
-- [ ] Fix any accessibility issues (keyboard nav, colour contrast, heading hierarchy)
-- [ ] Verify mobile layout at 375px width
-
----
-
-## Phase 8 — Deployment
-
-- [ ] Run `npm run build` locally — confirm zero errors
-- [ ] Push all code to GitHub `main`
-- [ ] Import repository to Vercel
-- [ ] Add all environment variables to Vercel dashboard
-- [ ] Trigger deployment and verify production URL
-- [ ] Configure MongoDB Atlas to allow all IPs (`0.0.0.0/0`)
-- [ ] Test production environment end-to-end
-- [ ] Configure custom domain (if applicable)
-- [ ] Add domain to `NEXT_PUBLIC_SITE_URL` in Vercel
+- [x] `generateMetadata()` on all dynamic public routes
+- [x] Open Graph + Twitter Card metadata on all routes
+- [x] Canonical URLs on all pages
+- [x] `src/app/sitemap.ts` created
+- [x] `src/app/robots.ts` created — `/cms/` disallowed
+- [x] `revalidate = 3600` on all Server Component content pages
+- [x] Skip navigation link in root layout
+- [ ] JSON-LD structured data on song pages (`MusicRecording`)
+- [ ] JSON-LD structured data on post pages (`Article`)
+- [ ] JSON-LD structured data on event pages (`Event`)
 
 ---
 
-## Phase 9 — Content Migration
+## Phase 8 — Performance & Accessibility 🔄 In Progress
 
-- [ ] Export WordPress content as XML
-- [ ] Write and run migration script for posts
-- [ ] Write and run migration script for media (upload to Cloudinary)
-- [ ] Create `MediaAsset` records for all migrated media
-- [ ] Update post body references to use new Cloudinary URLs
-- [ ] Validate: document count matches WordPress export
-- [ ] Spot-check 10 random migrated posts for accuracy
-- [ ] Confirm all images resolve (no broken URLs in production)
+- [x] `next/image` used for all images — no raw `<img>` in public pages
+- [x] `next/font` used for Inter
+- [x] Client Component usage minimised
+- [x] `loading="lazy"` on video embeds
+- [ ] Lighthouse Performance score ≥ 90 on Home, Music, Blog pages
+- [ ] Lighthouse Accessibility score ≥ 90
+- [ ] Colour contrast ratio verified ≥ 4.5:1 on all text
 
 ---
 
-## Post-Launch
+## Phase 9 — Testing ⬜ Not Started
 
-- [ ] Verify Google Search Console ownership
-- [ ] Submit sitemap at `https://search.google.com/search-console`
-- [ ] Run final Lighthouse audit on production URL
-- [ ] Confirm CMS login works on production domain (`/cms/login`)
-- [ ] Test booking form on production
-- [ ] Test all CMS CRUD operations on production
-- [ ] Enable MongoDB Atlas automated backups
+- [ ] All public pages load without errors
+- [ ] Dynamic routes resolve correctly (music, blog, tags, impact slugs, gallery)
+- [ ] API routes return correct status codes
+- [ ] CMS CRUD tested for all content types
+- [ ] Mobile layout at 375px width
+- [ ] `/sitemap.xml` accessible and correct
+- [ ] `/robots.txt` accessible and correct
+- [ ] Contact form saves to DB and sends email
+- [ ] Booking form saves to DB and sends email on status change
+- [ ] Gallery upload and lightbox working end-to-end
+- [ ] `/speaking` redirects to `/events`
+
+---
+
+## Phase 10 — Deployment ⬜ Not Started
+
+- [ ] `npm run build` passes locally — zero errors
+- [ ] `npx tsc --noEmit` passes — zero TypeScript errors
+- [ ] `npm run lint` passes — zero ESLint errors
+- [ ] Code pushed to `main` branch on GitHub
+- [ ] Repository imported into Vercel
+- [ ] All 13 environment variables added to Vercel dashboard
+- [ ] `NEXTAUTH_URL` updated to production domain
+- [ ] `NEXT_PUBLIC_SITE_URL` updated to production domain
+- [ ] First deployment successful
+- [ ] MongoDB Atlas Network Access set to `0.0.0.0/0`
+- [ ] Database user has `readWrite` permission
+- [ ] Atlas automated backups enabled
+- [ ] Custom domain configured
+- [ ] `/cms-login` accessible on production domain
+- [ ] Tawk.to widget embed URL confirmed in `TawkChat.tsx`
+- [ ] Resend `from` domain verified (or switch to `onboarding@resend.dev` for testing)
+
+---
+
+## Phase 11 — Content Migration ⬜ Not Started
+
+- [ ] WordPress `.xml` export downloaded
+- [ ] Migration script written and tested locally
+- [ ] All posts imported — document count matches WordPress export
+- [ ] All media downloaded from WordPress and uploaded to Cloudinary
+- [ ] `MediaAsset` records created for each migrated file
+- [ ] Post body image references updated to Cloudinary URLs
+- [ ] 10 random posts spot-checked for accuracy
+- [ ] Zero broken image URLs in production
+- [ ] All slugs unique — no duplicate key errors
+
+---
+
+## Post-Launch ⬜ Not Started
+
+- [ ] Google Search Console ownership verified
+- [ ] Sitemap submitted to Search Console
+- [ ] Lighthouse audit on production — Performance ≥ 90, SEO = 100, Accessibility ≥ 90
+- [ ] CMS login confirmed working on production
+- [ ] All CMS CRUD operations tested on production
+- [ ] Booking form tested on production
+- [ ] Contact form tested on production
+- [ ] Vercel deployment logs reviewed — no runtime errors
+- [ ] MongoDB Atlas metrics reviewed
+- [ ] Cloudinary usage reviewed against free tier limits
+- [ ] MongoDB Atlas automated backups enabled
 
 ---
 
 ## Ongoing
 
 - [ ] Review booking submissions weekly
-- [ ] Publish content via CMS (`/cms/posts`, `/cms/songs`, etc.)
+- [ ] Review contact form submissions weekly
+- [ ] Publish content via CMS
 - [ ] Run `npm outdated` monthly and update dependencies
 - [ ] Monitor Vercel and MongoDB Atlas dashboards for errors
