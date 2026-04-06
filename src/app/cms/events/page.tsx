@@ -26,16 +26,57 @@ export default async function CMSEventsPage() {
         createLabel="New Event"
       />
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-6">
-        <table className="w-full text-sm table-fixed">
+        {/* Mobile view (< sm) */}
+        <div className="sm:hidden divide-y divide-gray-100">
+          {events.map((event) => {
+            const isUpcoming = new Date(event.date) >= now;
+            return (
+              <div key={event._id.toString()} className="p-4 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-medium text-brand-deep">{event.title}</p>
+                  <span
+                    className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                    ${isUpcoming ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
+                  >
+                    {isUpcoming ? 'Upcoming' : 'Past'}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500">
+                  {new Date(event.date).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                  {' · '}
+                  {event.location}
+                </p>
+                <div className="pt-1">
+                  <CMSRowActions
+                    id={event._id.toString()}
+                    editHref={`/cms/events/${event._id}`}
+                    apiRoute="/api/events"
+                    resourceName="event"
+                  />
+                </div>
+              </div>
+            );
+          })}
+          {events.length === 0 && (
+            <p className="text-center text-gray-400 text-sm py-10">
+              No events yet. Create your first event.
+            </p>
+          )}
+        </div>
+
+        {/* Desktop view (>= sm) */}
+        <table className="hidden sm:table w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
             <tr>
-              <th className="px-3 py-3 text-left w-2/5">Title</th>
-              <th className="px-3 py-3 text-left w-1/5">Date</th>
-              <th className="px-3 py-3 text-left w-1/5 hidden sm:table-cell">
-                Location
-              </th>
-              <th className="px-3 py-3 text-left w-16">Status</th>
-              <th className="px-3 py-3 w-16" />
+              <th className="px-4 py-3 text-left">Title</th>
+              <th className="px-4 py-3 text-left">Date</th>
+              <th className="px-4 py-3 text-left">Location</th>
+              <th className="px-4 py-3 text-left">Status</th>
+              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -46,28 +87,26 @@ export default async function CMSEventsPage() {
                   key={event._id.toString()}
                   className="hover:bg-gray-50 transition-colors"
                 >
-                  <td className="px-3 py-3 font-medium text-brand-deep truncate">
+                  <td className="px-4 py-3 font-medium text-brand-deep">
                     {event.title}
                   </td>
-                  <td className="px-3 py-3 text-gray-500 whitespace-nowrap">
+                  <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                     {new Date(event.date).toLocaleDateString('en-GB', {
                       day: 'numeric',
                       month: 'short',
                       year: 'numeric',
                     })}
                   </td>
-                  <td className="px-3 py-3 text-gray-500 truncate hidden sm:table-cell">
-                    {event.location}
-                  </td>
-                  <td className="px-3 py-3">
+                  <td className="px-4 py-3 text-gray-500">{event.location}</td>
+                  <td className="px-4 py-3">
                     <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
                       ${isUpcoming ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
                     >
                       {isUpcoming ? 'Upcoming' : 'Past'}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-right">
+                  <td className="px-4 py-3 text-right">
                     <CMSRowActions
                       id={event._id.toString()}
                       editHref={`/cms/events/${event._id}`}
@@ -81,7 +120,7 @@ export default async function CMSEventsPage() {
           </tbody>
         </table>
         {events.length === 0 && (
-          <p className="text-center text-gray-400 text-sm py-10">
+          <p className="hidden sm:block text-center text-gray-400 text-sm py-10">
             No events yet. Create your first event.
           </p>
         )}
