@@ -2,16 +2,19 @@ import CMSPageHeader from '@/components/cms/CMSPageHeader';
 import CMSRowActions from '@/components/cms/CMSRowActions';
 import { connectDB } from '@/lib/mongodb';
 import Initiative from '@/models/Initiative';
+import type { Types } from 'mongoose';
 
 interface CMSInitiativeType {
-  _id: string;
+  _id: Types.ObjectId;
   title: string;
   description?: string;
 }
 
 export default async function CMSInitiativesPage() {
   await connectDB();
-  const initiatives = await Initiative.find().sort({ createdAt: -1 }).lean();
+  const initiatives = (await Initiative.find()
+    .sort({ createdAt: -1 })
+    .lean()) as CMSInitiativeType[];
 
   return (
     <div>
@@ -21,25 +24,27 @@ export default async function CMSInitiativesPage() {
         createLabel="New Initiative"
       />
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-6">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
           <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
             <tr>
-              <th className="px-4 py-3 text-left">Title</th>
+              <th className="px-4 py-3 text-left w-1/3">Title</th>
               <th className="px-4 py-3 text-left">Description</th>
-              <th className="px-4 py-3" />
+              <th className="px-4 py-3 w-20" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {initiatives.map((item: CMSInitiativeType) => (
+            {initiatives.map((item) => (
               <tr
                 key={item._id.toString()}
                 className="hover:bg-gray-50 transition-colors"
               >
-                <td className="px-4 py-3 font-medium text-brand-deep">
+                <td className="px-4 py-3 font-medium text-brand-deep truncate">
                   {item.title}
                 </td>
-                <td className="px-4 py-3 text-gray-500 truncate max-w-xs">
-                  {item.description ?? '—'}
+                <td className="px-4 py-3 text-gray-500">
+                  <p className="line-clamp-1 overflow-hidden">
+                    {item.description ?? '—'}
+                  </p>
                 </td>
                 <td className="px-4 py-3 text-right">
                   <CMSRowActions
@@ -48,12 +53,6 @@ export default async function CMSInitiativesPage() {
                     apiRoute="/api/initiatives"
                     resourceName="initiatives"
                   />
-                  {/* <Link
-                    href={`/cms/initiatives/${item._id}`}
-                    className="text-brand-teal hover:underline text-xs"
-                  >
-                    Edit
-                  </Link> */}
                 </td>
               </tr>
             ))}

@@ -16,7 +16,6 @@ export default async function CMSEventsPage() {
   const events = (await Event.find()
     .sort({ date: -1 })
     .lean()) as CMSEventType[];
-
   const now = new Date();
 
   return (
@@ -27,14 +26,16 @@ export default async function CMSEventsPage() {
         createLabel="New Event"
       />
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-6">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
           <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
             <tr>
-              <th className="px-4 py-3 text-left">Title</th>
-              <th className="px-4 py-3 text-left">Date</th>
-              <th className="px-4 py-3 text-left">Location</th>
-              <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3" />
+              <th className="px-3 py-3 text-left w-2/5">Title</th>
+              <th className="px-3 py-3 text-left w-1/5">Date</th>
+              <th className="px-3 py-3 text-left w-1/5 hidden sm:table-cell">
+                Location
+              </th>
+              <th className="px-3 py-3 text-left w-16">Status</th>
+              <th className="px-3 py-3 w-16" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -45,26 +46,28 @@ export default async function CMSEventsPage() {
                   key={event._id.toString()}
                   className="hover:bg-gray-50 transition-colors"
                 >
-                  <td className="px-4 py-3 font-medium text-brand-deep">
+                  <td className="px-3 py-3 font-medium text-brand-deep truncate">
                     {event.title}
                   </td>
-                  <td className="px-4 py-3 text-gray-500">
+                  <td className="px-3 py-3 text-gray-500 whitespace-nowrap">
                     {new Date(event.date).toLocaleDateString('en-GB', {
                       day: 'numeric',
                       month: 'short',
                       year: 'numeric',
                     })}
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{event.location}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3 text-gray-500 truncate hidden sm:table-cell">
+                    {event.location}
+                  </td>
+                  <td className="px-3 py-3">
                     <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap
                       ${isUpcoming ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
                     >
                       {isUpcoming ? 'Upcoming' : 'Past'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-3 py-3 text-right">
                     <CMSRowActions
                       id={event._id.toString()}
                       editHref={`/cms/events/${event._id}`}
