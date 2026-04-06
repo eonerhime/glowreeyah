@@ -46,6 +46,7 @@ export default function CMSLoginPage() {
               type="email"
               required
               value={email}
+              disabled={loading}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-teal outline-none"
             />
@@ -58,6 +59,7 @@ export default function CMSLoginPage() {
               type="password"
               required
               value={password}
+              disabled={loading}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-teal outline-none"
             />

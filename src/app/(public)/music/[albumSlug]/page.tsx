@@ -1,7 +1,7 @@
 import { connectDB } from '@/lib/mongodb';
 import Album from '@/models/Album';
 import Song from '@/models/Song';
-import SongCard, { type SongType } from '@/components/music/SongCard';
+import AlbumPlayer from '@/components/music/AlbumPlayer';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -49,7 +49,6 @@ export default async function AlbumPage({ params }: Props) {
   const { albumSlug } = await params;
   await connectDB();
 
-  // Referer-based back link
   const headersList = await headers();
   const referer = headersList.get('referer') ?? '';
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? '';
@@ -68,9 +67,19 @@ export default async function AlbumPage({ params }: Props) {
 
   if (!album) notFound();
 
-  const songs = await Song.find({ albumId: album._id, isPublished: true })
+  const rawSongs = await Song.find({ albumId: album._id, isPublished: true })
     .sort({ trackNumber: 1 })
     .lean();
+
+  const songs = rawSongs.map((s) => ({
+    _id: s._id.toString(),
+    title: s.title,
+    slug: s.slug,
+    trackNumber: s.trackNumber,
+    description: s.description,
+    audioUrl: s.audioUrl,
+    coverImageUrl: s.coverImageUrl,
+  }));
 
   return (
     <div className="min-h-screen bg-brand-warm">
@@ -119,26 +128,13 @@ export default async function AlbumPage({ params }: Props) {
       )}
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="max-w-4xl mx-auto px-6 py-12 pb-32">
         {album.description && (
           <p className="text-gray-600 leading-relaxed mb-10">
             {album.description}
           </p>
         )}
-        <div className="space-y-4">
-          {songs.map((song: SongType) => (
-            <SongCard
-              key={song._id.toString()}
-              song={song}
-              albumSlug={albumSlug}
-            />
-          ))}
-        </div>
-        {songs.length === 0 && (
-          <p className="text-gray-400 text-sm text-center py-10">
-            No songs published yet.
-          </p>
-        )}
+        <AlbumPlayer songs={songs} />
         <div className="mt-12 pt-6 border-t border-gray-200">
           <Link
             href={backHref}
