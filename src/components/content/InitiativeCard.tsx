@@ -18,13 +18,14 @@ export default function InitiativeCard({ item }: { item: Initiative }) {
       className="text-left bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group w-full block"
     >
       {item.coverImageUrl && (
-        <div className="relative w-full h-48 overflow-hidden">
+        <div className="w-full h-48 overflow-hidden">
           <Image
             src={item.coverImageUrl}
             alt={item.title}
-            fill
+            width={600}
+            height={192}
             quality={75}
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </div>
       )}
