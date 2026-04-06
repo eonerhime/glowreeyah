@@ -27,30 +27,39 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  await connectDB()
-  const body   = await req.json()
-  const parsed = SongSchema.safeParse(body)
+  await connectDB();
+  const body = await req.json();
+  const parsed = SongSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 422 })
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    );
   }
 
   // Check for duplicate track number within the same album
   if (parsed.data.trackNumber && parsed.data.albumId) {
     const existing = await Song.findOne({
-      albumId:     parsed.data.albumId,
+      albumId: parsed.data.albumId,
       trackNumber: parsed.data.trackNumber,
-    })
-   if (existing) {
+    });
+    if (existing) {
       return NextResponse.json(
-        { error: { trackNumber: [`Track ${parsed.data.trackNumber} is already used in this album. Please choose a different number.`] } },
+        {
+          error: {
+            trackNumber: [
+              `Track ${parsed.data.trackNumber} is already used in this album. Please choose a different number.`,
+            ],
+          },
+        },
         { status: 422 }
-      )
+      );
     }
   }
 
   const song = await Song.create({
     ...parsed.data,
     slug: slugify(parsed.data.title, { lower: true, strict: true }),
-  })
-  return NextResponse.json({ data: song }, { status: 201 })
+  });
+  return NextResponse.json({ data: song }, { status: 201 });
 }

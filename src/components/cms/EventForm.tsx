@@ -193,7 +193,7 @@ export default function EventForm({ event }: Props) {
         <button
           type="button"
           onClick={() => setForm((f) => ({ ...f, isUpcoming: !f.isUpcoming }))}
-          className="text-xs text-brand-teal hover:underline"
+          className="text-xs text-brand-teal hover:underline cursor-pointer"
         >
           Mark as {form.isUpcoming ? 'past' : 'upcoming'}
         </button>

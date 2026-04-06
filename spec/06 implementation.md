@@ -3221,7 +3221,7 @@ Go to https://vercel.com and log in with your GitHub account.
 
 - Click **"Add New Project"**
 - Select **"Import Git Repository"**
-- Find and select `glowreeyah-platform`
+- Find and select `glowreeyah`
 - Click **"Import"**
 
 **Step 3 — Configure project settings**

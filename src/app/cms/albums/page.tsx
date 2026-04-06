@@ -1,8 +1,7 @@
-import { connectDB } from '@/lib/mongodb';
-import Album from '@/models/Album';
-import Link from 'next/link';
 import CMSPageHeader from '@/components/cms/CMSPageHeader';
 import CMSRowActions from '@/components/cms/CMSRowActions';
+import { connectDB } from '@/lib/mongodb';
+import Album from '@/models/Album';
 
 interface CMSAlbumType {
   _id: string;

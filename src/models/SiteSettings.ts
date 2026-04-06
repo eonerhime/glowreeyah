@@ -4,6 +4,7 @@ export interface ISiteSettings extends Document {
   heroTitle: string;
   heroSubtitle: string;
   heroImageUrl: string;
+  heroImageMobileUrl: string;
   heroLogoUrl: string;
   homeIntro: string;
   musicPageHeading: string;
@@ -23,6 +24,7 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
     heroTitle: { type: String, default: 'Glowreeyah' },
     heroSubtitle: { type: String, default: 'Music. Ministry. Movement.' },
     heroImageUrl: { type: String },
+    heroImageMobileUrl: { type: String },
     heroLogoUrl: { type: String },
     homeIntro: { type: String },
     musicPageHeading: { type: String, default: 'Music' },

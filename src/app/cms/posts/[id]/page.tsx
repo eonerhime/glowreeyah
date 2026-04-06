@@ -4,13 +4,14 @@ import Tag from '@/models/Tag';
 import PostForm from '@/components/cms/PostForm';
 import CMSPageHeader from '@/components/cms/CMSPageHeader';
 import { notFound } from 'next/navigation';
+import mongoose from 'mongoose';
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
 export default async function EditPostPage({ params }: Props) {
-  const {id} = await params;
+  const { id } = await params;
   await connectDB();
 
   const [post, tags] = await Promise.all([
@@ -28,7 +29,7 @@ export default async function EditPostPage({ params }: Props) {
     excerpt: post.excerpt ?? '',
     body: post.body,
     coverImageUrl: post.coverImageUrl ?? '',
-    tags: post.tags.map((t: any) => t.toString()),
+    tags: post.tags.map((t: mongoose.Types.ObjectId) => t.toString()),
     isPublished: post.isPublished,
   };
 

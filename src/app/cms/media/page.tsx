@@ -1,40 +1,42 @@
-'use client'
-import { useState, useEffect } from 'react'
-import Image from 'next/image'
-import MediaUploader from '@/components/cms/MediaUploader'
+'use client';
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import MediaUploader from '@/components/cms/MediaUploader';
 
 interface MediaAssetType {
-  _id:     string
-  url:     string
-  altText: string
-  type:    string
+  _id: string;
+  url: string;
+  altText: string;
+  type: string;
 }
 
 export default function CMSMediaPage() {
-  const [assets,    setAssets]    = useState<MediaAssetType[]>([])
-  const [copiedId,  setCopiedId]  = useState<string | null>(null)
+  const [assets, setAssets] = useState<MediaAssetType[]>([]);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/media')
-      .then(r => r.json())
-      .then(d => setAssets(d.data ?? []))
-  }, [])
+      .then((r) => r.json())
+      .then((d) => setAssets(d.data ?? []));
+  }, []);
 
   function reload() {
     fetch('/api/media')
-      .then(r => r.json())
-      .then(d => setAssets(d.data ?? []))
+      .then((r) => r.json())
+      .then((d) => setAssets(d.data ?? []));
   }
 
   function handleCopy(id: string, url: string) {
-    navigator.clipboard.writeText(url)
-    setCopiedId(id)
-    setTimeout(() => setCopiedId(null), 2000)
+    navigator.clipboard.writeText(url);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-serif font-bold text-brand-deep mb-6">Media Library</h1>
+      <h1 className="text-2xl font-serif font-bold text-brand-deep mb-6">
+        Media Library
+      </h1>
       <MediaUploader onUploaded={reload} />
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-8">
         {assets.map((a: MediaAssetType) => (
@@ -68,7 +70,10 @@ export default function CMSMediaPage() {
 
             {/* Info */}
             <div className="p-3">
-              <p className="text-xs font-medium text-brand-deep truncate" title={a.altText}>
+              <p
+                className="text-xs font-medium text-brand-deep truncate"
+                title={a.altText}
+              >
                 {a.altText}
               </p>
               <div className="flex items-center justify-between mt-2">
@@ -78,9 +83,10 @@ export default function CMSMediaPage() {
                 <button
                   onClick={() => handleCopy(a._id, a.url)}
                   className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md transition-all duration-200
-                    ${copiedId === a._id
-                      ? 'bg-green-100 text-green-600'
-                      : 'bg-gray-100 text-brand-teal hover:bg-brand-teal hover:text-white'
+                    ${
+                      copiedId === a._id
+                        ? 'bg-green-100 text-green-600'
+                        : 'bg-gray-100 text-brand-teal hover:bg-brand-teal hover:text-white'
                     }`}
                 >
                   {copiedId === a._id ? (
@@ -103,5 +109,5 @@ export default function CMSMediaPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -4,9 +4,10 @@ import Tag from '@/models/Tag';
 import AlbumForm from '@/components/cms/AlbumForm';
 import CMSPageHeader from '@/components/cms/CMSPageHeader';
 import { notFound } from 'next/navigation';
+import mongoose from 'mongoose';
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function EditAlbumPage({ params }: Props) {
@@ -27,7 +28,7 @@ export default async function EditAlbumPage({ params }: Props) {
     releaseYear: album.releaseYear,
     coverImageUrl: album.coverImageUrl ?? '',
     description: album.description ?? '',
-    tags: album.tags.map((t: any) => t.toString()),
+    tags: album.tags.map((t: mongoose.Types.ObjectId) => t.toString()),
   };
 
   const serialisedTags = tags.map((t) => ({

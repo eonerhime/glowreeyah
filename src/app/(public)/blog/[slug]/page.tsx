@@ -1,74 +1,73 @@
-import { connectDB } from '@/lib/mongodb'
-import Post from '@/models/Post'
-import PageWrapper from '@/components/layout/PageWrapper'
-import { notFound } from 'next/navigation'
-import { headers } from 'next/headers'
-import ReactMarkdown from 'react-markdown'
-import Link from 'next/link'
-import Image from 'next/image'
-import type { Metadata } from 'next'
+import { connectDB } from '@/lib/mongodb';
+import Post from '@/models/Post';
+import type { Metadata } from 'next';
+import { headers } from 'next/headers';
+import Image from 'next/image';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
 
-export const revalidate = 3600
+export const revalidate = 3600;
 
 interface Props {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params
-  await connectDB()
-  const post = await Post.findOne({ slug }).lean() as {
-    title: string
-    excerpt?: string
-    coverImageUrl?: string
-    seo?: { metaTitle?: string; metaDescription?: string }
-  } | null
-  if (!post) return {}
+  const { slug } = await params;
+  await connectDB();
+  const post = (await Post.findOne({ slug }).lean()) as {
+    title: string;
+    excerpt?: string;
+    coverImageUrl?: string;
+    seo?: { metaTitle?: string; metaDescription?: string };
+  } | null;
+  if (!post) return {};
   return {
-    title:       post.seo?.metaTitle       || post.title,
+    title: post.seo?.metaTitle || post.title,
     description: post.seo?.metaDescription || post.excerpt,
     openGraph: {
-      title:       post.seo?.metaTitle       || post.title,
+      title: post.seo?.metaTitle || post.title,
       description: post.seo?.metaDescription || post.excerpt,
-      images:      post.coverImageUrl ? [{ url: post.coverImageUrl }] : [],
-      type:        'article',
+      images: post.coverImageUrl ? [{ url: post.coverImageUrl }] : [],
+      type: 'article',
     },
     twitter: {
-      card:        'summary_large_image',
-      title:       post.seo?.metaTitle       || post.title,
+      card: 'summary_large_image',
+      title: post.seo?.metaTitle || post.title,
       description: post.seo?.metaDescription || post.excerpt,
-      images:      post.coverImageUrl ? [post.coverImageUrl] : [],
+      images: post.coverImageUrl ? [post.coverImageUrl] : [],
     },
     alternates: {
       canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/blog/${slug}`,
     },
-  }
+  };
 }
 
 export default async function PostPage({ params }: Props) {
-  const { slug } = await params
-  await connectDB()
+  const { slug } = await params;
+  await connectDB();
 
   // Referer-based back link
-  const headersList = await headers()
-  const referer     = headersList.get('referer') ?? ''
-  const siteUrl     = process.env.NEXT_PUBLIC_SITE_URL ?? ''
-  const isFromHome  = referer === siteUrl || referer === `${siteUrl}/`
-  const backHref    = isFromHome ? '/#blog' : '/blog'
-  const backLabel   = isFromHome ? '← Back to Home' : '← Back to Blog'
+  const headersList = await headers();
+  const referer = headersList.get('referer') ?? '';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? '';
+  const isFromHome = referer === siteUrl || referer === `${siteUrl}/`;
+  const backHref = isFromHome ? '/#blog' : '/blog';
+  const backLabel = isFromHome ? '← Back to Home' : '← Back to Blog';
 
-  const post = await Post.findOne({ slug, isPublished: true })
+  const post = (await Post.findOne({ slug, isPublished: true })
     .populate('tags', 'name slug')
-    .lean() as {
-      title:          string
-      excerpt?:       string
-      body:           string
-      coverImageUrl?: string
-      publishedAt?:   Date
-      category:       string
-    } | null
+    .lean()) as {
+    title: string;
+    excerpt?: string;
+    body: string;
+    coverImageUrl?: string;
+    publishedAt?: Date;
+    category: string;
+  } | null;
 
-  if (!post) notFound()
+  if (!post) notFound();
 
   return (
     <div className="min-h-screen bg-brand-warm">
@@ -123,7 +122,9 @@ export default async function PostPage({ params }: Props) {
         {post.publishedAt && (
           <p className="text-sm text-gray-400 mb-8">
             {new Date(post.publishedAt).toLocaleDateString('en-GB', {
-              day: 'numeric', month: 'long', year: 'numeric',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
             })}
           </p>
         )}
@@ -136,11 +137,14 @@ export default async function PostPage({ params }: Props) {
           <ReactMarkdown>{post.body}</ReactMarkdown>
         </article>
         <div className="mt-12 pt-6 border-t border-gray-200">
-          <Link href={backHref} className="text-sm text-brand-teal hover:underline">
+          <Link
+            href={backHref}
+            className="text-sm text-brand-teal hover:underline"
+          >
             {backLabel}
           </Link>
         </div>
       </div>
     </div>
-  )
+  );
 }

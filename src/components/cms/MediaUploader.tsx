@@ -95,7 +95,7 @@ export default function MediaUploader({ onUploaded }: Props) {
         <button
           onClick={handleUpload}
           disabled={uploading}
-          className="bg-brand-teal text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-teal/90 disabled:opacity-50 transition-colors"
+          className="bg-brand-teal text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-teal/90 disabled:opacity-50 transition-colors cursor-pointer"
         >
           {uploading ? 'Uploading...' : 'Upload'}
         </button>

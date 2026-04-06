@@ -32,13 +32,13 @@ interface Props {
 
 function generateExcerpt(body: string, maxLength = 300): string {
   return body
-    .replace(/#{1,6}\s+/g, '')      // headings
+    .replace(/#{1,6}\s+/g, '') // headings
     .replace(/\*\*?(.*?)\*\*?/g, '$1') // bold/italic
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links
     .replace(/`{1,3}[^`]*`{1,3}/g, '') // code
     .replace(/\n+/g, ' ')
     .trim()
-    .slice(0, maxLength)
+    .slice(0, maxLength);
 }
 
 export default function PostForm({ post, tags }: Props) {
@@ -59,10 +59,10 @@ export default function PostForm({ post, tags }: Props) {
   const [error, setError] = useState('');
 
   async function handleSubmit() {
-     if (!form.coverImageUrl) {
-        setError('A cover image is required before saving.');
-        return;
-     }
+    if (!form.coverImageUrl) {
+      setError('A cover image is required before saving.');
+      return;
+    }
 
     setSaving(true);
     setError('');
@@ -174,9 +174,10 @@ export default function PostForm({ post, tags }: Props) {
           setForm((f) => ({
             ...f,
             body,
-            excerpt: f.excerpt && f.excerpt !== generateExcerpt(f.body)
-              ? f.excerpt                // user has manually overridden — keep it
-              : generateExcerpt(body),   // still auto — update it
+            excerpt:
+              f.excerpt && f.excerpt !== generateExcerpt(f.body)
+                ? f.excerpt // user has manually overridden — keep it
+                : generateExcerpt(body), // still auto — update it
           }))
         }
       />

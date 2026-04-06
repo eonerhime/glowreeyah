@@ -70,7 +70,16 @@ export default async function HomePage() {
 
   const [settings, artist, albums, latestPosts, upcomingEvents, initiatives] =
     await Promise.all([
-      SiteSettings.findOne().lean(),
+      SiteSettings.findOne().lean<{
+        heroTitle?: string;
+        heroSubtitle?: string;
+        heroImageUrl?: string;
+        heroImageMobileUrl?: string;
+        heroLogoUrl?: string;
+        homeIntro?: string;
+        blogPageHeading?: string;
+        impactPageHeading?: string;
+      }>(),
       Artist.findOne().lean(),
       Album.find().sort({ releaseYear: -1 }).limit(3).lean(),
       Post.find({ isPublished: true })
@@ -84,40 +93,83 @@ export default async function HomePage() {
   return (
     <div>
       {/* ── HERO ── */}
-      <section className="relative min-h-[90vh] flex items-end justify-center bg-brand-deep text-white px-6 pb-20">
-        {settings?.heroImageUrl && (
-          <Image
-            src={settings.heroImageUrl}
-            alt="Hero background"
-            fill
-            priority
-            quality={80}
-            className="object-cover object-center"
-          />
-        )}
-        <div className="relative z-10 w-full max-w-6xl mx-auto flex justify-end">
-          <div className="flex flex-col items-start text-left w-full max-w-lg pr-4">
-            <p className="text-xl md:text-2xl text-brand-deep font-semibold mb-6 drop-shadow-sm">
+      <section className="relative bg-brand-deep text-white">
+        {/* Mobile only (< 768px) */}
+        <div className="md:hidden">
+          {(settings?.heroImageMobileUrl || settings?.heroImageUrl) && (
+            <div className="relative w-full h-80">
+              <Image
+                src={settings.heroImageMobileUrl || settings.heroImageUrl || ''}
+                alt="Glowreeyah Braimah"
+                fill
+                priority
+                quality={80}
+                className="object-cover object-top"
+              />
+            </div>
+          )}
+          <div className="px-6 py-8 text-center bg-brand-deep">
+            <p className="text-lg text-brand-warm font-semibold mb-6">
               {settings?.heroSubtitle ?? 'Music. Ministry. Movement.'}
             </p>
             {settings?.homeIntro && (
-              <p className="max-w-xl text-brand-deep/80 text-base leading-relaxed mb-6">
+              <p className="text-white/70 text-sm leading-relaxed mb-6">
                 {settings.homeIntro}
               </p>
             )}
-            <div className="flex gap-4 flex-wrap">
+            <div className="flex flex-col gap-3 items-center">
               <Link
                 href="/music"
-                className="bg-brand-teal text-white px-8 py-3 rounded-full text-sm font-semibold hover:bg-brand-teal/90 transition-colors shadow-lg cursor-pointer"
+                className="w-full max-w-xs bg-brand-teal text-white px-8 py-3 rounded-full text-sm font-semibold hover:bg-brand-teal/90 transition-colors shadow-lg text-center"
               >
                 Listen Now
               </Link>
               <Link
                 href="/booking"
-                className="bg-white text-brand-deep border border-brand-deep/20 px-8 py-3 rounded-full text-sm font-semibold hover:bg-brand-warm transition-colors shadow-lg cursor-pointer"
+                className="w-full max-w-xs bg-white text-brand-deep border border-brand-deep/20 px-8 py-3 rounded-full text-sm font-semibold hover:bg-brand-warm transition-colors shadow-lg text-center"
               >
                 Book Glowreeyah
               </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Tablet + Desktop (>= 768px) */}
+        <div className="hidden md:flex relative min-h-[90vh] items-end justify-center px-6 pb-20">
+          {settings?.heroImageUrl && (
+            <Image
+              src={settings.heroImageUrl}
+              alt="Glowreeyah Braimah"
+              fill
+              priority
+              quality={80}
+              className="object-cover object-center"
+            />
+          )}
+          <div className="relative z-10 w-full max-w-6xl mx-auto flex justify-end">
+            <div className="flex flex-col items-start text-left w-full max-w-lg pr-4">
+              <p className="text-xl md:text-2xl text-brand-deep font-semibold mb-6 drop-shadow-sm">
+                {settings?.heroSubtitle ?? 'Music. Ministry. Movement.'}
+              </p>
+              {settings?.homeIntro && (
+                <p className="max-w-xl text-brand-deep/80 text-base leading-relaxed mb-6">
+                  {settings.homeIntro}
+                </p>
+              )}
+              <div className="flex gap-4 flex-wrap">
+                <Link
+                  href="/music"
+                  className="bg-brand-teal text-white px-8 py-3 rounded-full text-sm font-semibold hover:bg-brand-teal/90 transition-colors shadow-lg cursor-pointer"
+                >
+                  Listen Now
+                </Link>
+                <Link
+                  href="/booking"
+                  className="bg-white text-brand-deep border border-brand-deep/20 px-8 py-3 rounded-full text-sm font-semibold hover:bg-brand-warm transition-colors shadow-lg cursor-pointer"
+                >
+                  Book Glowreeyah
+                </Link>
+              </div>
             </div>
           </div>
         </div>

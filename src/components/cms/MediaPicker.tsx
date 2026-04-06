@@ -93,7 +93,7 @@ export default function MediaPicker({ value, onChange }: Props) {
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="text-sm text-brand-teal hover:underline"
+          className="text-sm text-brand-teal hover:underline cursor-pointer"
         >
           {value ? 'Change image' : 'Select image'}
         </button>

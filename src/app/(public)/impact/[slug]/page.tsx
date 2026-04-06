@@ -1,63 +1,64 @@
-import { connectDB } from '@/lib/mongodb'
-import Initiative from '@/models/Initiative'
-import PageWrapper from '@/components/layout/PageWrapper'
-import Image from 'next/image'
-import Link from 'next/link'
-import ReactMarkdown from 'react-markdown'
-import { notFound } from 'next/navigation'
-import { headers } from 'next/headers'
-import type { Metadata } from 'next'
+import { connectDB } from '@/lib/mongodb';
+import Initiative from '@/models/Initiative';
+import type { Metadata } from 'next';
+import { headers } from 'next/headers';
+import Image from 'next/image';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
 
 interface Props {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params
-  await connectDB()
-  const item = await Initiative.findOne({ slug }).lean() as {
-    title: string; description?: string; coverImageUrl?: string
-  } | null
-  if (!item) return {}
+  const { slug } = await params;
+  await connectDB();
+  const item = (await Initiative.findOne({ slug }).lean()) as {
+    title: string;
+    description?: string;
+    coverImageUrl?: string;
+  } | null;
+  if (!item) return {};
   return {
-    title:       item.title,
+    title: item.title,
     description: item.description ?? '',
     openGraph: {
-      title:       `${item.title} — Glowreeyah`,
+      title: `${item.title} — Glowreeyah`,
       description: item.description ?? '',
-      images:      item.coverImageUrl ? [{ url: item.coverImageUrl }] : [],
+      images: item.coverImageUrl ? [{ url: item.coverImageUrl }] : [],
     },
     alternates: {
       canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/impact/${slug}`,
     },
-  }
+  };
 }
 
 export default async function InitiativeDetailPage({ params }: Props) {
-  const { slug } = await params
-  await connectDB()
+  const { slug } = await params;
+  await connectDB();
 
   // Determine back link from referer
-  const headersList  = await headers()
-  const referer      = headersList.get('referer') ?? ''
-  const siteUrl      = process.env.NEXT_PUBLIC_SITE_URL ?? ''
-  const isFromHome   = referer === siteUrl || referer === `${siteUrl}/`
-  const backHref     = isFromHome ? '/#impact' : '/impact'
-  const backLabel    = isFromHome ? '← Back to Home' : '← Back to Impact'
+  const headersList = await headers();
+  const referer = headersList.get('referer') ?? '';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? '';
+  const isFromHome = referer === siteUrl || referer === `${siteUrl}/`;
+  const backHref = isFromHome ? '/#impact' : '/impact';
+  const backLabel = isFromHome ? '← Back to Home' : '← Back to Impact';
 
-  const item = await Initiative.findOne({ slug })
+  const item = (await Initiative.findOne({ slug })
     .populate('tags', 'name slug')
-    .lean() as {
-      _id:            { toString(): string }
-      title:          string
-      slug:           string
-      description?:   string
-      body?:          string
-      coverImageUrl?: string
-      externalLink?:  string
-    } | null
+    .lean()) as {
+    _id: { toString(): string };
+    title: string;
+    slug: string;
+    description?: string;
+    body?: string;
+    coverImageUrl?: string;
+    externalLink?: string;
+  } | null;
 
-  if (!item) notFound()
+  if (!item) notFound();
 
   return (
     <div className="min-h-screen bg-brand-warm">
@@ -115,8 +116,8 @@ export default async function InitiativeDetailPage({ params }: Props) {
         )}
         {item.externalLink && (
           <div className="mt-10">
-            
-            <a href={item.externalLink}
+            <a
+              href={item.externalLink}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-brand-teal text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-brand-teal/90 transition-colors"
@@ -126,11 +127,14 @@ export default async function InitiativeDetailPage({ params }: Props) {
           </div>
         )}
         <div className="mt-12 pt-6 border-t border-gray-200">
-          <Link href={backHref} className="text-sm text-brand-teal hover:underline">
+          <Link
+            href={backHref}
+            className="text-sm text-brand-teal hover:underline"
+          >
             {backLabel}
           </Link>
         </div>
       </div>
     </div>
-  )
+  );
 }

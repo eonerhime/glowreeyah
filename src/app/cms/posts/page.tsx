@@ -1,9 +1,8 @@
-import { connectDB } from '@/lib/mongodb';
-import Post from '@/models/Post';
-import Link from 'next/link';
 import CMSPageHeader from '@/components/cms/CMSPageHeader';
 import CMSRowActions from '@/components/cms/CMSRowActions';
 import StatusBadge from '@/components/cms/StatusBadge';
+import { connectDB } from '@/lib/mongodb';
+import Post from '@/models/Post';
 
 interface CMSPostType {
   _id: string;

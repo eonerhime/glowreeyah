@@ -15,10 +15,10 @@ interface Props {
 }
 
 export default function TagSelector({ allTags, selected, onChange }: Props) {
-  const [tags, setTags]       = useState<TagType[]>(allTags);
-  const [input, setInput]     = useState('');
+  const [tags, setTags] = useState<TagType[]>(allTags);
+  const [input, setInput] = useState('');
   const [creating, setCreating] = useState(false);
-  const [error, setError]     = useState('');
+  const [error, setError] = useState('');
 
   function toggle(id: string) {
     if (selected.includes(id)) {
@@ -46,10 +46,10 @@ export default function TagSelector({ allTags, selected, onChange }: Props) {
     setCreating(true);
     setError('');
     try {
-      const res  = await fetch('/api/tags', {
-        method:  'POST',
+      const res = await fetch('/api/tags', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
+        body: JSON.stringify({
           name,
           slug: slugify(name, { lower: true, strict: true }),
         }),
@@ -58,7 +58,7 @@ export default function TagSelector({ allTags, selected, onChange }: Props) {
       if (!res.ok) throw new Error(data?.error ?? 'Failed to create tag');
 
       const newTag: TagType = {
-        _id:  data.data._id,
+        _id: data.data._id,
         name: data.data.name,
         slug: data.data.slug,
       };
@@ -93,9 +93,10 @@ export default function TagSelector({ allTags, selected, onChange }: Props) {
             type="button"
             onClick={() => toggle(tag._id)}
             className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
-              ${selected.includes(tag._id)
-                ? 'bg-brand-teal text-white border-brand-teal'
-                : 'bg-white text-gray-600 border-gray-300 hover:border-brand-teal'
+              ${
+                selected.includes(tag._id)
+                  ? 'bg-brand-teal text-white border-brand-teal'
+                  : 'bg-white text-gray-600 border-gray-300 hover:border-brand-teal'
               }`}
           >
             {tag.name}

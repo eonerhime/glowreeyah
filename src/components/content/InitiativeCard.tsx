@@ -1,14 +1,14 @@
-'use client'
+'use client';
 
-import Image from 'next/image'
-import Link from 'next/link'
+import Image from 'next/image';
+import Link from 'next/link';
 
 interface Initiative {
-  _id:            string
-  title:          string
-  slug:           string
-  description?:   string
-  coverImageUrl?: string
+  _id: string;
+  title: string;
+  slug: string;
+  description?: string;
+  coverImageUrl?: string;
 }
 
 export default function InitiativeCard({ item }: { item: Initiative }) {
@@ -42,5 +42,5 @@ export default function InitiativeCard({ item }: { item: Initiative }) {
         </span>
       </div>
     </Link>
-  )
+  );
 }

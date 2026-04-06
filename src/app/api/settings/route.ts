@@ -4,11 +4,13 @@ import SiteSettings from '@/models/SiteSettings';
 
 export async function GET() {
   await connectDB();
-  let settings = await SiteSettings.findOne().lean();
+  let settings = await SiteSettings.findOne();
   if (!settings) {
     settings = await SiteSettings.create({});
   }
-  return NextResponse.json({ data: settings });
+  // Use toObject() not lean() so all schema fields are included
+  // even if they were never written to the document
+  return NextResponse.json({ data: settings.toObject() });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -21,5 +23,5 @@ export async function PATCH(req: NextRequest) {
     Object.assign(settings, body);
     await settings.save();
   }
-  return NextResponse.json({ data: settings });
+  return NextResponse.json({ data: settings.toObject() });
 }

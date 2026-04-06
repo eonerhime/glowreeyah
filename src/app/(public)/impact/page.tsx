@@ -1,45 +1,45 @@
-import { connectDB } from '@/lib/mongodb'
-import Initiative from '@/models/Initiative'
-import PageWrapper from '@/components/layout/PageWrapper'
-import InitiativeCard from '@/components/content/InitiativeCard'
-import type { Metadata } from 'next'
-import type { Types } from 'mongoose'
+import { connectDB } from '@/lib/mongodb';
+import Initiative from '@/models/Initiative';
+import PageWrapper from '@/components/layout/PageWrapper';
+import InitiativeCard from '@/components/content/InitiativeCard';
+import type { Metadata } from 'next';
+import type { Types } from 'mongoose';
 
-export const revalidate = 3600
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'Impact',
   description: 'Social impact initiatives and foundations by Glowreeyah.',
   openGraph: {
-    title:       'Impact — Glowreeyah',
+    title: 'Impact — Glowreeyah',
     description: 'Social impact initiatives and foundations by Glowreeyah.',
-    type:        'website',
+    type: 'website',
   },
   twitter: {
-    card:        'summary_large_image',
-    title:       'Impact — Glowreeyah',
+    card: 'summary_large_image',
+    title: 'Impact — Glowreeyah',
     description: 'Social impact initiatives and foundations by Glowreeyah.',
   },
   alternates: {
     canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/impact`,
   },
-}
+};
 
 interface LeanInitiative {
-  _id:           Types.ObjectId
-  title:         string
-  slug:          string
-  description?:  string
-  body?:         string
-  coverImageUrl?: string
-  externalLink?:  string
+  _id: Types.ObjectId;
+  title: string;
+  slug: string;
+  description?: string;
+  body?: string;
+  coverImageUrl?: string;
+  externalLink?: string;
 }
 
 export default async function ImpactPage() {
-  await connectDB()
-  const initiatives = await Initiative.find()
+  await connectDB();
+  const initiatives = (await Initiative.find()
     .sort({ createdAt: -1 })
-    .lean() as LeanInitiative[]
+    .lean()) as LeanInitiative[];
 
   return (
     <PageWrapper>
@@ -62,10 +62,10 @@ export default async function ImpactPage() {
             <InitiativeCard
               key={item._id.toString()}
               item={{
-                _id:           item._id.toString(),
-                title:         item.title,
-                slug:          item.slug,
-                description:   item.description,
+                _id: item._id.toString(),
+                title: item.title,
+                slug: item.slug,
+                description: item.description,
                 coverImageUrl: item.coverImageUrl,
               }}
             />
@@ -73,5 +73,5 @@ export default async function ImpactPage() {
         </div>
       </div>
     </PageWrapper>
-  )
+  );
 }

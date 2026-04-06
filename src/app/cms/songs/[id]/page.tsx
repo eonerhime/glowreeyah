@@ -1,14 +1,14 @@
-import { connectDB } from '@/lib/mongodb'
-import Song from '@/models/Song'
-import Tag from '@/models/Tag'
-import Album from '@/models/Album'
-import SongForm from '@/components/cms/SongForm'
-import CMSPageHeader from '@/components/cms/CMSPageHeader'
-import { notFound } from 'next/navigation'
-import mongoose from 'mongoose'
+import { connectDB } from '@/lib/mongodb';
+import Song from '@/models/Song';
+import Tag from '@/models/Tag';
+import Album from '@/models/Album';
+import SongForm from '@/components/cms/SongForm';
+import CMSPageHeader from '@/components/cms/CMSPageHeader';
+import { notFound } from 'next/navigation';
+import mongoose from 'mongoose';
 
 interface Props {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
 export default async function EditSongPage({ params }: Props) {
@@ -19,36 +19,36 @@ export default async function EditSongPage({ params }: Props) {
     Song.findById(id).lean(),
     Tag.find().sort({ name: 1 }).lean(),
     Album.find().sort({ title: 1 }).lean(),
-  ])
+  ]);
 
-  if (!song) notFound()
+  if (!song) notFound();
 
   const serialisedSong = {
-    _id:             song._id.toString(),
-    title:           song.title,
-    slug:            song.slug,
-    albumId:         song.albumId?.toString() ?? '',
-    trackNumber:     song.trackNumber     ?? '',
-    description:     song.description     ?? '',
-    lyrics:          song.lyrics          ?? '',
+    _id: song._id.toString(),
+    title: song.title,
+    slug: song.slug,
+    albumId: song.albumId?.toString() ?? '',
+    trackNumber: song.trackNumber ?? '',
+    description: song.description ?? '',
+    lyrics: song.lyrics ?? '',
     storyBehindSong: song.storyBehindSong ?? '',
-    audioUrl:        song.audioUrl        ?? '',
-    videoUrl:        song.videoUrl        ?? '',
-    coverImageUrl:   song.coverImageUrl   ?? '',
-    tags:            song.tags.map((t: mongoose.Types.ObjectId) => t.toString()),
-    isPublished:     song.isPublished,
-  }
+    audioUrl: song.audioUrl ?? '',
+    videoUrl: song.videoUrl ?? '',
+    coverImageUrl: song.coverImageUrl ?? '',
+    tags: song.tags.map((t: mongoose.Types.ObjectId) => t.toString()),
+    isPublished: song.isPublished,
+  };
 
-  const serialisedTags = tags.map(t => ({
-    _id:  t._id.toString(),
+  const serialisedTags = tags.map((t) => ({
+    _id: t._id.toString(),
     name: t.name,
     slug: t.slug,
-  }))
+  }));
 
-  const serialisedAlbums = albums.map(a => ({
-    _id:   a._id.toString(),
+  const serialisedAlbums = albums.map((a) => ({
+    _id: a._id.toString(),
     title: a.title,
-  }))
+  }));
 
   return (
     <div>
@@ -65,5 +65,5 @@ export default async function EditSongPage({ params }: Props) {
         />
       </div>
     </div>
-  )
+  );
 }

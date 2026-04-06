@@ -6,6 +6,7 @@ interface Settings {
   heroTitle: string;
   heroSubtitle: string;
   heroImageUrl: string;
+  heroImageMobileUrl: string;
   heroLogoUrl: string;
   homeIntro: string;
   musicPageHeading: string;
@@ -22,6 +23,7 @@ const defaults: Settings = {
   heroTitle: '',
   heroSubtitle: '',
   heroImageUrl: '',
+  heroImageMobileUrl: '',
   heroLogoUrl: '',
   homeIntro: '',
   musicPageHeading: '',
@@ -106,18 +108,51 @@ export default function CMSSettingsPage() {
             {field('Hero Title', 'heroTitle')}
             {field('Hero Subtitle', 'heroSubtitle')}
             {field('Home Intro', 'homeIntro', 3)}
-            <MediaPicker
-              value={form.heroImageUrl}
-              onChange={(url: string) =>
-                setForm((f) => ({ ...f, heroImageUrl: url }))
-              }
-            />
-            <MediaPicker
-              value={form.heroLogoUrl}
-              onChange={(url: string) =>
-                setForm((f) => ({ ...f, heroLogoUrl: url }))
-              }
-            />
+
+            {/* Desktop hero image */}
+            <div>
+              <p className="block text-sm font-medium text-gray-700 mb-1">
+                Hero Image — Desktop / Tablet
+                <span className="ml-2 text-xs font-normal text-gray-400">
+                  Landscape or square — recommended 1600 × 900px
+                </span>
+              </p>
+              <MediaPicker
+                value={form.heroImageUrl}
+                onChange={(url: string) =>
+                  setForm((f) => ({ ...f, heroImageUrl: url }))
+                }
+              />
+            </div>
+
+            {/* Mobile hero image */}
+            <div>
+              <p className="block text-sm font-medium text-gray-700 mb-1">
+                Hero Image — Mobile
+                <span className="ml-2 text-xs font-normal text-gray-400">
+                  Portrait 3:4 ratio — recommended 900 × 1200px, face
+                  centred-top
+                </span>
+              </p>
+              <MediaPicker
+                value={form.heroImageMobileUrl}
+                onChange={(url: string) =>
+                  setForm((f) => ({ ...f, heroImageMobileUrl: url }))
+                }
+              />
+            </div>
+
+            <div>
+              <p className="block text-sm font-medium text-gray-700 mb-1">
+                Hero Logo
+              </p>
+              <MediaPicker
+                value={form.heroLogoUrl}
+                onChange={(url: string) =>
+                  setForm((f) => ({ ...f, heroLogoUrl: url }))
+                }
+              />
+            </div>
           </div>
         </section>
 

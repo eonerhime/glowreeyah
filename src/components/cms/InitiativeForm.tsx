@@ -175,7 +175,7 @@ export default function InitiativeForm({ initiative, tags }: Props) {
         <button
           onClick={handleSubmit}
           disabled={saving}
-          className="bg-brand-teal text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-teal/90 disabled:opacity-50 transition-colors"
+          className="bg-brand-teal text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-teal/90 disabled:opacity-50 transition-colors cursor-pointer"
         >
           {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Initiative'}
         </button>

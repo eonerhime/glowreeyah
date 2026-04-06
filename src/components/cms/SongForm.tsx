@@ -34,79 +34,80 @@ interface SongData {
 }
 
 interface Props {
-  song?:           SongData
-  tags:            TagType[]
-  albums:          AlbumType[]
-  nextTrackNumber?: number
+  song?: SongData;
+  tags: TagType[];
+  albums: AlbumType[];
+  nextTrackNumber?: number;
 }
 
-export default function SongForm({ song, tags, albums, nextTrackNumber }: Props) {
+export default function SongForm({
+  song,
+  tags,
+  albums,
+  nextTrackNumber,
+}: Props) {
   const router = useRouter();
   const isEdit = !!song?._id;
 
   const [form, setForm] = useState<SongData>({
-    title:           song?.title           ?? '',
-    slug:            song?.slug            ?? '',
-    albumId:         song?.albumId         ?? '',
-    trackNumber:     song?.trackNumber     ?? nextTrackNumber ?? 1,
-    description:     song?.description     ?? '',
-    lyrics:          song?.lyrics          ?? '',
+    title: song?.title ?? '',
+    slug: song?.slug ?? '',
+    albumId: song?.albumId ?? '',
+    trackNumber: song?.trackNumber ?? nextTrackNumber ?? 1,
+    description: song?.description ?? '',
+    lyrics: song?.lyrics ?? '',
     storyBehindSong: song?.storyBehindSong ?? '',
-    audioUrl:        song?.audioUrl        ?? '',
-    videoUrl:        song?.videoUrl        ?? '',
-    coverImageUrl:   song?.coverImageUrl   ?? '',
-    tags:            song?.tags            ?? [],
-    isPublished:     song?.isPublished     ?? true,
-  })
-  const [manualTrack, setManualTrack] = useState(false)
+    audioUrl: song?.audioUrl ?? '',
+    videoUrl: song?.videoUrl ?? '',
+    coverImageUrl: song?.coverImageUrl ?? '',
+    tags: song?.tags ?? [],
+    isPublished: song?.isPublished ?? true,
+  });
+  const [manualTrack, setManualTrack] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
- async function handleSubmit() {
-  setSaving(true)
-  setError('')
-  try {
-    const url    = isEdit ? `/api/songs/${song!._id}` : '/api/songs'
-    const method = isEdit ? 'PATCH' : 'POST'
+  async function handleSubmit() {
+    setSaving(true);
+    setError('');
+    try {
+      const url = isEdit ? `/api/songs/${song!._id}` : '/api/songs';
+      const method = isEdit ? 'PATCH' : 'POST';
 
-    console.log('Saving song — method:', method, 'url:', url)
-    console.log('Payload:', {
-      ...form,
-      slug: slugify(form.title, { lower: true, strict: true }),
-    })
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          slug: slugify(form.title, { lower: true, strict: true }),
+        }),
+      });
 
-    const res  = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        ...form,
-        slug: slugify(form.title, { lower: true, strict: true }),
-      }),
-    })
+      const data = await res.json();
 
-    const data = await res.json()
-    console.log('Response:', res.status, data)
+      if (!res.ok) {
+        const message = data?.error
+          ? typeof data.error === 'object'
+            ? Object.entries(data.error)
+                .map(
+                  ([field, msgs]) =>
+                    `${field}: ${(msgs as string[]).join(', ')}`
+                )
+                .join(' | ')
+            : data.error
+          : `HTTP ${res.status} — ${res.statusText}`;
+        throw new Error(message);
+      }
 
-    if (!res.ok) {
-      const message = data?.error
-        ? typeof data.error === 'object'
-          ? Object.entries(data.error)
-              .map(([field, msgs]) => `${field}: ${(msgs as string[]).join(', ')}`)
-              .join(' | ')
-          : data.error
-        : `HTTP ${res.status} — ${res.statusText}`
-      throw new Error(message)
+      router.push('/cms/songs');
+      router.refresh();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Something went wrong');
+      console.error('Song save error:', e);
+    } finally {
+      setSaving(false);
     }
-
-    router.push('/cms/songs')
-    router.refresh()
-  } catch (e: unknown) {
-    setError(e instanceof Error ? e.message : 'Something went wrong')
-    console.error('Song save error:', e)
-  } finally {
-    setSaving(false)
   }
-}
 
   async function handleDelete() {
     if (!confirm('Delete this song? This cannot be undone.')) return;
@@ -174,14 +175,17 @@ export default function SongForm({ song, tags, albums, nextTrackNumber }: Props)
             min={1}
             value={form.trackNumber}
             disabled={!manualTrack && !isEdit}
-            onChange={e => setForm(f => ({
-              ...f,
-              trackNumber: e.target.value ? Number(e.target.value) : ''
-            }))}
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                trackNumber: e.target.value ? Number(e.target.value) : '',
+              }))
+            }
             className={`w-32 border rounded-lg px-3 py-2 text-sm focus:ring-2 outline-none transition-colors
-              ${!manualTrack && !isEdit
-                ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
-                : 'border-gray-300 focus:ring-brand-teal'
+              ${
+                !manualTrack && !isEdit
+                  ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
+                  : 'border-gray-300 focus:ring-brand-teal'
               }`}
           />
           {!isEdit && (
@@ -189,7 +193,7 @@ export default function SongForm({ song, tags, albums, nextTrackNumber }: Props)
               <input
                 type="checkbox"
                 checked={manualTrack}
-                onChange={e => setManualTrack(e.target.checked)}
+                onChange={(e) => setManualTrack(e.target.checked)}
                 className="rounded border-gray-300 text-brand-teal focus:ring-brand-teal"
               />
               Override auto-number
@@ -302,14 +306,14 @@ export default function SongForm({ song, tags, albums, nextTrackNumber }: Props)
         <div className="bg-red-50 border border-red-200 rounded-lg p-3">
           {(() => {
             try {
-              const parsed = JSON.parse(error)
+              const parsed = JSON.parse(error);
               return Object.entries(parsed).map(([field, messages]) => (
                 <p key={field} className="text-red-600 text-sm">
                   {(messages as string[]).join(', ')}
                 </p>
-              ))
+              ));
             } catch {
-              return <p className="text-red-600 text-sm">{error}</p>
+              return <p className="text-red-600 text-sm">{error}</p>;
             }
           })()}
         </div>

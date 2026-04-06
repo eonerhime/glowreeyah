@@ -164,30 +164,30 @@ export default function AlbumForm({ album, tags }: Props) {
 
       {/* Actions */}
       {error && <p className="text-red-500 text-sm">{error}</p>}
-        <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={handleSubmit}
+          disabled={saving}
+          className="bg-brand-teal text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-teal/90 disabled:opacity-50 transition-colors cursor-pointer"
+        >
+          {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Album'}
+        </button>
+        <button
+          onClick={() => router.push('/cms/albums')}
+          disabled={saving}
+          className="px-5 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors cursor-pointer"
+        >
+          Cancel
+        </button>
+        {isEdit && (
           <button
-            onClick={handleSubmit}
-            disabled={saving}
-            className="bg-brand-teal text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-teal/90 disabled:opacity-50 transition-colors cursor-pointer"
+            onClick={handleDelete}
+            className="ml-auto text-red-500 text-sm hover:underline cursor-pointer"
           >
-            {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Album'}
+            Delete
           </button>
-          <button
-            onClick={() => router.push('/cms/albums')}
-            disabled={saving}
-            className="px-5 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors cursor-pointer"
-          >
-            Cancel
-          </button>
-          {isEdit && (
-            <button
-              onClick={handleDelete}
-              className="ml-auto text-red-500 text-sm hover:underline cursor-pointer"
-            >
-              Delete
-            </button>
-          )}
-        </div>
+        )}
+      </div>
     </div>
   );
 }
