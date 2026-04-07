@@ -1,3 +1,4 @@
+// src/app/api/media/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import cloudinary from '@/lib/cloudinary';
@@ -54,4 +55,43 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ data: asset }, { status: 201 });
+}
+
+// Bulk delete — body: { ids: string[] }
+export async function DELETE(req: NextRequest) {
+  await connectDB();
+
+  let ids: string[];
+  try {
+    const body = await req.json();
+    ids = body.ids;
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return NextResponse.json(
+      { error: 'ids must be a non-empty array' },
+      { status: 422 }
+    );
+  }
+
+  const assets = await MediaAsset.find({ _id: { $in: ids } });
+
+  if (assets.length === 0) {
+    return NextResponse.json(
+      { error: 'No matching assets found' },
+      { status: 404 }
+    );
+  }
+
+  // Delete from Cloudinary in parallel, tolerate individual failures
+  await Promise.allSettled(
+    assets.map((a) => cloudinary.uploader.destroy(a.publicId))
+  );
+
+  // Remove all from MongoDB
+  await MediaAsset.deleteMany({ _id: { $in: ids } });
+
+  return NextResponse.json({ ok: true, deleted: assets.length });
 }
