@@ -56,6 +56,8 @@ export default async function EditSongPage({ params }: Props) {
         title="Edit Song"
         createHref="/cms/songs/new"
         createLabel="New Song"
+        backHref="/cms/songs"
+        backLabel="Back"
       />
       <div className="mt-6">
         <SongForm

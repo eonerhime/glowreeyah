@@ -19,6 +19,8 @@ export default async function NewInitiativePage() {
         title="New Initiative"
         createHref="/cms/initiatives"
         createLabel="Back to Initiatives"
+        backHref="/cms/initiatives"
+        backLabel="Back"
       />
       <div className="mt-6">
         <InitiativeForm tags={serialisedTags} />

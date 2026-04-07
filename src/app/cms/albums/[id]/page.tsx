@@ -43,6 +43,8 @@ export default async function EditAlbumPage({ params }: Props) {
         title="Edit Album"
         createHref="/cms/albums/new"
         createLabel="New Album"
+        backHref="/cms/albums"
+        backLabel="Back"
       />
       <div className="mt-6">
         <AlbumForm album={serialisedAlbum} tags={serialisedTags} />

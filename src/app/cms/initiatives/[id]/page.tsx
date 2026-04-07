@@ -45,6 +45,8 @@ export default async function EditInitiativePage({ params }: Props) {
         title="Edit Initiative"
         createHref="/cms/initiatives/new"
         createLabel="New Initiative"
+        backHref="/cms/initiatives"
+        backLabel="Back"
       />
       <div className="mt-6">
         <InitiativeForm

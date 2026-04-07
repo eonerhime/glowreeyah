@@ -1,7 +1,7 @@
+import CMSPageHeader from '@/components/cms/CMSPageHeader';
+import EventForm from '@/components/cms/EventForm';
 import { connectDB } from '@/lib/mongodb';
 import Event from '@/models/Event';
-import EventForm from '@/components/cms/EventForm';
-import CMSPageHeader from '@/components/cms/CMSPageHeader';
 import { notFound } from 'next/navigation';
 
 interface Props {
@@ -29,11 +29,16 @@ export default async function EditEventPage({ params }: Props) {
 
   return (
     <div>
-      <CMSPageHeader
-        title="Edit Event"
-        createHref="/cms/events/new"
-        createLabel="New Event"
-      />
+      <div className="grid grid-cols-[1fr_auto] items-center gap-4 mb-6">
+        <CMSPageHeader
+          title="Edit Event"
+          createHref="/cms/events/new"
+          createLabel="New Event"
+          backHref="/cms/events"
+          backLabel="Back"
+        />
+      </div>
+
       <div className="mt-6">
         <EventForm event={serialisedEvent} />
       </div>

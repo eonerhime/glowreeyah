@@ -45,6 +45,8 @@ export default async function EditPostPage({ params }: Props) {
         title="Edit Post"
         createHref="/cms/posts/new"
         createLabel="New Post"
+        backHref="/cms/posts"
+        backLabel="Back"
       />
       <div className="mt-6">
         <PostForm post={serialisedPost} tags={serialisedTags} />

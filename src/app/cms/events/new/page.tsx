@@ -8,6 +8,8 @@ export default function NewEventPage() {
         title="New Event"
         createHref="/cms/events"
         createLabel="Back to Events"
+        backHref="/cms/events"
+        backLabel="Back"
       />
       <div className="mt-6">
         <EventForm />

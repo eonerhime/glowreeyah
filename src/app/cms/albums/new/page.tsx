@@ -19,6 +19,8 @@ export default async function NewAlbumPage() {
         title="New Album"
         createHref="/cms/albums"
         createLabel="Back to Albums"
+        backHref="/cms/albums"
+        backLabel="Back"
       />
       <div className="mt-6">
         <AlbumForm tags={serialisedTags} />

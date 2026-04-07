@@ -19,6 +19,8 @@ export default async function NewPostPage() {
         title="New Post"
         createHref="/cms/posts"
         createLabel="Back to Posts"
+        backHref="/cms/posts"
+        backLabel="Back"
       />
       <div className="mt-6">
         <PostForm tags={serialisedTags} />

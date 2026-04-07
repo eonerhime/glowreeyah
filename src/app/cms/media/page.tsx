@@ -98,34 +98,22 @@ export default function CMSMediaPage() {
   }
 
   const allSelected = assets.length > 0 && selected.size === assets.length;
-  const someSelected = selected.size > 0;
 
   return (
     <div>
       {/* ── Page header ── */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6">
         <h1 className="text-2xl font-serif font-bold text-brand-deep">
           Media Library
         </h1>
-
-        {someSelected && (
-          <button
-            onClick={deleteSelected}
-            disabled={deleting}
-            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 disabled:opacity-50
-                       text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-          >
-            {deleting ? 'Deleting…' : `Delete ${selected.size} selected`}
-          </button>
-        )}
       </div>
 
       {/* ── Uploader ── */}
       <MediaUploader onUploaded={load} />
 
-      {/* ── Toolbar (select-all + count) ── */}
+      {/* ── Toolbar (select-all + delete button) ── */}
       {assets.length > 0 && (
-        <div className="flex items-center gap-3 mt-8 mb-3">
+        <div className="flex items-center gap-4 mt-8 mb-3">
           <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-600">
             <input
               type="checkbox"
@@ -135,10 +123,16 @@ export default function CMSMediaPage() {
             />
             {allSelected ? 'Deselect all' : 'Select all'}
           </label>
-          {someSelected && (
-            <span className="text-sm text-gray-400">
-              {selected.size} of {assets.length} selected
-            </span>
+
+          {allSelected && (
+            <button
+              onClick={deleteSelected}
+              disabled={deleting}
+              className="bg-red-500 hover:bg-red-600 disabled:opacity-50
+                         text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
+            >
+              {deleting ? 'Deleting…' : `Delete all ${assets.length}`}
+            </button>
           )}
         </div>
       )}

@@ -1,79 +1,89 @@
 'use client';
-
+// src/components/cms/EventForm.tsx
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import SlugField from './SlugField';
 import MediaPicker from './MediaPicker';
-import slugify from 'slugify';
-
-function deriveIsUpcoming(dateStr: string): boolean {
-  if (!dateStr) return true;
-  return new Date(dateStr) >= new Date();
-}
 
 interface EventData {
   _id?: string;
-  title: string;
-  slug: string;
-  date: string;
-  location: string;
-  description: string;
-  externalLink: string;
-  coverImageUrl: string;
-  isUpcoming: boolean;
+  title?: string;
+  slug?: string;
+  date?: string;
+  location?: string;
+  description?: string;
+  externalLink?: string;
+  isUpcoming?: boolean;
+  coverImageUrl?: string;
 }
 
 interface Props {
   event?: EventData;
 }
 
+// ── module-level helpers ───────────────────────────────────────
+function deriveIsUpcoming(dateStr: string): boolean {
+  if (!dateStr) return true;
+  return new Date(dateStr) >= new Date();
+}
+
+function isPastEvent(event?: EventData): boolean {
+  if (!event?._id) return false; // new events are always editable
+  if (event.isUpcoming === false) return true;
+  // fallback: check the date directly in case isUpcoming is stale
+  if (event.date) return new Date(event.date) < new Date();
+  return false;
+}
+
+// ─────────────────────────────────────────────────────────────
 export default function EventForm({ event }: Props) {
   const router = useRouter();
   const isEdit = !!event?._id;
+  const isPast = isPastEvent(event); // ← lock flag
 
-  const [form, setForm] = useState<EventData>({
+  const [form, setForm] = useState({
     title: event?.title ?? '',
     slug: event?.slug ?? '',
-    date: event?.date ?? '',
+    date: event?.date ? new Date(event.date).toISOString().slice(0, 16) : '',
     location: event?.location ?? '',
     description: event?.description ?? '',
     externalLink: event?.externalLink ?? '',
-    coverImageUrl: event?.coverImageUrl ?? '',
     isUpcoming: event?.isUpcoming ?? true,
+    coverImageUrl: event?.coverImageUrl ?? '',
   });
-
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  function handleDateChange(dateStr: string) {
+    setForm((f) => ({
+      ...f,
+      date: dateStr,
+      isUpcoming: deriveIsUpcoming(dateStr),
+    }));
+  }
+
   async function handleSubmit() {
+    if (isPast) return;
     setSaving(true);
     setError('');
     try {
-      const url = isEdit ? `/api/events/${event!._id}` : '/api/events';
-      const method = isEdit ? 'PATCH' : 'POST';
-
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          slug: slugify(form.title, { lower: true, strict: true }),
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        const message = data?.error
-          ? JSON.stringify(data.error)
-          : `HTTP ${res.status} — ${res.statusText}`;
-        throw new Error(message);
-      }
-
+      const res = await fetch(
+        isEdit ? `/api/events/${event!._id}` : '/api/events',
+        {
+          method: isEdit ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        }
+      );
+      if (!res.ok) throw new Error('Save failed');
       router.push('/cms/events');
       router.refresh();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Something went wrong');
-      console.error('Event save error:', e);
+      if (e instanceof Error) {
+        setError(e.message);
+      } else {
+        setError(String(e));
+      }
     } finally {
       setSaving(false);
     }
@@ -86,142 +96,183 @@ export default function EventForm({ event }: Props) {
     router.refresh();
   }
 
+  // shared input class — greyed out when past
+  const inputCls = `w-full border rounded-lg px-3 py-2 text-sm outline-none
+    ${
+      isPast
+        ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+        : 'border-gray-300 bg-white focus:ring-2 focus:ring-brand-teal'
+    }`;
+
   return (
-    <div className="max-w-3xl space-y-6">
-      {/* Title */}
+    <div className="max-w-2xl space-y-6">
+      {/* ── Past-event notice banner ── */}
+      {isPast && (
+        <div
+          className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700
+                        text-sm px-4 py-3 rounded-lg"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4 shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+            />
+          </svg>
+          This event has already taken place and cannot be edited.
+        </div>
+      )}
+
+      {/* ── Title ── */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Title
         </label>
         <input
           value={form.title}
-          onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-teal outline-none"
-        />
-      </div>
-      {/* Slug */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Slug
-        </label>
-        <input
-          value={slugify(form.title, { lower: true, strict: true })}
-          disabled
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-400 cursor-not-allowed font-mono"
-        />
-        <p className="text-xs text-gray-400 mt-1">
-          Auto-generated from title — not editable
-        </p>
-      </div>
-      {/* Date */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Date
-        </label>
-        <input
-          type="date"
-          value={form.date}
           onChange={(e) =>
-            setForm((f) => ({
-              ...f,
-              date: e.target.value,
-              isUpcoming: deriveIsUpcoming(e.target.value),
-            }))
+            !isPast && setForm((f) => ({ ...f, title: e.target.value }))
           }
-          className="w-48 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-teal outline-none"
+          readOnly={isPast}
+          className={inputCls}
         />
       </div>
-      {/* Location */}
+
+      {/* ── Slug ── */}
+      {isPast ? (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Slug
+          </label>
+          <input value={form.slug} readOnly className={inputCls} />
+          <p className="text-xs text-gray-400 mt-1">/{form.slug}</p>
+        </div>
+      ) : (
+        <SlugField
+          sourceValue={form.title}
+          value={form.slug}
+          onChange={(slug) => setForm((f) => ({ ...f, slug }))}
+        />
+      )}
+
+      {/* ── Date ── */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Date & Time
+        </label>
+        <input
+          type="datetime-local"
+          value={form.date}
+          onChange={(e) => !isPast && handleDateChange(e.target.value)}
+          readOnly={isPast}
+          className={inputCls}
+        />
+      </div>
+
+      {/* ── Location ── */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Location
         </label>
         <input
           value={form.location}
-          onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-teal outline-none"
+          onChange={(e) =>
+            !isPast && setForm((f) => ({ ...f, location: e.target.value }))
+          }
+          readOnly={isPast}
+          className={inputCls}
         />
       </div>
-      {/* Description */}
+
+      {/* ── Description ── */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Description
         </label>
         <textarea
-          rows={3}
+          rows={4}
           value={form.description}
           onChange={(e) =>
-            setForm((f) => ({ ...f, description: e.target.value }))
+            !isPast && setForm((f) => ({ ...f, description: e.target.value }))
           }
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-teal outline-none"
+          readOnly={isPast}
+          className={inputCls}
         />
       </div>
-      {/* External Link */}
+
+      {/* ── External link ── */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           External Link
         </label>
         <input
-          type="url"
           value={form.externalLink}
           onChange={(e) =>
-            setForm((f) => ({ ...f, externalLink: e.target.value }))
+            !isPast && setForm((f) => ({ ...f, externalLink: e.target.value }))
           }
-          placeholder="https://..."
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-teal outline-none"
+          readOnly={isPast}
+          className={inputCls}
         />
       </div>
-      {/* Cover Image */}
-      <MediaPicker
-        value={form.coverImageUrl}
-        onChange={(url: string) =>
-          setForm((f) => ({ ...f, coverImageUrl: url }))
-        }
-      />
 
-      {/* Is Upcoming */}
-      <div className="flex items-center gap-3">
+      {/* ── Cover image ── */}
+      {isPast ? (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Cover Image
+          </label>
+          <input value={form.coverImageUrl} readOnly className={inputCls} />
+        </div>
+      ) : (
+        <MediaPicker
+          value={form.coverImageUrl}
+          onChange={(url) => setForm((f) => ({ ...f, coverImageUrl: url }))}
+        />
+      )}
+
+      {/* ── Status pill ── */}
+      <div className="flex items-center gap-2">
         <span
-          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-            form.isUpcoming
-              ? 'bg-green-100 text-green-700'
-              : 'bg-gray-100 text-gray-500'
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+          ${
+            isPast ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-700'
           }`}
         >
-          {form.isUpcoming ? 'Upcoming' : 'Past event'}
+          {isPast ? 'Past event' : 'Upcoming'}
         </span>
-        <button
-          type="button"
-          onClick={() => setForm((f) => ({ ...f, isUpcoming: !f.isUpcoming }))}
-          className="text-xs text-brand-teal hover:underline cursor-pointer"
-        >
-          Mark as {form.isUpcoming ? 'past' : 'upcoming'}
-        </button>
       </div>
-      <p className="text-xs text-gray-400">
-        Auto-set from the date — override manually if needed.
-      </p>
-      {/* Actions */}
+
+      {/* ── Actions ── */}
       {error && <p className="text-red-500 text-sm">{error}</p>}
-      <div className="flex items-center gap-3">
+
+      <div className="flex items-center gap-3 pt-2">
+        {/* Save button — disabled and muted for past events */}
         <button
           onClick={handleSubmit}
-          disabled={saving}
-          className="bg-brand-teal text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-teal/90 disabled:opacity-50 transition-colors cursor-pointer"
+          disabled={isPast || saving}
+          title={isPast ? 'Past events cannot be edited' : undefined}
+          className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors
+            ${
+              isPast
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-brand-teal text-white hover:bg-brand-teal/90 disabled:opacity-50'
+            }`}
         >
-          {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Event'}
+          {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Event'}
         </button>
-        <button
-          onClick={() => router.push('/cms/events')}
-          disabled={saving}
-          className="px-5 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors cursor-pointer"
-        >
-          Cancel
-        </button>
+
+        {/* Delete is still allowed on past events */}
         {isEdit && (
           <button
             onClick={handleDelete}
-            className="ml-auto text-red-500 text-sm hover:underline cursor-pointer"
+            className="text-red-500 text-sm hover:underline"
           >
             Delete
           </button>

@@ -38,6 +38,8 @@ export default async function NewSongPage() {
         title="New Song"
         createHref="/cms/songs"
         createLabel="Back to Songs"
+        backHref="/cms/songs"
+        backLabel="Back"
       />
       <div className="mt-6">
         <SongForm
