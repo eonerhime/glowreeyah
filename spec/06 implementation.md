@@ -2,9 +2,9 @@
 
 **Project:** Glowreeyah Digital Platform
 **Document Type:** Software Design Document (SDD) — Single Source of Truth
-**Version:** 1.1.0
-**Last Updated:** 2026-03-28
-**Status:** In Progress
+**Version:** 2.0.0
+**Last Updated:** 2026-04-06
+**Status:** Pre-deployment
 
 ---
 
@@ -16,13 +16,13 @@
 | §2      | Tech Stack & Dependencies   | ✅ Complete    |
 | §3      | Environment Setup           | ✅ Complete    |
 | §4      | Project Scaffolding         | ✅ Complete    |
-| §5      | Database Design             | 🔄 In Progress |
-| §6      | API Layer                   | 🔄 In Progress |
+| §5      | Database Design             | ✅ Complete    |
+| §6      | API Layer                   | ✅ Complete    |
 | §7      | UI & Component Layer        | ✅ Complete    |
 | §8      | Page Implementation         | ✅ Complete    |
-| §9      | Media Integration           | 🔄 In Progress |
-| §10     | CMS                         | 🔄 In Progress |
-| §11     | SEO Implementation          | ⬜ Not Started |
+| §9      | Media Integration           | ✅ Complete    |
+| §10     | CMS                         | ✅ Complete    |
+| §11     | SEO Implementation          | 🔄 In Progress |
 | §12     | Performance & Accessibility | ⬜ Not Started |
 | §13     | Testing                     | ⬜ Not Started |
 | §14     | Deployment                  | ⬜ Not Started |
@@ -39,11 +39,11 @@ This document is the **single source of truth** for end-to-end implementation an
 
 Cross-references:
 
-- Feature definitions → `features.md`
-- Brand rules and constraints → `constitution.md`
-- Data models and domain spec → `specification.md`
-- Execution phases and milestones → `plan.md`
-- Outstanding tasks → `tasks.md`
+- Feature definitions → `04_features.md`
+- Brand rules and constraints → `01_constitution.md`
+- Data models and domain spec → `02_specification.md`
+- Execution phases and milestones → `03_plan.md`
+- Outstanding tasks → `05_tasks.md`
 
 ---
 
@@ -73,7 +73,7 @@ Cross-references:
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                        BROWSER                               │
-│   (public)/* — Public website    (cms)/* — Content Studio    │
+│   (public)/* — Public website    cms/* — Content Studio      │
 └──────────────────┬───────────────────────┬───────────────────┘
                    │ HTTP / fetch           │ HTTP / fetch
 ┌──────────────────▼───────────────────────▼───────────────────┐
@@ -86,6 +86,12 @@ Cross-references:
 │  (all content,   │           │  Cloudinary                   │
 │   CMS sessions)  │           │  (images, audio, video)       │
 └─────────────────┘           └──────────────────────────────┘
+                                           │
+                               ┌───────────▼──────────────────┐
+                               │  External Services            │
+                               │  Resend (email notifications) │
+                               │  Tawk.to (live chat)          │
+                               └──────────────────────────────┘
 ```
 
 **Deployment targets:**
@@ -93,6 +99,16 @@ Cross-references:
 - Public frontend + CMS + API routes → Vercel (single deployment)
 - Database → MongoDB Atlas
 - Media → Cloudinary
+- Email → Resend
+- Chat → Tawk.to (client-side embed)
+
+**Route groups:**
+
+- `src/app/(public)/` — public-facing website, no auth required
+- `src/app/cms/` — real directory (not a route group) for the CMS, protected by NextAuth middleware
+- `src/app/api/` — shared REST API consumed by both public pages and CMS
+
+> **Note:** The CMS uses a real `cms/` directory rather than a `(cms)` route group. This resolves a route conflict that occurred with the route group approach in Next.js 15.
 
 ---
 
@@ -102,7 +118,7 @@ Cross-references:
 
 | Package                | Version | Purpose                                  |
 | ---------------------- | ------- | ---------------------------------------- |
-| `next`                 | 14.x    | Framework (App Router)                   |
+| `next`                 | 15.x    | Framework (App Router)                   |
 | `react`                | 18.x    | UI runtime                               |
 | `react-dom`            | 18.x    | DOM rendering                            |
 | `typescript`           | 5.x     | Type safety                              |
@@ -117,21 +133,25 @@ Cross-references:
 
 ### Media
 
-| Package               | Version | Purpose                 |
-| --------------------- | ------- | ----------------------- |
-| `cloudinary`          | 2.x     | Media upload + delivery |
-| `@next/third-parties` | latest  | Optimised embeds        |
+| Package      | Version | Purpose                 |
+| ------------ | ------- | ----------------------- |
+| `cloudinary` | 2.x     | Media upload + delivery |
+
+### Auth & Communication
+
+| Package     | Version | Purpose                                 |
+| ----------- | ------- | --------------------------------------- |
+| `next-auth` | 4.x     | CMS authentication + session management |
+| `resend`    | latest  | Transactional email (booking alerts)    |
 
 ### Utilities
 
-| Package                | Version | Purpose                                 |
-| ---------------------- | ------- | --------------------------------------- |
-| `next-auth`            | 4.x     | CMS authentication + session management |
-| `@uiw/react-md-editor` | 3.x     | Markdown rich text editor (CMS)         |
-| `react-markdown`       | 9.x     | Render markdown on public frontend      |
-| `slugify`              | 1.x     | URL-safe slug generation                |
-| `zod`                  | 3.x     | Schema validation                       |
-| `next-seo`             | 6.x     | SEO helpers (optional)                  |
+| Package                | Version | Purpose                            |
+| ---------------------- | ------- | ---------------------------------- |
+| `@uiw/react-md-editor` | 3.x     | Markdown rich text editor (CMS)    |
+| `react-markdown`       | 9.x     | Render markdown on public frontend |
+| `slugify`              | 1.x     | URL-safe slug generation           |
+| `zod`                  | 3.x     | Schema validation                  |
 
 ### Dev Dependencies
 
@@ -148,21 +168,11 @@ Cross-references:
 
 ### 3.1 Prerequisites ✅
 
-Ensure the following are installed on your local machine before starting:
-
 | Tool    | Minimum Version | Install             |
 | ------- | --------------- | ------------------- |
 | Node.js | 18.17.0         | https://nodejs.org  |
 | npm     | 9.x             | Bundled with Node   |
 | Git     | 2.x             | https://git-scm.com |
-
-Verify installations:
-
-```bash
-node --version
-npm --version
-git --version
-```
 
 - [x] Node.js installed and verified
 - [x] npm installed and verified
@@ -172,16 +182,18 @@ git --version
 
 ### 3.2 Accounts Required ✅
 
-- [x] MongoDB Atlas account created — M0 cluster running, database user created, connection string copied
-- [x] Cloudinary account created — Cloud Name, API Key, API Secret noted
-- [x] Vercel account created and linked to GitHub
-- [x] GitHub repository `glowreeyah-platform` created
+- [x] MongoDB Atlas account — M0 cluster running, database user created, connection string copied
+- [x] Cloudinary account — Cloud Name, API Key, API Secret noted
+- [x] Vercel account — linked to GitHub
+- [x] GitHub repository created (`glowreeyah-platform`)
+- [x] Resend account — API key created, sending domain verified
+- [x] Tawk.to account — property created, embed script URL noted
 
 ---
 
 ### 3.3 Environment Variables ✅
 
-Create a `.env.local` file in the project root with the following keys. **Never commit this file to Git.**
+**File:** `.env.local` — never commit this file to Git.
 
 ```env
 # MongoDB
@@ -202,15 +214,14 @@ NEXTAUTH_SECRET=your_random_32_char_string
 NEXTAUTH_URL=http://localhost:3000
 CMS_ADMIN_EMAIL=admin@glowreeyah.com
 CMS_ADMIN_PASSWORD=your_secure_password
+
+# Email (Resend)
+RESEND_API_KEY=re_your_resend_api_key
+RESEND_FROM_EMAIL=noreply@glowreeyah.com
+RESEND_TO_EMAIL=admin@glowreeyah.com
 ```
 
-Add `.env.local` to `.gitignore`:
-
-```bash
-echo ".env.local" >> .gitignore
-```
-
-- [x] `.env.local` created in project root with all required variables
+- [x] `.env.local` created with all required variables
 - [x] `.env.local` added to `.gitignore`
 
 ---
@@ -218,8 +229,6 @@ echo ".env.local" >> .gitignore
 ## 4. Project Scaffolding ✅
 
 ### 4.1 Create the Next.js Application ✅
-
-Run the following command from your chosen parent directory:
 
 ```bash
 npx create-next-app@latest glowreeyah-platform \
@@ -231,15 +240,7 @@ npx create-next-app@latest glowreeyah-platform \
   --import-alias "@/*"
 ```
 
-When prompted, select:
-
-- Would you like to use Turbopack? → **No** (more stable for production)
-
-Navigate into the project:
-
-```bash
-cd glowreeyah-platform
-```
+When prompted: **Turbopack → No** (more stable for production).
 
 - [x] Next.js app scaffolded with TypeScript, Tailwind, ESLint, App Router, `src/` dir
 - [x] `npm run dev` starts without errors
@@ -249,63 +250,52 @@ cd glowreeyah-platform
 ### 4.2 Install Dependencies ✅
 
 ```bash
-npm install mongoose slugify zod cloudinary next-auth @uiw/react-md-editor react-markdown
+npm install mongoose slugify zod cloudinary next-auth resend @uiw/react-md-editor react-markdown
 npm install --save-dev prettier @types/node
 ```
-
-- [x] All dependencies installed
-- [x] No install errors in terminal
-
-- [x] All dependencies installed
-- [x] No install errors in terminal
 
 ---
 
 ### 4.3 Directory Structure ✅
 
-- [x] All directories created via `mkdir` commands below
-- [x] Directory tree matches the structure above
-
-Create the complete directory structure manually or run the commands below:
-
 ```
 src/
 ├── app/
 │   ├── (public)/
-│   │   ├── page.tsx              ← Home
+│   │   ├── page.tsx                    ← Home
 │   │   ├── about/
 │   │   │   └── page.tsx
 │   │   ├── music/
 │   │   │   ├── page.tsx
 │   │   │   └── [albumSlug]/
-│   │   │       ├── page.tsx
-│   │   │       └── [songSlug]/
-│   │   │           └── page.tsx
+│   │   │       └── page.tsx            ← Album detail (AlbumPlayer)
 │   │   ├── blog/
 │   │   │   ├── page.tsx
 │   │   │   └── [slug]/
-│   │   │       └── page.tsx
+│   │   │       └── page.tsx            ← Post detail
 │   │   ├── media/
 │   │   │   └── page.tsx
-│   │   ├── speaking/
+│   │   ├── events/                     ← renamed from /speaking
 │   │   │   └── page.tsx
 │   │   ├── booking/
 │   │   │   └── page.tsx
 │   │   ├── impact/
-│   │   │   └── page.tsx
+│   │   │   ├── page.tsx
+│   │   │   └── [slug]/
+│   │   │       └── page.tsx            ← Initiative detail
 │   │   └── tag/
 │   │       └── [slug]/
 │   │           └── page.tsx
-│   ├── (cms)/
-│   │   ├── layout.tsx                ← CMS shell (sidebar + topbar)
+│   ├── cms/                            ← Real directory (not route group)
+│   │   ├── layout.tsx                  ← CMSShell (sidebar drawer + topbar)
 │   │   ├── login/
-│   │   │   └── page.tsx              ← Login page
+│   │   │   └── page.tsx
 │   │   ├── dashboard/
-│   │   │   └── page.tsx              ← Overview: counts, recent activity
+│   │   │   └── page.tsx
 │   │   ├── songs/
-│   │   │   ├── page.tsx              ← Songs list
-│   │   │   ├── new/page.tsx          ← Create song
-│   │   │   └── [id]/page.tsx         ← Edit song
+│   │   │   ├── page.tsx
+│   │   │   ├── new/page.tsx
+│   │   │   └── [id]/page.tsx
 │   │   ├── albums/
 │   │   │   ├── page.tsx
 │   │   │   ├── new/page.tsx
@@ -315,7 +305,7 @@ src/
 │   │   │   ├── new/page.tsx
 │   │   │   └── [id]/page.tsx
 │   │   ├── events/
-│   │   │   ├── page.tsx
+│   │   │   ├── page.tsx                ← Mobile card layout (not table)
 │   │   │   ├── new/page.tsx
 │   │   │   └── [id]/page.tsx
 │   │   ├── initiatives/
@@ -323,32 +313,50 @@ src/
 │   │   │   ├── new/page.tsx
 │   │   │   └── [id]/page.tsx
 │   │   ├── media/
-│   │   │   └── page.tsx              ← Upload + media browser
+│   │   │   └── page.tsx
 │   │   ├── bookings/
-│   │   │   └── page.tsx              ← Booking submissions
+│   │   │   └── page.tsx                ← Status updates + Resend email
 │   │   ├── tags/
-│   │   │   └── page.tsx              ← Tag management
+│   │   │   └── page.tsx
+│   │   ├── settings/
+│   │   │   └── page.tsx                ← SiteSettings (hero images, etc.)
 │   │   └── artist/
-│   │       └── page.tsx              ← Edit artist profile
+│   │       └── page.tsx
 │   ├── api/
+│   │   ├── auth/
+│   │   │   └── [...nextauth]/route.ts
 │   │   ├── artists/
-│   │   │   └── route.ts
+│   │   │   ├── route.ts
+│   │   │   └── [id]/route.ts
 │   │   ├── albums/
-│   │   │   └── route.ts
+│   │   │   ├── route.ts
+│   │   │   └── [id]/route.ts
 │   │   ├── songs/
-│   │   │   └── route.ts
+│   │   │   ├── route.ts
+│   │   │   └── [id]/route.ts
 │   │   ├── posts/
-│   │   │   └── route.ts
+│   │   │   ├── route.ts
+│   │   │   └── [id]/route.ts
 │   │   ├── media/
-│   │   │   └── route.ts
+│   │   │   ├── route.ts
+│   │   │   └── [id]/route.ts
 │   │   ├── events/
-│   │   │   └── route.ts
+│   │   │   ├── route.ts
+│   │   │   └── [id]/route.ts
 │   │   ├── initiatives/
-│   │   │   └── route.ts
+│   │   │   ├── route.ts
+│   │   │   └── [id]/route.ts
 │   │   ├── bookings/
-│   │   │   └── route.ts
-│   │   └── tags/
-│   │       └── route.ts
+│   │   │   ├── route.ts
+│   │   │   └── [id]/route.ts
+│   │   ├── tags/
+│   │   │   ├── route.ts
+│   │   │   └── [id]/route.ts
+│   │   ├── settings/
+│   │   │   └── route.ts                ← SiteSettings GET/PATCH
+│   │   └── cms/
+│   │       └── bookings-seen/
+│   │           └── route.ts            ← Cookie-based seen tracking
 │   ├── layout.tsx
 │   └── globals.css
 ├── components/
@@ -357,39 +365,54 @@ src/
 │   │   ├── Footer.tsx
 │   │   └── PageWrapper.tsx
 │   ├── cms/
-│   │   ├── CMSSidebar.tsx            ← Persistent left nav for CMS
-│   │   ├── CMSTopbar.tsx             ← Top bar with user info + logout
-│   │   ├── CMSPageHeader.tsx         ← Page title + action button (e.g. "New Song")
-│   │   ├── ContentTable.tsx          ← Reusable list/table for all content types
-│   │   ├── ContentForm.tsx           ← Generic form wrapper with save/cancel
-│   │   ├── RichTextEditor.tsx        ← Rich text input (prose content)
-│   │   ├── MediaPicker.tsx           ← Select existing media asset
-│   │   ├── MediaUploader.tsx         ← Upload new file to Cloudinary
-│   │   ├── TagSelector.tsx           ← Multi-select tag input
-│   │   ├── PublishToggle.tsx         ← Published / Draft toggle
-│   │   ├── SlugField.tsx             ← Auto-generates slug from title
-│   │   ├── ConfirmDialog.tsx         ← Confirmation modal for deletes
-│   │   └── StatusBadge.tsx           ← Pill badge (Published, Draft, Pending)
+│   │   ├── CMSShell.tsx                ← Outer shell with mobile drawer state
+│   │   ├── CMSSidebar.tsx              ← Nav links + collapsible on mobile
+│   │   ├── CMSTopbar.tsx               ← Hamburger + bookings badge + logout
+│   │   ├── CMSPageHeader.tsx
+│   │   ├── CMSRowActions.tsx
+│   │   ├── MarkBookingsSeen.tsx        ← Sets seen cookie on mount
+│   │   ├── ContentTable.tsx
+│   │   ├── RichTextEditor.tsx
+│   │   ├── MediaPicker.tsx
+│   │   ├── MediaUploader.tsx
+│   │   ├── TagSelector.tsx
+│   │   ├── PublishToggle.tsx
+│   │   ├── SlugField.tsx
+│   │   ├── ConfirmDialog.tsx
+│   │   ├── StatusBadge.tsx
+│   │   ├── PostForm.tsx
+│   │   ├── SongForm.tsx
+│   │   ├── AlbumForm.tsx
+│   │   ├── EventForm.tsx               ← deriveIsUpcoming() at module scope
+│   │   └── InitiativeForm.tsx
 │   ├── music/
 │   │   ├── AlbumCard.tsx
 │   │   ├── SongCard.tsx
-│   │   └── AudioPlayer.tsx
+│   │   └── AlbumPlayer.tsx             ← Inline play, floating bar, prev/next
 │   ├── content/
 │   │   ├── PostCard.tsx
 │   │   └── RichText.tsx
 │   ├── media/
 │   │   └── MediaCard.tsx
-│   ├── ui/
-│   │   ├── Button.tsx
-│   │   ├── Input.tsx
-│   │   ├── Tag.tsx
-│   │   └── LoadingSpinner.tsx
-│   └── seo/
-│       └── MetaTags.tsx
+│   └── ui/
+│       ├── Button.tsx
+│       ├── Input.tsx
+│       ├── Tag.tsx
+│       └── LoadingSpinner.tsx
 ├── lib/
-│   ├── mongodb.ts                ← DB connection
-│   ├── cloudinary.ts             ← Media client
-│   └── utils.ts                  ← Shared helpers
+│   ├── mongodb.ts
+│   ├── cloudinary.ts
+│   ├── resend.ts
+│   ├── utils.ts
+│   └── validators/
+│       ├── albumValidator.ts
+│       ├── artistValidator.ts
+│       ├── bookingValidator.ts
+│       ├── eventValidator.ts
+│       ├── initiativeValidator.ts
+│       ├── postValidator.ts
+│       ├── songValidator.ts
+│       └── tagValidator.ts
 ├── models/
 │   ├── Artist.ts
 │   ├── Album.ts
@@ -399,41 +422,18 @@ src/
 │   ├── Event.ts
 │   ├── Initiative.ts
 │   ├── Booking.ts
-│   └── Tag.ts
-└── services/
-    ├── artistService.ts
-    ├── albumService.ts
-    ├── songService.ts
-    ├── postService.ts
-    └── mediaService.ts
-```
-
-Create all directories:
-
-```bash
-mkdir -p src/app/\(public\)/{about,music,blog,media,speaking,booking,impact}
-mkdir -p src/app/\(public\)/music/\[albumSlug\]/\[songSlug\]
-mkdir -p src/app/\(public\)/blog/\[slug\]
-mkdir -p src/app/\(public\)/tag/\[slug\]
-mkdir -p src/app/\(cms\)/{login,dashboard,media,bookings,tags,artist}
-mkdir -p src/app/\(cms\)/songs/{new,\[id\]}
-mkdir -p src/app/\(cms\)/albums/{new,\[id\]}
-mkdir -p src/app/\(cms\)/posts/{new,\[id\]}
-mkdir -p src/app/\(cms\)/events/{new,\[id\]}
-mkdir -p src/app/\(cms\)/initiatives/{new,\[id\]}
-mkdir -p src/app/api/{artists,albums,songs,posts,media,events,initiatives,bookings,tags}
-mkdir -p src/app/api/admin
-mkdir -p src/components/{layout,cms,music,content,media,ui,seo}
-mkdir -p src/lib src/models src/services
+│   ├── Tag.ts
+│   └── SiteSettings.ts                 ← heroImageUrl, heroImageMobileUrl, etc.
+└── middleware.ts
 ```
 
 ---
 
 ### 4.4 Tailwind Configuration ✅
 
-This project uses **Tailwind v4**, which removes `tailwind.config.ts` entirely. All theme customisation lives in `src/app/globals.css` using the CSS-first `@theme` block. There is no config file to create.
+This project uses **Tailwind v4** — no `tailwind.config.ts`. All theme config lives in `src/app/globals.css`.
 
-**File:** `src/app/globals.css` — replace all existing content with:
+**File:** `src/app/globals.css`
 
 ```css
 @import 'tailwindcss';
@@ -450,9 +450,7 @@ This project uses **Tailwind v4**, which removes `tailwind.config.ts` entirely. 
 }
 ```
 
-Tailwind v4 generates all utility classes from the `@theme` block automatically — `bg-brand-gold`, `text-brand-deep`, `text-brand-warm`, `font-serif`, etc. are all available in components without any additional setup.
-
-**File:** `postcss.config.js` — confirm it reads exactly:
+**File:** `postcss.config.js`
 
 ```js
 module.exports = {
@@ -462,12 +460,48 @@ module.exports = {
 };
 ```
 
-> **Note:** Do not use the old `tailwindcss` key in `postcss.config.js` — that is Tailwind v3 syntax and will cause a build error on v4.
+> Do **not** use the old `tailwindcss` key — that is v3 syntax and will cause a build error on v4.
 
-- [x] `globals.css` replaced with `@import "tailwindcss"` + `@theme` block including teal, gold, deep, warm, accent
+- [x] `globals.css` replaced with `@import "tailwindcss"` + `@theme` block
 - [x] `postcss.config.js` uses `@tailwindcss/postcss`
-- [x] VS Code `unknownAtRules` warning suppressed via `.vscode/settings.json`
-- [x] Brand colour classes (`bg-brand-teal`, `text-brand-deep`, etc.) resolve correctly in dev
+- [x] Brand colour classes resolve correctly in dev
+
+---
+
+### 4.5 next.config.ts ✅
+
+**File:** `next.config.ts`
+
+```typescript
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+    ],
+    qualities: [75, 80],
+  },
+  async redirects() {
+    return [
+      {
+        source: '/speaking',
+        destination: '/events',
+        permanent: true,
+      },
+    ];
+  },
+};
+
+export default nextConfig;
+```
+
+- [x] Cloudinary `remotePatterns` set — `next/image` works with Cloudinary URLs
+- [x] `qualities: [75, 80]` for optimised delivery
+- [x] `/speaking` → `/events` permanent redirect
 
 ---
 
@@ -526,10 +560,7 @@ export interface IArtist extends Document {
     spotify?: string;
     twitter?: string;
   };
-  seo: {
-    metaTitle: string;
-    metaDescription: string;
-  };
+  seo: { metaTitle: string; metaDescription: string };
   updatedAt: Date;
 }
 
@@ -549,10 +580,7 @@ const ArtistSchema = new Schema<IArtist>(
       spotify: String,
       twitter: String,
     },
-    seo: {
-      metaTitle: String,
-      metaDescription: String,
-    },
+    seo: { metaTitle: String, metaDescription: String },
   },
   { timestamps: true }
 );
@@ -586,10 +614,7 @@ const AlbumSchema = new Schema<IAlbum>(
     coverImageUrl: { type: String, required: true },
     description: { type: String },
     tags: [{ type: Schema.Types.ObjectId, ref: 'Tag' }],
-    seo: {
-      metaTitle: String,
-      metaDescription: String,
-    },
+    seo: { metaTitle: String, metaDescription: String },
   },
   { timestamps: true }
 );
@@ -635,10 +660,7 @@ const SongSchema = new Schema<ISong>(
     coverImageUrl: { type: String },
     tags: [{ type: Schema.Types.ObjectId, ref: 'Tag' }],
     isPublished: { type: Boolean, default: true },
-    seo: {
-      metaTitle: String,
-      metaDescription: String,
-    },
+    seo: { metaTitle: String, metaDescription: String },
   },
   { timestamps: true }
 );
@@ -682,10 +704,7 @@ const PostSchema = new Schema<IPost>(
     tags: [{ type: Schema.Types.ObjectId, ref: 'Tag' }],
     isPublished: { type: Boolean, default: false },
     publishedAt: { type: Date },
-    seo: {
-      metaTitle: String,
-      metaDescription: String,
-    },
+    seo: { metaTitle: String, metaDescription: String },
   },
   { timestamps: true }
 );
@@ -703,11 +722,11 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IMediaAsset extends Document {
   url: string;
-  publicId: string; // Cloudinary public_id for deletion/transforms
+  publicId: string;
   altText: string;
   type: 'image' | 'video' | 'audio';
   linkedContentId: mongoose.Types.ObjectId;
-  linkedContentType: string; // 'Song' | 'Post' | 'Album' etc.
+  linkedContentType: string;
   tags: mongoose.Types.ObjectId[];
 }
 
@@ -861,21 +880,58 @@ export default mongoose.models.Initiative ||
   mongoose.model<IInitiative>('Initiative', InitiativeSchema);
 ```
 
+---
+
+#### SiteSettings — `src/models/SiteSettings.ts`
+
+New model added this session. Stores site-wide configurable values managed in `/cms/settings`.
+
+```typescript
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface ISiteSettings extends Document {
+  heroImageUrl: string; // Desktop hero image
+  heroImageMobileUrl: string; // Mobile hero image (stacked layout)
+  heroHeadline: string;
+  heroSubheadline: string;
+  siteTagline: string;
+}
+
+const SiteSettingsSchema = new Schema<ISiteSettings>(
+  {
+    heroImageUrl: { type: String },
+    heroImageMobileUrl: { type: String },
+    heroHeadline: { type: String },
+    heroSubheadline: { type: String },
+    siteTagline: { type: String },
+  },
+  { timestamps: true }
+);
+
+export default mongoose.models.SiteSettings ||
+  mongoose.model<ISiteSettings>('SiteSettings', SiteSettingsSchema);
+```
+
+**API route:** `src/app/api/settings/route.ts` — GET returns first document (upserts on first save), PATCH updates it.
+
+**CMS page:** `src/app/cms/settings/page.tsx` — form for hero images, headline, tagline. Uses `MediaPicker` for both `heroImageUrl` and `heroImageMobileUrl`.
+
+---
+
 **Section 5 Checklist:**
 
-- [ ] `src/lib/mongodb.ts` created and tested — `connectDB()` resolves without error
-- [ ] `src/lib/cloudinary.ts` created (see §9.1)
-- [ ] `src/lib/utils.ts` created
-- [ ] `src/models/Artist.ts` created
-- [ ] `src/models/Album.ts` created
-- [ ] `src/models/Song.ts` created
-- [ ] `src/models/Post.ts` created
-- [ ] `src/models/MediaAsset.ts` created
-- [ ] `src/models/Event.ts` created
-- [ ] `src/models/Booking.ts` created
-- [ ] `src/models/Tag.ts` created
-- [ ] `src/models/Initiative.ts` created
-- [ ] All models import without TypeScript errors (`npx tsc --noEmit`)
+- [x] `src/lib/mongodb.ts` — `connectDB()` resolves without error
+- [x] `src/models/Artist.ts`
+- [x] `src/models/Album.ts`
+- [x] `src/models/Song.ts`
+- [x] `src/models/Post.ts`
+- [x] `src/models/MediaAsset.ts`
+- [x] `src/models/Event.ts`
+- [x] `src/models/Booking.ts`
+- [x] `src/models/Tag.ts`
+- [x] `src/models/Initiative.ts`
+- [x] `src/models/SiteSettings.ts`
+- [x] All models import without TypeScript errors (`npx tsc --noEmit`)
 
 ---
 
@@ -892,6 +948,20 @@ GET    /api/[resource]/[id]     → get single
 PATCH  /api/[resource]/[id]     → update
 DELETE /api/[resource]/[id]     → delete
 ```
+
+**Next.js 15 async params:** All `[id]` route handlers use `Promise<{ id: string }>` for params and must `await` before use:
+
+```typescript
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  // use id, not params.id
+}
+```
+
+This pattern applies uniformly across **all** `[id]` route handlers: songs, albums, posts, events, initiatives, tags, artists, bookings, media.
 
 ---
 
@@ -957,10 +1027,11 @@ import { SongSchema } from '@/lib/validators/songValidator';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
-  const song = await Song.findById(params.id)
+  const song = await Song.findById(id)
     .populate('albumId', 'title slug')
     .populate('tags', 'name slug')
     .lean();
@@ -970,8 +1041,9 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
   const body = await req.json();
   const parsed = SongSchema.partial().safeParse(body);
@@ -987,24 +1059,25 @@ export async function PATCH(
         slug: slugify(parsed.data.title, { lower: true, strict: true }),
       }
     : parsed.data;
-  const song = await Song.findByIdAndUpdate(params.id, update, { new: true });
+  const song = await Song.findByIdAndUpdate(id, update, { new: true });
   if (!song) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: song });
 }
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
-  await Song.findByIdAndDelete(params.id);
+  await Song.findByIdAndDelete(id);
   return NextResponse.json({ ok: true });
 }
 ```
 
 ---
 
-### 6.3 Albums Route
+### 6.3 Albums Route ✅
 
 **File:** `src/app/api/albums/route.ts`
 
@@ -1060,20 +1133,20 @@ import { AlbumSchema } from '@/lib/validators/albumValidator';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
-  const album = await Album.findById(params.id)
-    .populate('tags', 'name slug')
-    .lean();
+  const album = await Album.findById(id).populate('tags', 'name slug').lean();
   if (!album) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: album });
 }
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
   const body = await req.json();
   const parsed = AlbumSchema.partial().safeParse(body);
@@ -1089,24 +1162,25 @@ export async function PATCH(
         slug: slugify(parsed.data.title, { lower: true, strict: true }),
       }
     : parsed.data;
-  const album = await Album.findByIdAndUpdate(params.id, update, { new: true });
+  const album = await Album.findByIdAndUpdate(id, update, { new: true });
   if (!album) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: album });
 }
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
-  await Album.findByIdAndDelete(params.id);
+  await Album.findByIdAndDelete(id);
   return NextResponse.json({ ok: true });
 }
 ```
 
 ---
 
-### 6.4 Posts Route
+### 6.4 Posts Route ✅
 
 **File:** `src/app/api/posts/route.ts`
 
@@ -1154,7 +1228,7 @@ export async function POST(req: NextRequest) {
 }
 ```
 
-**File:** `src/app/api/posts/[id]/route.ts`
+**File:** `src/app/api/posts/[id]/route.ts` — PATCH fix: params awaited before use. `coverImageUrl` is `.optional().or(z.literal(''))` in the validator so empty string passes validation.
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
@@ -1165,20 +1239,20 @@ import { PostSchema } from '@/lib/validators/postValidator';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
-  const post = await Post.findById(params.id)
-    .populate('tags', 'name slug')
-    .lean();
+  const post = await Post.findById(id).populate('tags', 'name slug').lean();
   if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: post });
 }
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params; // ← was params.id before fix
   await connectDB();
   const body = await req.json();
   const parsed = PostSchema.partial().safeParse(body);
@@ -1192,24 +1266,25 @@ export async function PATCH(
   if (parsed.data.title)
     update.slug = slugify(parsed.data.title, { lower: true, strict: true });
   if (parsed.data.isPublished) update.publishedAt = new Date();
-  const post = await Post.findByIdAndUpdate(params.id, update, { new: true });
+  const post = await Post.findByIdAndUpdate(id, update, { new: true });
   if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: post });
 }
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
-  await Post.findByIdAndDelete(params.id);
+  await Post.findByIdAndDelete(id);
   return NextResponse.json({ ok: true });
 }
 ```
 
 ---
 
-### 6.5 Events Route
+### 6.5 Events Route ✅
 
 **File:** `src/app/api/events/route.ts`
 
@@ -1262,18 +1337,20 @@ import { EventSchema } from '@/lib/validators/eventValidator';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
-  const event = await Event.findById(params.id).lean();
+  const event = await Event.findById(id).lean();
   if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: event });
 }
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
   const body = await req.json();
   const parsed = EventSchema.partial().safeParse(body);
@@ -1289,24 +1366,25 @@ export async function PATCH(
         slug: slugify(parsed.data.title, { lower: true, strict: true }),
       }
     : parsed.data;
-  const event = await Event.findByIdAndUpdate(params.id, update, { new: true });
+  const event = await Event.findByIdAndUpdate(id, update, { new: true });
   if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: event });
 }
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
-  await Event.findByIdAndDelete(params.id);
+  await Event.findByIdAndDelete(id);
   return NextResponse.json({ ok: true });
 }
 ```
 
 ---
 
-### 6.6 Initiatives Route
+### 6.6 Initiatives Route ✅
 
 **File:** `src/app/api/initiatives/route.ts`
 
@@ -1355,10 +1433,11 @@ import { InitiativeSchema } from '@/lib/validators/initiativeValidator';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
-  const initiative = await Initiative.findById(params.id)
+  const initiative = await Initiative.findById(id)
     .populate('tags', 'name slug')
     .lean();
   if (!initiative)
@@ -1368,8 +1447,9 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
   const body = await req.json();
   const parsed = InitiativeSchema.partial().safeParse(body);
@@ -1385,7 +1465,7 @@ export async function PATCH(
         slug: slugify(parsed.data.title, { lower: true, strict: true }),
       }
     : parsed.data;
-  const initiative = await Initiative.findByIdAndUpdate(params.id, update, {
+  const initiative = await Initiative.findByIdAndUpdate(id, update, {
     new: true,
   });
   if (!initiative)
@@ -1395,17 +1475,20 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
-  await Initiative.findByIdAndDelete(params.id);
+  await Initiative.findByIdAndDelete(id);
   return NextResponse.json({ ok: true });
 }
 ```
 
 ---
 
-### 6.7 Tags Route
+### 6.7 Tags Route ✅
+
+Tags use `name` (not `title`) for slug generation: `slugify(parsed.data.name, ...)`. DELETE only on `[id]` — no PATCH (rename by delete + recreate).
 
 **File:** `src/app/api/tags/route.ts`
 
@@ -1449,21 +1532,20 @@ import Tag from '@/models/Tag';
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
-  await Tag.findByIdAndDelete(params.id);
+  await Tag.findByIdAndDelete(id);
   return NextResponse.json({ ok: true });
 }
 ```
 
-> Tags use `name` not `title` for slug generation — note `slugify(parsed.data.name, ...)` in the POST handler.
-
 ---
 
-### 6.8 Artists Route
+### 6.8 Artists Route ✅
 
-No slug. Single artist document — GET returns the first (and only) artist record. POST creates it on first setup. PATCH updates it.
+Single document. GET returns `Artist.findOne()`. POST creates on first setup. PATCH via `[id]` route.
 
 **File:** `src/app/api/artists/route.ts`
 
@@ -1504,8 +1586,9 @@ import { ArtistSchema } from '@/lib/validators/artistValidator';
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
   const body = await req.json();
   const parsed = ArtistSchema.partial().safeParse(body);
@@ -1515,9 +1598,7 @@ export async function PATCH(
       { status: 422 }
     );
   }
-  const artist = await Artist.findByIdAndUpdate(params.id, parsed.data, {
-    new: true,
-  });
+  const artist = await Artist.findByIdAndUpdate(id, parsed.data, { new: true });
   if (!artist)
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ data: artist });
@@ -1526,9 +1607,9 @@ export async function PATCH(
 
 ---
 
-### 6.9 Bookings Route
+### 6.9 Bookings Route ✅
 
-No slug. Submissions only come in via POST from the public booking form. Status updates via PATCH from the CMS.
+Public POST (no auth). CMS GET (all bookings with optional `?status=` filter). PATCH (`[id]`) updates status and triggers Resend email notification (see §6.11).
 
 **File:** `src/app/api/bookings/route.ts`
 
@@ -1571,13 +1652,15 @@ export async function POST(req: NextRequest) {
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Booking from '@/models/Booking';
+import { sendBookingStatusEmail } from '@/lib/resend';
 
 const VALID_STATUSES = ['pending', 'reviewed', 'accepted', 'declined'] as const;
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
   const { status } = await req.json();
   if (!VALID_STATUSES.includes(status)) {
@@ -1587,21 +1670,783 @@ export async function PATCH(
     );
   }
   const booking = await Booking.findByIdAndUpdate(
-    params.id,
+    id,
     { status },
     { new: true }
   );
   if (!booking)
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  // Send email notification when status changes
+  await sendBookingStatusEmail(booking);
+
   return NextResponse.json({ data: booking });
 }
 ```
 
 ---
 
-### 6.10 Media Route
+### 6.10 Media Route ✅
 
-Entirely different — handles `FormData`, not JSON. Uploads to Cloudinary before writing to MongoDB. No slug. See §9 for Cloudinary setup.
+Handles `FormData` for upload. `DELETE /api/media/[id]` removes a single asset from Cloudinary then MongoDB. `DELETE /api/media` (collection-level) accepts `{ ids: string[] }` and bulk-removes from Cloudinary (`Promise.allSettled`) then MongoDB. Full code in §9.2.
+
+---
+
+### 6.11 Resend Email Integration ✅
+
+**File:** `src/lib/resend.ts`
+
+```typescript
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export async function sendBookingStatusEmail(booking: any) {
+  const { name, email, status } = booking;
+
+  const subjectMap: Record<string, string> = {
+    reviewed: 'Your booking request has been reviewed',
+    accepted: 'Your booking request has been accepted!',
+    declined: 'Update on your booking request',
+  };
+
+  if (!subjectMap[status]) return; // Don't email on 'pending'
+
+  await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL!,
+    to: email,
+    subject: subjectMap[status],
+    html: `<p>Hi ${name},</p><p>Your booking status has been updated to: <strong>${status}</strong>.</p>`,
+  });
+}
+```
+
+---
+
+### 6.12 Bookings Seen Route ✅
+
+Cookie-based tracking for the pending bookings badge in the CMS sidebar.
+
+**File:** `src/app/api/cms/bookings-seen/route.ts`
+
+```typescript
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+
+export async function POST() {
+  const cookieStore = await cookies();
+  cookieStore.set('bookings_seen_at', new Date().toISOString(), {
+    path: '/',
+    httpOnly: true,
+    maxAge: 60 * 60 * 24 * 365,
+  });
+  return NextResponse.json({ ok: true });
+}
+```
+
+---
+
+### 6.13 Settings Route ✅
+
+**File:** `src/app/api/settings/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import SiteSettings from '@/models/SiteSettings';
+
+export async function GET() {
+  await connectDB();
+  const settings = await SiteSettings.findOne().lean();
+  return NextResponse.json({ data: settings ?? {} });
+}
+
+export async function PATCH(req: NextRequest) {
+  await connectDB();
+  const body = await req.json();
+  const settings = await SiteSettings.findOneAndUpdate(
+    {},
+    { $set: body },
+    { new: true, upsert: true }
+  );
+  return NextResponse.json({ data: settings });
+}
+```
+
+---
+
+### 6.14 Validators ✅
+
+All validators live in `src/lib/validators/`. URL fields use `.optional().or(z.literal(''))` to allow empty strings without validation errors.
+
+**`songValidator.ts`**
+
+```typescript
+import { z } from 'zod';
+export const SongSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  albumId: z.string().min(1, 'Album is required'),
+  trackNumber: z.number().optional(),
+  description: z.string().optional(),
+  lyrics: z.string().optional(),
+  storyBehindSong: z.string().optional(),
+  audioUrl: z.string().url().optional().or(z.literal('')),
+  videoUrl: z.string().url().optional().or(z.literal('')),
+  coverImageUrl: z.string().url().optional().or(z.literal('')),
+  tags: z.array(z.string()).optional(),
+  isPublished: z.boolean().default(true),
+  seo: z
+    .object({
+      metaTitle: z.string().optional(),
+      metaDescription: z.string().optional(),
+    })
+    .optional(),
+});
+export type SongInput = z.infer<typeof SongSchema>;
+```
+
+**`postValidator.ts`**
+
+```typescript
+import { z } from 'zod';
+export const PostSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  category: z.enum(['blog', 'devotional', 'story']).default('blog'),
+  body: z.string().min(1, 'Body is required'),
+  excerpt: z.string().max(300).optional(),
+  coverImageUrl: z.string().url().optional().or(z.literal('')),
+  tags: z.array(z.string()).optional(),
+  isPublished: z.boolean().default(false),
+  seo: z
+    .object({
+      metaTitle: z.string().optional(),
+      metaDescription: z.string().optional(),
+    })
+    .optional(),
+});
+export type PostInput = z.infer<typeof PostSchema>;
+```
+
+**`eventValidator.ts`**
+
+```typescript
+import { z } from 'zod';
+export const EventSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  date: z.string().min(1, 'Date is required'),
+  location: z.string().min(1, 'Location is required'),
+  description: z.string().optional(),
+  externalLink: z.string().url().optional().or(z.literal('')),
+  isUpcoming: z.boolean().default(true),
+  coverImageUrl: z.string().url().optional().or(z.literal('')),
+});
+export type EventInput = z.infer<typeof EventSchema>;
+```
+
+**`albumValidator.ts`**
+
+```typescript
+import { z } from 'zod';
+export const AlbumSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  releaseYear: z.number({ required_error: 'Release year is required' }),
+  coverImageUrl: z.string().url('Must be a valid URL'),
+  description: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  seo: z
+    .object({
+      metaTitle: z.string().optional(),
+      metaDescription: z.string().optional(),
+    })
+    .optional(),
+});
+export type AlbumInput = z.infer<typeof AlbumSchema>;
+```
+
+**`initiativeValidator.ts`**
+
+```typescript
+import { z } from 'zod';
+export const InitiativeSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  body: z.string().optional(),
+  coverImageUrl: z.string().url().optional().or(z.literal('')),
+  externalLink: z.string().url().optional().or(z.literal('')),
+  tags: z.array(z.string()).optional(),
+});
+export type InitiativeInput = z.infer<typeof InitiativeSchema>;
+```
+
+**`tagValidator.ts`**
+
+```typescript
+import { z } from 'zod';
+export const TagSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional(),
+});
+export type TagInput = z.infer<typeof TagSchema>;
+```
+
+**`artistValidator.ts`**
+
+```typescript
+import { z } from 'zod';
+export const ArtistSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  slugName: z.string().min(1, 'Slug is required'),
+  biographyShort: z.string().max(160),
+  biographyMedium: z.string().max(500),
+  biographyLong: z.string(),
+  achievements: z.array(z.string()).optional(),
+  speakingProfile: z.string().optional(),
+  profileImageUrl: z.string().url('Must be a valid URL'),
+  socialLinks: z
+    .object({
+      instagram: z.string().url().optional().or(z.literal('')),
+      youtube: z.string().url().optional().or(z.literal('')),
+      spotify: z.string().url().optional().or(z.literal('')),
+      twitter: z.string().url().optional().or(z.literal('')),
+    })
+    .optional(),
+  seo: z
+    .object({
+      metaTitle: z.string().optional(),
+      metaDescription: z.string().optional(),
+    })
+    .optional(),
+});
+export type ArtistInput = z.infer<typeof ArtistSchema>;
+```
+
+**`bookingValidator.ts`**
+
+```typescript
+import { z } from 'zod';
+export const BookingSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Must be a valid email'),
+  organisation: z.string().optional(),
+  eventType: z.string().optional(),
+  eventDate: z.string().optional(),
+  message: z.string().min(1, 'Message is required'),
+});
+export type BookingInput = z.infer<typeof BookingSchema>;
+```
+
+---
+
+### 6.15 Key Differences Summary
+
+| Route       | Slug field | Slug source | Query filters                    | Special behaviour                          |
+| ----------- | ---------- | ----------- | -------------------------------- | ------------------------------------------ |
+| songs       | `slug`     | `title`     | `albumId`, `tag`, `isPublished`  | `trackNumber` sort                         |
+| albums      | `slug`     | `title`     | `tag`                            | No `isPublished` filter                    |
+| posts       | `slug`     | `title`     | `category`, `tag`, `isPublished` | `publishedAt` set on publish               |
+| events      | `slug`     | `title`     | `isUpcoming`                     | `isUpcoming` derived from date             |
+| initiatives | `slug`     | `title`     | —                                | No publish toggle                          |
+| tags        | `slug`     | `name`      | —                                | DELETE only (no PATCH)                     |
+| artists     | none       | —           | —                                | Single document, GET + POST + PATCH        |
+| bookings    | none       | —           | `status`                         | POST public, PATCH triggers Resend email   |
+| media       | none       | —           | —                                | `FormData` upload, Cloudinary DELETE first |
+| settings    | none       | —           | —                                | Single document, upsert on PATCH           |
+
+---
+
+**Section 6 Checklist:**
+
+**Validators** (`src/lib/validators/`)
+
+- [x] `songValidator.ts`
+- [x] `albumValidator.ts`
+- [x] `postValidator.ts`
+- [x] `eventValidator.ts`
+- [x] `initiativeValidator.ts`
+- [x] `tagValidator.ts`
+- [x] `artistValidator.ts`
+- [x] `bookingValidator.ts`
+
+**Route files** (`src/app/api/`)
+
+- [x] `songs/route.ts` — GET (filters: `albumId`, `tag`, `isPublished`), POST
+- [x] `songs/[id]/route.ts` — GET, PATCH, DELETE
+- [x] `albums/route.ts` — GET (filters: `tag`), POST
+- [x] `albums/[id]/route.ts` — GET, PATCH, DELETE
+- [x] `posts/route.ts` — GET (filters: `category`, `tag`, `isPublished`), POST
+- [x] `posts/[id]/route.ts` — GET, PATCH, DELETE
+- [x] `events/route.ts` — GET (filters: `upcoming`), POST
+- [x] `events/[id]/route.ts` — GET, PATCH, DELETE
+- [x] `initiatives/route.ts` — GET, POST
+- [x] `initiatives/[id]/route.ts` — GET, PATCH, DELETE
+- [x] `tags/route.ts` — GET, POST
+- [x] `tags/[id]/route.ts` — DELETE only
+- [x] `artists/route.ts` — GET (single record), POST
+- [x] `artists/[id]/route.ts` — PATCH only
+- [x] `bookings/route.ts` — GET (filters: `status`), POST
+- [x] `bookings/[id]/route.ts` — PATCH (status update + Resend email)
+- [x] `media/route.ts` — GET, POST (FormData + Cloudinary upload)
+- [x] `media/[id]/route.ts` — DELETE (removes from Cloudinary + MongoDB)
+- [x] `settings/route.ts` — GET, PATCH (upsert)
+- [x] `cms/bookings-seen/route.ts` — POST (sets seen cookie)
+
+**Verification**
+
+- [x] `npx tsc --noEmit` — zero TypeScript errors across all route files
+- [x] All routes tested via REST client — correct status codes and response shapes
+
+---
+
+## 7. UI & Component Layer ✅
+
+### 7.1 Root Layout
+
+**File:** `src/app/layout.tsx`
+
+```typescript
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+import Navbar from '@/components/layout/Navbar'
+import Footer from '@/components/layout/Footer'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: { default: 'Glowreeyah', template: '%s | Glowreeyah' },
+  description: 'Music. Ministry. Movement.',
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body className={`${inter.className} bg-brand-warm text-brand-deep`}>
+        <Navbar />
+        <main>{children}</main>
+        <Footer />
+      </body>
+    </html>
+  )
+}
+```
+
+---
+
+### 7.2 Navbar
+
+**File:** `src/components/layout/Navbar.tsx`
+
+```typescript
+'use client'
+import Link from 'next/link'
+import { useState } from 'react'
+
+const links = [
+  { href: '/',        label: 'Home' },
+  { href: '/about',   label: 'About' },
+  { href: '/music',   label: 'Music' },
+  { href: '/blog',    label: 'Blog' },
+  { href: '/media',   label: 'Media' },
+  { href: '/events',  label: 'Events' },
+  { href: '/impact',  label: 'Impact' },
+  { href: '/booking', label: 'Book' },
+]
+
+export default function Navbar() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <nav className="sticky top-0 z-50 bg-brand-deep text-white px-6 py-4 flex items-center justify-between">
+      <Link href="/" className="text-brand-teal font-serif text-xl font-bold">
+        Glowreeyah
+      </Link>
+      <ul className="hidden md:flex gap-6 text-sm">
+        {links.map(l => (
+          <li key={l.href}>
+            <Link href={l.href} className="hover:text-brand-teal transition-colors">
+              {l.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <button
+        className="md:hidden"
+        onClick={() => setOpen(!open)}
+        aria-label="Toggle menu"
+      >
+        ☰
+      </button>
+      {open && (
+        <ul className="absolute top-full left-0 w-full bg-brand-deep flex flex-col gap-4 px-6 py-4 md:hidden">
+          {links.map(l => (
+            <li key={l.href}>
+              <Link href={l.href} onClick={() => setOpen(false)} className="hover:text-brand-gold">
+                {l.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </nav>
+  )
+}
+```
+
+---
+
+### 7.3 Rendering Strategy
+
+| Page Type                  | Strategy                                    | Reason                         |
+| -------------------------- | ------------------------------------------- | ------------------------------ |
+| Home, About, Music List    | Server Component + `revalidate`             | SEO + performance              |
+| Song / Post / Album detail | Server Component + ISR (`revalidate: 3600`) | Fresh content, cacheable       |
+| Search / Filter            | Client Component                            | Real-time interaction          |
+| CMS dashboard + forms      | Client Component                            | Full interactivity, form state |
+| Booking form               | Client Component                            | Form state management          |
+
+---
+
+### 7.4 CMS Components
+
+**CMSShell** (`src/components/cms/CMSShell.tsx`) — outer shell that manages mobile drawer open/close state. Renders `CMSSidebar` (as a slide-in drawer on mobile, persistent on desktop) and `CMSTopbar`.
+
+**CMSSidebar** (`src/components/cms/CMSSidebar.tsx`) — navigation links. Collapsible on mobile via CMSShell state. Highlights active route.
+
+```
+Nav items: Dashboard, Posts, Songs, Albums, Events, Initiatives, Media, Bookings, Tags, Artist Profile, Settings
+```
+
+**CMSTopbar** (`src/components/cms/CMSTopbar.tsx`) — hamburger menu button (mobile), pending bookings badge, "View site" link, user email, logout button.
+
+The **pending bookings badge** shows the count of bookings created after the `bookings_seen_at` cookie timestamp. It is computed server-side in the CMS layout and passed as a prop.
+
+**MarkBookingsSeen** (`src/components/cms/MarkBookingsSeen.tsx`) — client component that calls `POST /api/cms/bookings-seen` on mount when the user lands on `/cms/bookings`. Clears the badge count.
+
+**CMSRowActions** (`src/components/cms/CMSRowActions.tsx`) — Edit link for list rows. No router dependency (removed unused `router`).
+
+**EventForm** (`src/components/cms/EventForm.tsx`) — `deriveIsUpcoming()` is defined at module scope (outside the component). Called when the date field changes to auto-set `isUpcoming`. `PublishToggle` is not present in EventForm.
+
+---
+
+### 7.5 Music Components
+
+**AlbumPlayer** (`src/components/music/AlbumPlayer.tsx`) — replaces `SongCard` on album detail pages. Features:
+
+- Inline play/pause per track
+- Floating player bar (fixed bottom) that appears when a track is playing
+- Previous / Next track navigation
+- Volume control
+- Auto-advance to next track on completion
+
+**AlbumCard** (`src/components/music/AlbumCard.tsx`) — card used on the Music index page. Links to `/music/[albumSlug]`.
+
+**SongCard** (`src/components/music/SongCard.tsx`) — retained for use in contexts outside AlbumPlayer (e.g. tag pages).
+
+---
+
+### 7.6 Content Components
+
+**PostCard** (`src/components/content/PostCard.tsx`) — card with cover image, title, excerpt, category, date. Cover image uses explicit `width` and `height` props with `object-cover` (not `fill`).
+
+**RichText** (`src/components/content/RichText.tsx`) — renders markdown body via `react-markdown`.
+
+---
+
+**Section 7 Checklist:**
+
+- [x] `src/app/layout.tsx` — root layout with Navbar and Footer, `next/font` Inter, no layout shift
+- [x] `src/components/layout/Navbar.tsx` — responsive, mobile menu, links updated to `/events`
+- [x] `src/components/layout/Footer.tsx` — created
+- [x] `src/components/layout/PageWrapper.tsx` — created
+- [x] `src/components/ui/Button.tsx` — created
+- [x] `src/components/ui/Input.tsx` — created
+- [x] `src/components/ui/Tag.tsx` — created
+- [x] `src/components/ui/LoadingSpinner.tsx` — created
+- [x] `src/components/music/AlbumCard.tsx` — created
+- [x] `src/components/music/SongCard.tsx` — created
+- [x] `src/components/music/AlbumPlayer.tsx` — inline play, floating bar, prev/next, volume, auto-advance
+- [x] `src/components/content/PostCard.tsx` — explicit width/height, object-cover (not fill)
+- [x] `src/components/content/RichText.tsx` — react-markdown renderer
+- [x] `src/components/media/MediaCard.tsx` — created
+- [x] `npm run dev` renders root layout with Navbar and Footer, no console errors
+
+---
+
+## 8. Page Implementation ✅
+
+### 8.1 Public Routes
+
+| Route                | Page file                             | Notes                                     |
+| -------------------- | ------------------------------------- | ----------------------------------------- |
+| `/`                  | `(public)/page.tsx`                   | Dual hero, events section, impact cards   |
+| `/about`             | `(public)/about/page.tsx`             | `object-top`, fixed height hero container |
+| `/music`             | `(public)/music/page.tsx`             | Album cards grid                          |
+| `/music/[albumSlug]` | `(public)/music/[albumSlug]/page.tsx` | AlbumPlayer — inline + floating bar       |
+| `/blog`              | `(public)/blog/page.tsx`              | Post cards, category filter               |
+| `/blog/[slug]`       | `(public)/blog/[slug]/page.tsx`       | Hero image + referer-based back link      |
+| `/events`            | `(public)/events/page.tsx`            | Cards grid (renamed from `/speaking`)     |
+| `/booking`           | `(public)/booking/page.tsx`           | Contact + booking form                    |
+| `/impact`            | `(public)/impact/page.tsx`            | Initiative image cards linking to detail  |
+| `/impact/[slug]`     | `(public)/impact/[slug]/page.tsx`     | Initiative detail                         |
+| `/media`             | `(public)/media/page.tsx`             | Gallery grid                              |
+| `/tag/[slug]`        | `(public)/tag/[slug]/page.tsx`        | Tagged content list                       |
+
+---
+
+### 8.2 Homepage Hero — Dual Layout ✅
+
+The homepage hero renders two separate layouts controlled by Tailwind breakpoints:
+
+```tsx
+{/* Mobile — stacked image above text */}
+<section className="md:hidden">
+  <Image src={settings.heroImageMobileUrl} ... />
+  <div className="p-6">
+    <h1>{settings.heroHeadline}</h1>
+    ...
+  </div>
+</section>
+
+{/* Desktop — text overlaid on full-width image */}
+<section className="hidden md:flex relative">
+  <Image src={settings.heroImageUrl} fill ... />
+  <div className="absolute inset-0 flex flex-col justify-center px-16">
+    <h1>{settings.heroHeadline}</h1>
+    ...
+  </div>
+</section>
+```
+
+Both `heroImageUrl` (desktop) and `heroImageMobileUrl` (mobile) are stored in `SiteSettings` and managed via `/cms/settings`.
+
+---
+
+### 8.3 Blog Post Detail — Referer Back Link ✅
+
+The blog post detail page reads the `Referer` header on the server and renders a back link that goes to the referring page if it is within the same origin, otherwise defaults to `/blog`.
+
+```typescript
+// In generateMetadata or the page component:
+const headersList = await headers();
+const referer = headersList.get('referer') ?? '';
+const backHref = referer.includes(process.env.NEXT_PUBLIC_SITE_URL!)
+  ? referer
+  : '/blog';
+```
+
+---
+
+### 8.4 generateMetadata ✅
+
+Every dynamic public route implements `generateMetadata()`:
+
+```typescript
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  // fetch content...
+  return {
+    title: content.seo?.metaTitle || content.title,
+    description: content.seo?.metaDescription || content.excerpt,
+    openGraph: {
+      title: content.seo?.metaTitle || content.title,
+      description: content.seo?.metaDescription || content.excerpt,
+      images: [{ url: content.coverImageUrl }],
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: content.seo?.metaTitle || content.title,
+      description: content.seo?.metaDescription || content.excerpt,
+      images: [content.coverImageUrl],
+    },
+    alternates: {
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/blog/${slug}`,
+    },
+  };
+}
+```
+
+---
+
+### 8.5 Initiative Image Cards ✅
+
+Initiative cards on `/impact` use explicit `width` / `height` with `object-cover` (not `fill`). Each card links to `/impact/[slug]`.
+
+```tsx
+<Image
+  src={initiative.coverImageUrl}
+  alt={initiative.title}
+  width={600}
+  height={400}
+  className="w-full h-48 object-cover"
+/>
+```
+
+---
+
+### 8.6 Events Homepage Section ✅
+
+The homepage events section shows cards for upcoming events (not a single featured event). Fetches events where `isUpcoming: true`, sorted by date ascending.
+
+---
+
+### 8.7 Home Page Server Component Pattern
+
+**File:** `src/app/(public)/page.tsx`
+
+```typescript
+import { connectDB } from '@/lib/mongodb'
+import Song from '@/models/Song'
+import Post from '@/models/Post'
+import Event from '@/models/Event'
+import Initiative from '@/models/Initiative'
+import SiteSettings from '@/models/SiteSettings'
+import Image from 'next/image'
+
+export const revalidate = 3600
+
+export default async function HomePage() {
+  await connectDB()
+
+  const [latestSongs, latestPosts, upcomingEvents, initiatives, settings] = await Promise.all([
+    Song.find({ isPublished: true }).sort({ createdAt: -1 }).limit(3).lean(),
+    Post.find({ isPublished: true }).sort({ publishedAt: -1 }).limit(3).lean(),
+    Event.find({ isUpcoming: true }).sort({ date: 1 }).limit(3).lean(),
+    Initiative.find().sort({ createdAt: -1 }).limit(4).lean(),
+    SiteSettings.findOne().lean(),
+  ])
+
+  return (
+    <div>
+      {/* Mobile hero — stacked */}
+      <section className="md:hidden">
+        {settings?.heroImageMobileUrl && (
+          <Image src={settings.heroImageMobileUrl} alt="Hero" width={800} height={600} className="w-full object-cover" />
+        )}
+        <div className="p-6 bg-brand-deep text-white text-center">
+          <h1 className="font-serif text-4xl text-brand-teal mb-2">{settings?.heroHeadline ?? 'Glowreeyah'}</h1>
+          <p className="text-brand-warm">{settings?.heroSubheadline ?? 'Music. Ministry. Movement.'}</p>
+        </div>
+      </section>
+
+      {/* Desktop hero — overlay */}
+      <section className="hidden md:flex relative min-h-[90vh] items-center">
+        {settings?.heroImageUrl && (
+          <Image src={settings.heroImageUrl} alt="Hero" fill className="object-cover" />
+        )}
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative z-10 px-16 text-white">
+          <h1 className="font-serif text-7xl text-brand-teal mb-4">{settings?.heroHeadline ?? 'Glowreeyah'}</h1>
+          <p className="text-2xl text-brand-warm">{settings?.heroSubheadline ?? 'Music. Ministry. Movement.'}</p>
+        </div>
+      </section>
+
+      {/* Events section, impact section, latest songs, latest posts... */}
+    </div>
+  )
+}
+```
+
+---
+
+### 8.8 Dynamic Route Pattern
+
+All dynamic slug-based pages follow this server component pattern.
+
+**Example — Album detail:** `src/app/(public)/music/[albumSlug]/page.tsx`
+
+```typescript
+import { connectDB } from '@/lib/mongodb'
+import Album from '@/models/Album'
+import Song from '@/models/Song'
+import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
+import AlbumPlayer from '@/components/music/AlbumPlayer'
+
+interface Props {
+  params: Promise<{ albumSlug: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { albumSlug } = await params
+  await connectDB()
+  const album = await Album.findOne({ slug: albumSlug }).lean()
+  if (!album) return {}
+  return {
+    title: album.seo?.metaTitle || album.title,
+    description: album.seo?.metaDescription || album.description,
+    openGraph: { images: [{ url: album.coverImageUrl }] },
+  }
+}
+
+export default async function AlbumPage({ params }: Props) {
+  const { albumSlug } = await params
+  await connectDB()
+  const album = await Album.findOne({ slug: albumSlug }).lean()
+  if (!album) notFound()
+
+  const songs = await Song.find({ albumId: album._id, isPublished: true })
+    .sort({ trackNumber: 1 })
+    .lean()
+
+  return (
+    <main className="max-w-4xl mx-auto px-6 py-12">
+      <h1 className="font-serif text-4xl text-brand-deep mb-2">{album.title}</h1>
+      <p className="text-gray-500 mb-8">{album.releaseYear}</p>
+      <AlbumPlayer songs={songs} album={album} />
+    </main>
+  )
+}
+```
+
+---
+
+**Section 8 Checklist:**
+
+- [x] `src/app/(public)/page.tsx` — dual hero renders correctly; events, initiatives, songs, posts sections present
+- [x] `src/app/(public)/about/page.tsx` — loads with fallback UI when no artist document; `object-top`, fixed height hero
+- [x] `src/app/(public)/music/page.tsx` — album cards grid, empty state handled
+- [x] `src/app/(public)/music/[albumSlug]/page.tsx` — AlbumPlayer renders, floating bar works
+- [x] `src/app/(public)/blog/page.tsx` — post cards, category filter, empty state handled
+- [x] `src/app/(public)/blog/[slug]/page.tsx` — full post renders, referer-aware back link
+- [x] `src/app/(public)/events/page.tsx` — event cards grid (renamed from `/speaking`)
+- [x] `src/app/(public)/booking/page.tsx` — form renders and submits without errors
+- [x] `src/app/(public)/impact/page.tsx` — initiative image cards render, link to detail
+- [x] `src/app/(public)/impact/[slug]/page.tsx` — initiative detail renders, 404s on unknown slug
+- [x] `src/app/(public)/media/page.tsx` — gallery renders, empty state handled
+- [x] `src/app/(public)/tag/[slug]/page.tsx` — 404s correctly on unknown slug
+- [x] `/speaking` → `/events` redirect verified (301)
+- [x] `generateMetadata()` implemented on all dynamic routes
+- [x] `notFound()` used on all slug-based routes
+- [ ] All pages re-verified with live data after DB is seeded
+
+---
+
+## 9. Media Integration ✅
+
+### 9.1 Cloudinary Configuration
+
+**File:** `src/lib/cloudinary.ts`
+
+```typescript
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+export default cloudinary;
+```
+
+---
+
+### 9.2 Upload API Route
 
 **File:** `src/app/api/media/route.ts`
 
@@ -1665,7 +2510,52 @@ export async function POST(req: NextRequest) {
 }
 ```
 
-**File:** `src/app/api/media/[id]/route.ts`
+**Bulk delete** is also handled on the collection route via `DELETE /api/media` with a JSON body `{ ids: string[] }`. This allows the frontend to delete multiple assets in one request.
+
+**File:** `src/app/api/media/route.ts` — add `DELETE` handler below the existing `POST`:
+
+```typescript
+// Bulk delete — body: { ids: string[] }
+export async function DELETE(req: NextRequest) {
+  await connectDB();
+
+  let ids: string[];
+  try {
+    const body = await req.json();
+    ids = body.ids;
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return NextResponse.json(
+      { error: 'ids must be a non-empty array' },
+      { status: 422 }
+    );
+  }
+
+  const assets = await MediaAsset.find({ _id: { $in: ids } });
+
+  if (assets.length === 0) {
+    return NextResponse.json(
+      { error: 'No matching assets found' },
+      { status: 404 }
+    );
+  }
+
+  // Delete from Cloudinary in parallel — tolerate individual Cloudinary failures
+  await Promise.allSettled(
+    assets.map((a) => cloudinary.uploader.destroy(a.publicId))
+  );
+
+  // Remove all from MongoDB
+  await MediaAsset.deleteMany({ _id: { $in: ids } });
+
+  return NextResponse.json({ ok: true, deleted: assets.length });
+}
+```
+
+**File:** `src/app/api/media/[id]/route.ts` — single delete (unchanged):
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
@@ -1675,13 +2565,14 @@ import MediaAsset from '@/models/MediaAsset';
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   await connectDB();
-  const asset = await MediaAsset.findById(params.id);
+
+  const asset = await MediaAsset.findById(id);
   if (!asset) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  // Delete from Cloudinary first, then remove the DB record
   await cloudinary.uploader.destroy(asset.publicId);
   await asset.deleteOne();
 
@@ -1689,566 +2580,62 @@ export async function DELETE(
 }
 ```
 
----
-
-### 6.11 Validators
-
-Create one file per resource in `src/lib/validators/`.
-
-**`albumValidator.ts`**
-
-```typescript
-import { z } from 'zod';
-export const AlbumSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  releaseYear: z.number({ required_error: 'Release year is required' }),
-  coverImageUrl: z.string().url('Must be a valid URL'),
-  description: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  seo: z
-    .object({
-      metaTitle: z.string().optional(),
-      metaDescription: z.string().optional(),
-    })
-    .optional(),
-});
-export type AlbumInput = z.infer<typeof AlbumSchema>;
-```
-
-**`postValidator.ts`**
-
-```typescript
-import { z } from 'zod';
-export const PostSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  category: z.enum(['blog', 'devotional', 'story']).default('blog'),
-  body: z.string().min(1, 'Body is required'),
-  excerpt: z.string().max(300).optional(),
-  coverImageUrl: z.string().url().optional(),
-  tags: z.array(z.string()).optional(),
-  isPublished: z.boolean().default(false),
-  seo: z
-    .object({
-      metaTitle: z.string().optional(),
-      metaDescription: z.string().optional(),
-    })
-    .optional(),
-});
-export type PostInput = z.infer<typeof PostSchema>;
-```
-
-**`eventValidator.ts`**
-
-```typescript
-import { z } from 'zod';
-export const EventSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  date: z.string().min(1, 'Date is required'),
-  location: z.string().min(1, 'Location is required'),
-  description: z.string().optional(),
-  externalLink: z.string().url().optional(),
-  isUpcoming: z.boolean().default(true),
-  coverImageUrl: z.string().url().optional(),
-});
-export type EventInput = z.infer<typeof EventSchema>;
-```
-
-**`initiativeValidator.ts`**
-
-```typescript
-import { z } from 'zod';
-export const InitiativeSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  body: z.string().optional(),
-  coverImageUrl: z.string().url().optional(),
-  externalLink: z.string().url().optional(),
-  tags: z.array(z.string()).optional(),
-});
-export type InitiativeInput = z.infer<typeof InitiativeSchema>;
-```
-
-**`tagValidator.ts`**
-
-```typescript
-import { z } from 'zod';
-export const TagSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  description: z.string().optional(),
-});
-export type TagInput = z.infer<typeof TagSchema>;
-```
-
-**`artistValidator.ts`**
-
-```typescript
-import { z } from 'zod';
-export const ArtistSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  slugName: z.string().min(1, 'Slug is required'),
-  biographyShort: z.string().max(160, 'Max 160 characters'),
-  biographyMedium: z.string().max(500, 'Max 500 characters'),
-  biographyLong: z.string(),
-  achievements: z.array(z.string()).optional(),
-  speakingProfile: z.string().optional(),
-  profileImageUrl: z.string().url('Must be a valid URL'),
-  socialLinks: z
-    .object({
-      instagram: z.string().url().optional(),
-      youtube: z.string().url().optional(),
-      spotify: z.string().url().optional(),
-      twitter: z.string().url().optional(),
-    })
-    .optional(),
-  seo: z
-    .object({
-      metaTitle: z.string().optional(),
-      metaDescription: z.string().optional(),
-    })
-    .optional(),
-});
-export type ArtistInput = z.infer<typeof ArtistSchema>;
-```
-
-**`bookingValidator.ts`**
-
-```typescript
-import { z } from 'zod';
-export const BookingSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Must be a valid email'),
-  organisation: z.string().optional(),
-  eventType: z.string().optional(),
-  eventDate: z.string().optional(),
-  message: z.string().min(1, 'Message is required'),
-});
-export type BookingInput = z.infer<typeof BookingSchema>;
-```
-
-**`songValidator.ts`** (updated full version)
-
-```typescript
-import { z } from 'zod';
-export const SongSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  albumId: z.string().min(1, 'Album is required'),
-  trackNumber: z.number().optional(),
-  description: z.string().optional(),
-  lyrics: z.string().optional(),
-  storyBehindSong: z.string().optional(),
-  audioUrl: z.string().url('Must be a valid URL').optional(),
-  videoUrl: z.string().url('Must be a valid URL').optional(),
-  coverImageUrl: z.string().url('Must be a valid URL').optional(),
-  tags: z.array(z.string()).optional(),
-  isPublished: z.boolean().default(true),
-  seo: z
-    .object({
-      metaTitle: z.string().optional(),
-      metaDescription: z.string().optional(),
-    })
-    .optional(),
-});
-export type SongInput = z.infer<typeof SongSchema>;
-```
+> Single delete (`DELETE /api/media/[id]`) is used by the per-card delete button. Bulk delete (`DELETE /api/media` with `{ ids }` body) is used by the "Delete N selected" toolbar button. Both remove from Cloudinary first, then MongoDB. Cloudinary failures are tolerated with `Promise.allSettled` in the bulk path so a missing Cloudinary asset does not block the MongoDB cleanup.
 
 ---
 
-### 6.12 Key Differences Summary
-
-| Route         | Slug field | Slug source | Query filters     | Special behaviour                                            |
-| ------------- | ---------- | ----------- | ----------------- | ------------------------------------------------------------ |
-| `songs`       | ✅         | `title`     | `albumId`, `tag`  | Filters by `isPublished` on GET                              |
-| `albums`      | ✅         | `title`     | `tag`             | Sorted by `releaseYear` desc                                 |
-| `posts`       | ✅         | `title`     | `category`, `tag` | Sets `publishedAt` on publish                                |
-| `events`      | ✅         | `title`     | `upcoming`        | Sorted by `date` asc                                         |
-| `initiatives` | ✅         | `title`     | none              | —                                                            |
-| `tags`        | ✅         | `name`      | none              | DELETE only on `[id]`                                        |
-| `artists`     | ❌         | —           | none              | GET returns single record                                    |
-| `bookings`    | ❌         | —           | `status`          | PATCH updates status only                                    |
-| `media`       | ❌         | —           | none              | Uses `FormData`, not JSON; deletes from Cloudinary on DELETE |
-
-**Section 6 Checklist:**
-
-**Validators** (`src/lib/validators/`)
-
-- [x] `songValidator.ts`
-- [x] `albumValidator.ts`
-- [x] `postValidator.ts`
-- [x] `eventValidator.ts`
-- [x] `initiativeValidator.ts`
-- [x] `tagValidator.ts`
-- [x] `artistValidator.ts`
-- [x] `bookingValidator.ts`
-
-**Route files** (`src/app/api/`)
-
-- [x] `songs/route.ts` — GET (filters: `albumId`, `tag`, `isPublished`), POST
-- [x] `songs/[id]/route.ts` — GET, PATCH, DELETE
-- [x] `albums/route.ts` — GET (filters: `tag`), POST
-- [x] `albums/[id]/route.ts` — GET, PATCH, DELETE
-- [x] `posts/route.ts` — GET (filters: `category`, `tag`, `isPublished`), POST
-- [x] `posts/[id]/route.ts` — GET, PATCH, DELETE
-- [x] `events/route.ts` — GET (filters: `upcoming`), POST
-- [x] `events/[id]/route.ts` — GET, PATCH, DELETE
-- [x] `initiatives/route.ts` — GET, POST
-- [x] `initiatives/[id]/route.ts` — GET, PATCH, DELETE
-- [x] `tags/route.ts` — GET, POST
-- [x] `tags/[id]/route.ts` — DELETE only
-- [x] `artists/route.ts` — GET (single record), POST
-- [x] `artists/[id]/route.ts` — PATCH only
-- [x] `bookings/route.ts` — GET (filters: `status`), POST
-- [x] `bookings/[id]/route.ts` — PATCH (status update only)
-- [x] `media/route.ts` — GET, POST (FormData + Cloudinary upload)
-- [x] `media/[id]/route.ts` — DELETE (removes from Cloudinary + MongoDB)
-
-**Verification**
-
-- [x] `npx tsc --noEmit` — zero TypeScript errors across all route files
-- [x] All routes tested via REST client — correct status codes and response shapes
-
----
-
-## 7. UI & Component Layer ✅
-
-### 7.1 Root Layout
-
-**File:** `src/app/layout.tsx`
-
-```typescript
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-import Navbar from '@/components/layout/Navbar'
-import Footer from '@/components/layout/Footer'
-
-const inter = Inter({ subsets: ['latin'] })
-
-export const metadata: Metadata = {
-  title: { default: 'Glowreeyah', template: '%s | Glowreeyah' },
-  description: 'Music. Ministry. Movement.',
-}
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <body className={`${inter.className} bg-brand-warm text-brand-deep`}>
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
-      </body>
-    </html>
-  )
-}
-```
-
----
-
-### 7.2 Navbar
-
-**File:** `src/components/layout/Navbar.tsx`
-
-```typescript
-'use client'
-import Link from 'next/link'
-import { useState } from 'react'
-
-const links = [
-  { href: '/',         label: 'Home' },
-  { href: '/about',    label: 'About' },
-  { href: '/music',    label: 'Music' },
-  { href: '/blog',     label: 'Blog' },
-  { href: '/media',    label: 'Media' },
-  { href: '/speaking', label: 'Speaking' },
-  { href: '/impact',   label: 'Impact' },
-  { href: '/booking',  label: 'Book' },
-]
-
-export default function Navbar() {
-  const [open, setOpen] = useState(false)
-
-  return (
-    <nav className="sticky top-0 z-50 bg-brand-deep text-white px-6 py-4 flex items-center justify-between">
-      <Link href="/" className="text-brand-teal font-serif text-xl font-bold">
-        Glowreeyah
-      </Link>
-      <ul className="hidden md:flex gap-6 text-sm">
-        {links.map(l => (
-          <li key={l.href}>
-            <Link href={l.href} className="hover:text-brand-teal transition-colors">
-              {l.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-      <button
-        className="md:hidden"
-        onClick={() => setOpen(!open)}
-        aria-label="Toggle menu"
-      >
-        ☰
-      </button>
-      {open && (
-        <ul className="absolute top-full left-0 w-full bg-brand-deep flex flex-col gap-4 px-6 py-4 md:hidden">
-          {links.map(l => (
-            <li key={l.href}>
-              <Link href={l.href} onClick={() => setOpen(false)} className="hover:text-brand-gold">
-                {l.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </nav>
-  )
-}
-```
-
----
-
-### 7.3 Rendering Strategy
-
-| Page Type                  | Strategy                                  | Reason                         |
-| -------------------------- | ----------------------------------------- | ------------------------------ |
-| Home, About, Music List    | Server Component + `generateStaticParams` | SEO + performance              |
-| Song / Post / Album detail | Server Component + ISR (revalidate: 3600) | Fresh content, cacheable       |
-| Search / Filter            | Client Component                          | Real-time interaction          |
-| CMS dashboard + forms      | Client Component                          | Full interactivity, form state |
-| Booking form               | Client Component                          | Form state management          |
-
-**Section 7 Checklist:**
-
-- [ ] `src/app/layout.tsx` — root layout with Navbar and Footer wired up
-- [ ] `src/components/layout/Navbar.tsx` — responsive, mobile menu working
-- [ ] `src/components/layout/Footer.tsx` — created
-- [ ] `src/components/layout/PageWrapper.tsx` — created
-- [ ] `src/components/ui/Button.tsx` — created
-- [ ] `src/components/ui/Input.tsx` — created
-- [ ] `src/components/ui/Tag.tsx` — created
-- [ ] `src/components/ui/LoadingSpinner.tsx` — created
-- [ ] `src/components/music/AlbumCard.tsx` — created
-- [ ] `src/components/music/SongCard.tsx` — created
-- [ ] `src/components/music/AudioPlayer.tsx` — created
-- [ ] `src/components/content/PostCard.tsx` — created
-- [ ] `src/components/content/RichText.tsx` — created
-- [ ] `src/components/media/MediaCard.tsx` — created
-- [ ] `src/components/seo/MetaTags.tsx` — created
-- [ ] `npm run dev` renders root layout with Navbar and Footer, no console errors
-
----
-
-## 8. Page Implementation ✅
-
-### 8.1 Home Page — `src/app/(public)/page.tsx`
-
-```typescript
-import { connectDB } from '@/lib/mongodb'
-import Song from '@/models/Song'
-import Post from '@/models/Post'
-
-export const revalidate = 3600
-
-export default async function HomePage() {
-  await connectDB()
-
-  const [latestSongs, latestPosts] = await Promise.all([
-    Song.find({ isPublished: true }).sort({ createdAt: -1 }).limit(3).lean(),
-    Post.find({ isPublished: true }).sort({ publishedAt: -1 }).limit(3).lean(),
-  ])
-
-  return (
-    <div>
-      {/* Hero section */}
-      <section className="min-h-[90vh] flex items-center justify-center bg-brand-deep text-white text-center px-6">
-        <div>
-          <h1 className="font-serif text-5xl md:text-7xl text-brand-teal mb-4">Glowreeyah</h1>
-          <p className="text-xl md:text-2xl text-brand-warm">Music. Ministry. Movement.</p>
-        </div>
-      </section>
-
-      {/* Latest music section */}
-      {/* Latest posts section */}
-    </div>
-  )
-}
-```
-
-Follow the same Server Component data-fetching pattern for all public pages.
-
----
-
-### 8.2 Dynamic Route Example — Song Detail
-
-**File:** `src/app/(public)/music/[albumSlug]/[songSlug]/page.tsx`
-
-```typescript
-import { connectDB } from '@/lib/mongodb'
-import Song from '@/models/Song'
-import Album from '@/models/Album'
-import { notFound } from 'next/navigation'
-import type { Metadata } from 'next'
-
-interface Props {
-  params: { albumSlug: string; songSlug: string }
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  await connectDB()
-  const song = await Song.findOne({ slug: params.songSlug }).lean()
-  if (!song) return {}
-  return {
-    title: song.seo?.metaTitle || song.title,
-    description: song.seo?.metaDescription || song.description,
-  }
-}
-
-export default async function SongPage({ params }: Props) {
-  await connectDB()
-  const song = await Song.findOne({ slug: params.songSlug })
-    .populate('albumId')
-    .populate('tags')
-    .lean()
-
-  if (!song) notFound()
-
-  return (
-    <article className="max-w-3xl mx-auto px-6 py-12">
-      <h1 className="font-serif text-4xl text-brand-deep mb-2">{song.title}</h1>
-      {song.audioUrl && (
-        <audio controls src={song.audioUrl} className="w-full my-6" />
-      )}
-      {song.lyrics && (
-        <section>
-          <h2 className="font-serif text-2xl mb-4">Lyrics</h2>
-          <pre className="whitespace-pre-wrap font-sans">{song.lyrics}</pre>
-        </section>
-      )}
-    </article>
-  )
-}
-```
-
-**Section 8 Checklist:**
-
-- [x] `src/app/(public)/page.tsx` — hero renders, no console errors
-- [x] `src/app/(public)/about/page.tsx` — loads with fallback UI when no artist document exists
-- [x] `src/app/(public)/music/page.tsx` — loads with empty state, no errors
-- [x] `src/app/(public)/music/[albumSlug]/page.tsx` — 404s correctly on unknown slug
-- [x] `src/app/(public)/music/[albumSlug]/[songSlug]/page.tsx` — 404s correctly on unknown slug
-- [x] `src/app/(public)/blog/page.tsx` — loads with empty state, no errors
-- [x] `src/app/(public)/blog/[slug]/page.tsx` — 404s correctly on unknown slug
-- [x] `src/app/(public)/media/page.tsx` — loads with empty state, no errors
-- [x] `src/app/(public)/speaking/page.tsx` — loads with empty state, no errors
-- [x] `src/app/(public)/booking/page.tsx` — form renders and submits without errors
-- [x] `src/app/(public)/impact/page.tsx` — loads with empty state, no errors
-- [x] `src/app/(public)/tag/[slug]/page.tsx` — 404s correctly on unknown slug
-- [x] `generateMetadata()` implemented on all dynamic routes
-- [x] `notFound()` used on slug-based routes, fallback UI used on single-document routes
-- [ ] All pages re-verified with live data after CMS is built in §10
-
-> Full data rendering will be verified in §13 Testing after the CMS is complete and the database is seeded.
-
-- [ ] All pages verified at correct URLs in browser with no console errors
-
----
-
-## 9. Media Integration ✅
-
-### 9.1 Cloudinary Configuration
-
-**File:** `src/lib/cloudinary.ts`
-
-```typescript
-import { v2 as cloudinary } from 'cloudinary';
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-export default cloudinary;
-```
-
----
-
-### 9.2 Upload API Route
-
-The complete implementation is in §6.10. The `src/app/api/media/route.ts` file covers `GET` and `POST`, and `src/app/api/media/[id]/route.ts` covers `DELETE` (removes from Cloudinary then MongoDB). Use those files — do not use the snippet below.
-
-> The version in your codebase (`media/route.ts`) is the correct one — it includes `file` validation, proper TypeScript typing on the upload promise, and both `altText` and `file` guards before the Cloudinary upload.
-
----
-
-### 9.3 Storage Rules (enforced)
+### 9.3 Storage Rules
 
 | Data        | Location                       |
 | ----------- | ------------------------------ |
-| Image files | Cloudinary (object storage)    |
-| Audio files | Cloudinary or S3               |
+| Image files | Cloudinary                     |
+| Audio files | Cloudinary                     |
 | Video files | Cloudinary or YouTube embed    |
 | File URLs   | MongoDB (`MediaAsset.url`)     |
 | Alt text    | MongoDB (`MediaAsset.altText`) |
 | Binary data | **Never stored in MongoDB**    |
 
+---
+
 **Section 9 Checklist:**
 
-- [x] `src/lib/cloudinary.ts` created with correct env var references
-- [x] `src/app/api/media/route.ts` — GET, POST implemented (see §6.10)
-- [x] `src/app/api/media/[id]/route.ts` — DELETE implemented (see §6.10)
-- [x] `next.config.ts` updated with Cloudinary `remotePatterns`
-- [x] `next/image` used in `AlbumCard`, `PostCard`, `MediaCard` — no raw `<img>` tags in those components
-- [ ] Cloudinary env vars added to `.env.local` (`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`)
-- [ ] `MediaAsset` document created in MongoDB after upload — verified via MongoDB Atlas or Compass
-- [ ] Upload blocked with `422` when `altText` is missing — verified via REST client
-- [ ] Test upload end-to-end: file → Cloudinary → URL resolves in browser
-
-> The remaining items require the CMS media uploader (`/cms/media`) built in §10, and valid Cloudinary credentials in `.env.local`. Defer until §10 is complete.
+- [x] `src/lib/cloudinary.ts` created
+- [x] `src/app/api/media/route.ts` — GET, POST, DELETE (bulk)
+- [x] `src/app/api/media/[id]/route.ts` — DELETE (single, Cloudinary first then MongoDB)
+- [x] `next.config.ts` — Cloudinary `remotePatterns` + `qualities: [75, 80]`
+- [x] `next/image` used throughout — no raw `<img>` in public pages
+- [x] Initiative cards use explicit `width`/`height`, not `fill`
+- [ ] Cloudinary env vars confirmed in `.env.local`
+- [ ] Test single upload + delete end-to-end in dev
+- [ ] Test bulk delete — confirm Cloudinary assets removed and MongoDB docs deleted
+- [ ] Verify `MediaAsset` doc created in MongoDB Atlas after upload
 
 ---
 
 ## 10. CMS — Content Management System ✅
 
-The CMS is a protected section of the same Next.js application, served at `/cms/*`. It shares the MongoDB database, models, API routes, and Cloudinary config with the public frontend — no separate service, no separate deployment.
-
----
-
 ### 10.1 CMS Architecture
 
 ```
-/cms/* routes  →  (cms) route group  →  CMS layout (sidebar + topbar)
-                                         ↓
-                                   Client Components
-                                   (forms, tables, editors)
-                                         ↓
-                               /api/* route handlers  (shared)
-                                         ↓
-                                   MongoDB Atlas  (shared)
-                                   Cloudinary     (shared)
+/cms/* routes  →  cms/ directory  →  CMS layout (CMSShell)
+                                       ↓
+                            CMSSidebar (collapsible mobile drawer)
+                            CMSTopbar  (badge + logout)
+                                       ↓
+                              Client Component forms
+                                       ↓
+                          /api/* route handlers (shared)
+                                       ↓
+                          MongoDB Atlas + Cloudinary (shared)
 ```
 
-The `(cms)` route group uses a dedicated layout with sidebar navigation. It is completely isolated from the public `(public)` route group — they share no layout but share all backend resources.
+The CMS is implemented as a real `src/app/cms/` directory (not a `(cms)` route group) to avoid route conflicts in Next.js 15. It shares all backend resources with the public frontend.
 
 ---
 
-### 10.2 Authentication
+### 10.2 Authentication ✅
 
-The CMS uses **NextAuth.js** with a Credentials provider for v1.0. This replaces the earlier secret-token approach and gives proper session management, logout, and extensibility to OAuth providers in future.
-
-**Install NextAuth:**
-
-```bash
-npm install next-auth
-```
-
-**Add to `.env.local`:**
-
-```env
-NEXTAUTH_SECRET=your_random_32_char_string
-NEXTAUTH_URL=http://localhost:3000
-
-CMS_ADMIN_EMAIL=admin@glowreeyah.com
-CMS_ADMIN_PASSWORD=your_secure_password
-```
+**NextAuth.js** Credentials provider. Credentials validated against `CMS_ADMIN_EMAIL` and `CMS_ADMIN_PASSWORD` env vars. JWT session strategy.
 
 **File:** `src/app/api/auth/[...nextauth]/route.ts`
 
@@ -2275,9 +2662,7 @@ const handler = NextAuth({
       },
     }),
   ],
-  pages: {
-    signIn: '/cms/login',
-  },
+  pages: { signIn: '/cms/login' },
   session: { strategy: 'jwt' },
   secret: process.env.NEXTAUTH_SECRET,
 });
@@ -2287,7 +2672,7 @@ export { handler as GET, handler as POST };
 
 ---
 
-### 10.3 CMS Middleware
+### 10.3 CMS Middleware ✅
 
 **File:** `src/middleware.ts`
 
@@ -2303,255 +2688,161 @@ export const config = {
 };
 ```
 
-This redirects any unauthenticated request to `/cms/*` (except `/cms/login`) to the login page.
+Redirects all unauthenticated `/cms/*` requests (except login) to `/cms/login`.
 
 ---
 
-### 10.4 CMS Layout
+### 10.4 CMS Layout ✅
 
-**File:** `src/app/(cms)/layout.tsx`
+**File:** `src/app/cms/layout.tsx`
 
 ```typescript
-import CMSSidebar from '@/components/cms/CMSSidebar'
-import CMSTopbar  from '@/components/cms/CMSTopbar'
+import CMSShell from '@/components/cms/CMSShell';
+import { connectDB } from '@/lib/mongodb';
+import Booking from '@/models/Booking';
+import { cookies } from 'next/headers';
 
-export default function CMSLayout({ children }: { children: React.ReactNode }) {
+export default async function CMSLayout({ children }: { children: React.ReactNode }) {
+  // Compute pending badge count server-side
+  await connectDB();
+  const cookieStore = await cookies();
+  const seenAt = cookieStore.get('bookings_seen_at')?.value;
+  const query = seenAt
+    ? { status: 'pending', createdAt: { $gt: new Date(seenAt) } }
+    : { status: 'pending' };
+  const pendingCount = await Booking.countDocuments(query);
+
+  return <CMSShell pendingCount={pendingCount}>{children}</CMSShell>;
+}
+```
+
+---
+
+### 10.5 CMSShell & Mobile Responsive Sidebar ✅
+
+**File:** `src/components/cms/CMSShell.tsx`
+
+Client component that holds the `sidebarOpen` state for mobile. Renders the hamburger trigger in `CMSTopbar` and the slide-in `CMSSidebar` drawer on mobile.
+
+```typescript
+'use client';
+import { useState } from 'react';
+import CMSSidebar from './CMSSidebar';
+import CMSTopbar from './CMSTopbar';
+
+interface Props {
+  children: React.ReactNode;
+  pendingCount: number;
+}
+
+export default function CMSShell({ children, pendingCount }: Props) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
-      <CMSSidebar />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <CMSTopbar />
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-20 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar — drawer on mobile, persistent on desktop */}
+      <div
+        className={`fixed md:relative z-30 h-full transition-transform duration-200
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+      >
+        <CMSSidebar onClose={() => setSidebarOpen(false)} />
+      </div>
+
+      <div className="flex flex-col flex-1 overflow-hidden min-w-0">
+        <CMSTopbar
+          pendingCount={pendingCount}
+          onMenuClick={() => setSidebarOpen(o => !o)}
+        />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </div>
     </div>
-  )
+  );
 }
 ```
 
 ---
 
-### 10.5 CMS Sidebar
+### 10.6 Pending Bookings Badge ✅
 
-**File:** `src/components/cms/CMSSidebar.tsx`
+The badge in `CMSTopbar` shows new pending bookings since the last time the admin viewed `/cms/bookings`. Flow:
+
+1. CMS layout computes `pendingCount` server-side using the `bookings_seen_at` cookie
+2. `CMSTopbar` receives `pendingCount` and renders a red badge if > 0
+3. When the admin navigates to `/cms/bookings`, `MarkBookingsSeen` (client component) fires `POST /api/cms/bookings-seen` on mount
+4. Cookie is updated; next page load shows badge = 0
+
+---
+
+### 10.7 EventForm — isUpcoming Derivation ✅
+
+`deriveIsUpcoming()` is defined at **module scope** (outside the component function) so it does not re-create on each render:
 
 ```typescript
-'use client'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-
-const nav = [
-  { href: '/cms/dashboard',    label: 'Dashboard',   icon: '⊞' },
-  { href: '/cms/posts',        label: 'Posts',        icon: '✎' },
-  { href: '/cms/songs',        label: 'Songs',        icon: '♪' },
-  { href: '/cms/albums',       label: 'Albums',       icon: '◉' },
-  { href: '/cms/events',       label: 'Events',       icon: '◷' },
-  { href: '/cms/initiatives',  label: 'Initiatives',  icon: '◈' },
-  { href: '/cms/media',        label: 'Media',        icon: '⊡' },
-  { href: '/cms/bookings',     label: 'Bookings',     icon: '✉' },
-  { href: '/cms/tags',         label: 'Tags',         icon: '#' },
-  { href: '/cms/artist',       label: 'Artist Profile', icon: '✦' },
-]
-
-export default function CMSSidebar() {
-  const pathname = usePathname()
-
-  return (
-    <aside className="w-56 bg-brand-deep text-white flex flex-col shrink-0">
-      <div className="px-6 py-5 border-b border-white/10">
-        <span className="text-brand-teal font-serif font-bold text-lg">Glowreeyah</span>
-        <p className="text-white/40 text-xs mt-0.5">Content Studio</p>
-      </div>
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {nav.map(item => {
-          const active = pathname.startsWith(item.href)
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors
-                ${active
-                  ? 'bg-brand-teal/20 text-brand-teal'
-                  : 'text-white/70 hover:text-white hover:bg-white/5'
-                }`}
-            >
-              <span>{item.icon}</span>
-              {item.label}
-            </Link>
-          )
-        })}
-      </nav>
-      <div className="px-4 py-4 border-t border-white/10 text-xs text-white/30">
-        CMS v1.0
-      </div>
-    </aside>
-  )
+// At module level — NOT inside the component
+function deriveIsUpcoming(dateStr: string): boolean {
+  if (!dateStr) return true;
+  return new Date(dateStr) >= new Date();
 }
+
+export default function EventForm({ event }: Props) {
+  const [form, setForm] = useState({
+    // ...
+    isUpcoming: event?.isUpcoming ?? true,
+  });
+
+  function handleDateChange(dateStr: string) {
+    setForm((f) => ({
+      ...f,
+      date: dateStr,
+      isUpcoming: deriveIsUpcoming(dateStr),
+    }));
+  }
+  // ...
+}
+```
+
+`PublishToggle` is **not** present in `EventForm`.
+
+---
+
+### 10.8 CMS Events Page — Mobile Card Layout ✅
+
+The CMS events list page at `src/app/cms/events/page.tsx` uses **cards on all screen sizes** rather than a table, because the event date/location combination did not fit legibly in a table on mobile.
+
+---
+
+### 10.9 CMS Initiatives — Truncation Fix ✅
+
+The CMS initiatives list applies `line-clamp-1` on long titles and `table-fixed` on the table to prevent overflow:
+
+```tsx
+<table className="w-full text-sm table-fixed">
+  ...
+  <td className="px-4 py-3 font-medium text-brand-deep truncate line-clamp-1 max-w-xs">
+    {initiative.title}
+  </td>
 ```
 
 ---
 
-### 10.6 CMS Topbar
+### 10.10 Content Form Pattern
 
-**File:** `src/components/cms/CMSTopbar.tsx`
+Create and Edit pages share the same Client Component form. The page passes either empty defaults (new) or fetched data (edit). Example pattern:
 
-```typescript
-'use client'
-import { signOut, useSession } from 'next-auth/react'
-import Link from 'next/link'
-
-export default function CMSTopbar() {
-  const { data: session } = useSession()
-
-  return (
-    <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
-      <div />
-      <div className="flex items-center gap-4">
-        <Link
-          href="/"
-          target="_blank"
-          className="text-sm text-gray-500 hover:text-brand-teal transition-colors"
-        >
-          View site ↗
-        </Link>
-        <span className="text-sm text-gray-600">{session?.user?.email}</span>
-        <button
-          onClick={() => signOut({ callbackUrl: '/cms/login' })}
-          className="text-sm text-red-500 hover:text-red-700 transition-colors"
-        >
-          Logout
-        </button>
-      </div>
-    </header>
-  )
-}
+```
+src/app/cms/posts/new/page.tsx  → renders <PostForm />  (no post prop)
+src/app/cms/posts/[id]/page.tsx → fetches post, renders <PostForm post={post} />
 ```
 
----
-
-### 10.7 Dashboard Page
-
-**File:** `src/app/(cms)/dashboard/page.tsx`
-
-```typescript
-import { connectDB } from '@/lib/mongodb'
-import Song        from '@/models/Song'
-import Post        from '@/models/Post'
-import Album       from '@/models/Album'
-import Booking     from '@/models/Booking'
-import Event       from '@/models/Event'
-
-export default async function CMSDashboard() {
-  await connectDB()
-
-  const [songs, posts, albums, bookings, events] = await Promise.all([
-    Song.countDocuments(),
-    Post.countDocuments(),
-    Album.countDocuments(),
-    Booking.countDocuments({ status: 'pending' }),
-    Event.countDocuments({ isUpcoming: true }),
-  ])
-
-  const stats = [
-    { label: 'Songs',            value: songs,    href: '/cms/songs' },
-    { label: 'Posts',            value: posts,    href: '/cms/posts' },
-    { label: 'Albums',           value: albums,   href: '/cms/albums' },
-    { label: 'Pending Bookings', value: bookings, href: '/cms/bookings' },
-    { label: 'Upcoming Events',  value: events,   href: '/cms/events' },
-  ]
-
-  return (
-    <div>
-      <h1 className="text-2xl font-serif font-bold text-brand-deep mb-6">Dashboard</h1>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {stats.map(s => (
-          <a
-            key={s.label}
-            href={s.href}
-            className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:border-brand-teal transition-colors"
-          >
-            <p className="text-3xl font-bold text-brand-teal">{s.value}</p>
-            <p className="text-sm text-gray-500 mt-1">{s.label}</p>
-          </a>
-        ))}
-      </div>
-    </div>
-  )
-}
-```
-
----
-
-### 10.8 Content List Page Pattern
-
-Every content type (songs, posts, albums, etc.) follows this pattern for its list page.
-
-**Example — Posts List:** `src/app/(cms)/posts/page.tsx`
-
-```typescript
-import { connectDB } from '@/lib/mongodb'
-import Post from '@/models/Post'
-import Link from 'next/link'
-import CMSPageHeader from '@/components/cms/CMSPageHeader'
-import StatusBadge   from '@/components/cms/StatusBadge'
-
-export default async function CMSPostsPage() {
-  await connectDB()
-  const posts = await Post.find().sort({ createdAt: -1 }).lean()
-
-  return (
-    <div>
-      <CMSPageHeader title="Posts" createHref="/cms/posts/new" createLabel="New Post" />
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-6">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
-            <tr>
-              <th className="px-4 py-3 text-left">Title</th>
-              <th className="px-4 py-3 text-left">Category</th>
-              <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Date</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {posts.map((post: any) => (
-              <tr key={post._id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-3 font-medium text-brand-deep">{post.title}</td>
-                <td className="px-4 py-3 text-gray-500 capitalize">{post.category}</td>
-                <td className="px-4 py-3">
-                  <StatusBadge published={post.isPublished} />
-                </td>
-                <td className="px-4 py-3 text-gray-400">
-                  {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : '—'}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <Link
-                    href={`/cms/posts/${post._id}`}
-                    className="text-brand-teal hover:underline text-xs"
-                  >
-                    Edit
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-```
-
-Apply the same pattern for songs, albums, events, initiatives, and tags.
-
----
-
-### 10.9 Content Form Pattern
-
-Create and Edit pages share the same Client Component form. The page passes either empty defaults (new) or fetched data (edit).
-
-**Example — Post Form:** `src/components/cms/PostForm.tsx`
+**Example — PostForm:** `src/components/cms/PostForm.tsx`
 
 ```typescript
 'use client'
@@ -2564,7 +2855,7 @@ import RichTextEditor from './RichTextEditor'
 import MediaPicker    from './MediaPicker'
 
 interface Props {
-  post?: any      // undefined = new, populated = edit
+  post?: any
   tags:  any[]
 }
 
@@ -2579,7 +2870,7 @@ export default function PostForm({ post, tags }: Props) {
     excerpt:       post?.excerpt       ?? '',
     body:          post?.body          ?? '',
     coverImageUrl: post?.coverImageUrl ?? '',
-    tags:          post?.tags          ?? [],
+    tags:          post?.tags?.map((t: any) => t._id ?? t) ?? [],
     isPublished:   post?.isPublished   ?? false,
   })
   const [saving, setSaving] = useState(false)
@@ -2616,7 +2907,6 @@ export default function PostForm({ post, tags }: Props) {
 
   return (
     <div className="max-w-3xl space-y-6">
-      {/* Title */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
         <input
@@ -2626,14 +2916,12 @@ export default function PostForm({ post, tags }: Props) {
         />
       </div>
 
-      {/* Slug */}
       <SlugField
         sourceValue={form.title}
         value={form.slug}
         onChange={slug => setForm(f => ({ ...f, slug }))}
       />
 
-      {/* Category */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
         <select
@@ -2647,7 +2935,6 @@ export default function PostForm({ post, tags }: Props) {
         </select>
       </div>
 
-      {/* Excerpt */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt</label>
         <textarea
@@ -2658,32 +2945,27 @@ export default function PostForm({ post, tags }: Props) {
         />
       </div>
 
-      {/* Body */}
       <RichTextEditor
         value={form.body}
         onChange={body => setForm(f => ({ ...f, body }))}
       />
 
-      {/* Cover Image */}
       <MediaPicker
         value={form.coverImageUrl}
         onChange={url => setForm(f => ({ ...f, coverImageUrl: url }))}
       />
 
-      {/* Tags */}
       <TagSelector
         allTags={tags}
         selected={form.tags}
         onChange={tags => setForm(f => ({ ...f, tags }))}
       />
 
-      {/* Publish */}
       <PublishToggle
         value={form.isPublished}
         onChange={val => setForm(f => ({ ...f, isPublished: val }))}
       />
 
-      {/* Actions */}
       {error && <p className="text-red-500 text-sm">{error}</p>}
       <div className="flex gap-3">
         <button
@@ -2711,7 +2993,7 @@ Apply the same form pattern for: `SongForm`, `AlbumForm`, `EventForm`, `Initiati
 
 ---
 
-### 10.10 Shared CMS Components
+### 10.11 Shared CMS Components
 
 #### SlugField — `src/components/cms/SlugField.tsx`
 
@@ -2822,13 +3104,7 @@ export default function CMSPageHeader({ title, createHref, createLabel }: Props)
 
 ---
 
-### 10.11 Rich Text Editor
-
-Use the `@uiw/react-md-editor` package for markdown-based rich text. It is lightweight, has no server-side dependencies, and outputs clean markdown stored as a string in MongoDB.
-
-```bash
-npm install @uiw/react-md-editor
-```
+### 10.12 Rich Text Editor
 
 **File:** `src/components/cms/RichTextEditor.tsx`
 
@@ -2854,7 +3130,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
 }
 ```
 
-On the public frontend, `ReactMarkdown` is used in exactly one place — the blog post detail page. It is already implemented in `src/app/(public)/blog/[slug]/page.tsx`:
+On the public frontend, `ReactMarkdown` renders the stored markdown string:
 
 ```tsx
 import ReactMarkdown from 'react-markdown';
@@ -2864,49 +3140,205 @@ import ReactMarkdown from 'react-markdown';
 </article>;
 ```
 
-If initiative body content is also written in markdown via the CMS, apply the same pattern in `src/app/(public)/impact/page.tsx`. No other public pages require markdown rendering.
+If initiative body content is also markdown, apply the same pattern in the initiative detail page.
 
 ---
 
-### 10.12 Media Upload & Browser
+### 10.13 Media Upload & Browser
 
-**File:** `src/app/(cms)/media/page.tsx`
+Supports single delete (per-card button), bulk delete (checkbox + toolbar button), select-all, and Copy URL. Selection state is local — cleared on every reload.
+
+**File:** `src/app/cms/media/page.tsx`
 
 ```typescript
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import MediaUploader from '@/components/cms/MediaUploader'
 
-export default function CMSMediaPage() {
-  const [assets, setAssets] = useState<any[]>([])
+interface Asset {
+  _id: string
+  url: string
+  altText: string
+  type: string
+}
 
-  async function load() {
+export default function CMSMediaPage() {
+  const [assets, setAssets]     = useState<Asset[]>([])
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [deleting, setDeleting] = useState(false)
+  const [loading, setLoading]   = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true)
     const res  = await fetch('/api/media')
     const data = await res.json()
-    setAssets(data.data)
+    setAssets(data.data ?? [])
+    setSelected(new Set())
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  // ── selection helpers ──────────────────────────────────────
+  function toggleOne(id: string) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
   }
 
-  useEffect(() => { load() }, [])
+  function toggleAll() {
+    setSelected(
+      selected.size === assets.length
+        ? new Set()
+        : new Set(assets.map(a => a._id))
+    )
+  }
+
+  // ── single delete ──────────────────────────────────────────
+  async function deleteSingle(id: string) {
+    if (!confirm('Delete this file? This cannot be undone.')) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/media/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error()
+      setAssets(prev => prev.filter(a => a._id !== id))
+      setSelected(prev => { const n = new Set(prev); n.delete(id); return n })
+    } catch {
+      alert('Delete failed — please try again.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  // ── bulk delete ────────────────────────────────────────────
+  async function deleteSelected() {
+    if (selected.size === 0) return
+    if (!confirm(`Delete ${selected.size} file${selected.size > 1 ? 's' : ''}? This cannot be undone.`)) return
+    setDeleting(true)
+    try {
+      const res = await fetch('/api/media', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selected) }),
+      })
+      if (!res.ok) throw new Error()
+      const gone = new Set(selected)
+      setAssets(prev => prev.filter(a => !gone.has(a._id)))
+      setSelected(new Set())
+    } catch {
+      alert('Delete failed — please try again.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const allSelected  = assets.length > 0 && selected.size === assets.length
+  const someSelected = selected.size > 0
 
   return (
     <div>
-      <h1 className="text-2xl font-serif font-bold text-brand-deep mb-6">Media Library</h1>
-      <MediaUploader onUploaded={load} />
-      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-8">
-        {assets.map((a: any) => (
-          <div key={a._id} className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100">
-            <img src={a.url} alt={a.altText} className="object-cover w-full h-full" />
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <button
-                onClick={() => navigator.clipboard.writeText(a.url)}
-                className="text-white text-xs bg-brand-teal px-2 py-1 rounded"
-              >
-                Copy URL
-              </button>
-            </div>
-          </div>
-        ))}
+      {/* ── Page header ── */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-serif font-bold text-brand-deep">Media Library</h1>
+        {someSelected && (
+          <button
+            onClick={deleteSelected}
+            disabled={deleting}
+            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 disabled:opacity-50
+                       text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          >
+            {deleting ? 'Deleting…' : `Delete ${selected.size} selected`}
+          </button>
+        )}
       </div>
+
+      {/* ── Uploader ── */}
+      <MediaUploader onUploaded={load} />
+
+      {/* ── Select-all toolbar ── */}
+      {assets.length > 0 && (
+        <div className="flex items-center gap-3 mt-8 mb-3">
+          <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-600">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleAll}
+              className="w-4 h-4 rounded accent-brand-teal cursor-pointer"
+            />
+            {allSelected ? 'Deselect all' : 'Select all'}
+          </label>
+          {someSelected && (
+            <span className="text-sm text-gray-400">
+              {selected.size} of {assets.length} selected
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* ── Grid ── */}
+      {loading ? (
+        <p className="text-sm text-gray-400 mt-6">Loading…</p>
+      ) : assets.length === 0 ? (
+        <p className="text-sm text-gray-400 mt-6">No media uploaded yet.</p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {assets.map(asset => {
+            const isSelected = selected.has(asset._id)
+            return (
+              <div
+                key={asset._id}
+                onClick={() => toggleOne(asset._id)}
+                className={`group relative aspect-square rounded-lg overflow-hidden bg-gray-100
+                            ring-2 cursor-pointer transition-all
+                            ${isSelected ? 'ring-brand-teal' : 'ring-transparent'}`}
+              >
+                {/* Thumbnail */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={asset.url} alt={asset.altText} className="object-cover w-full h-full" />
+
+                {/* Checkbox — top-left; always visible when selected, hover otherwise */}
+                <div
+                  className={`absolute top-2 left-2 transition-opacity
+                              ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleOne(asset._id)}
+                    className="w-4 h-4 rounded accent-brand-teal cursor-pointer"
+                  />
+                </div>
+
+                {/* Hover overlay — Copy URL + Delete */}
+                <div
+                  className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100
+                              transition-opacity flex flex-col items-center justify-center gap-2"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <button
+                    onClick={() => navigator.clipboard.writeText(asset.url)}
+                    className="text-white text-xs bg-brand-teal hover:bg-brand-teal/80
+                               px-2 py-1 rounded w-20 transition-colors"
+                  >
+                    Copy URL
+                  </button>
+                  <button
+                    onClick={() => deleteSingle(asset._id)}
+                    disabled={deleting}
+                    className="text-white text-xs bg-red-500 hover:bg-red-600
+                               disabled:opacity-50 px-2 py-1 rounded w-20 transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -2914,14 +3346,14 @@ export default function CMSMediaPage() {
 
 ---
 
-### 10.13 Bookings Manager
+### 10.14 Bookings Manager
 
-**File:** `src/app/(cms)/bookings/page.tsx`
+**File:** `src/app/cms/bookings/page.tsx`
 
 ```typescript
 import { connectDB } from '@/lib/mongodb'
 import Booking from '@/models/Booking'
-import StatusBadge from '@/components/cms/StatusBadge'
+import MarkBookingsSeen from '@/components/cms/MarkBookingsSeen'
 
 const statusColours: Record<string, string> = {
   pending:  'bg-yellow-100 text-yellow-700',
@@ -2936,6 +3368,7 @@ export default async function CMSBookingsPage() {
 
   return (
     <div>
+      <MarkBookingsSeen />
       <h1 className="text-2xl font-serif font-bold text-brand-deep mb-6">Booking Requests</h1>
       <div className="space-y-4">
         {bookings.map((b: any) => (
@@ -2961,129 +3394,183 @@ export default async function CMSBookingsPage() {
 
 ---
 
-### 10.14 CMS Route Summary
+### 10.15 CMS Dashboard
 
-| Route                   | Purpose               | Component Type          |
-| ----------------------- | --------------------- | ----------------------- |
-| `/cms/login`            | Authentication        | Client                  |
-| `/cms/dashboard`        | Overview stats        | Server                  |
-| `/cms/posts`            | List all posts        | Server                  |
-| `/cms/posts/new`        | Create post           | Client (PostForm)       |
-| `/cms/posts/[id]`       | Edit post             | Client (PostForm)       |
-| `/cms/songs`            | List all songs        | Server                  |
-| `/cms/songs/new`        | Create song           | Client (SongForm)       |
-| `/cms/songs/[id]`       | Edit song             | Client (SongForm)       |
-| `/cms/albums`           | List all albums       | Server                  |
-| `/cms/albums/new`       | Create album          | Client (AlbumForm)      |
-| `/cms/albums/[id]`      | Edit album            | Client (AlbumForm)      |
-| `/cms/events`           | List all events       | Server                  |
-| `/cms/events/new`       | Create event          | Client (EventForm)      |
-| `/cms/events/[id]`      | Edit event            | Client (EventForm)      |
-| `/cms/initiatives`      | List initiatives      | Server                  |
-| `/cms/initiatives/new`  | Create initiative     | Client (InitiativeForm) |
-| `/cms/initiatives/[id]` | Edit initiative       | Client (InitiativeForm) |
-| `/cms/media`            | Upload + browse media | Client                  |
-| `/cms/bookings`         | View submissions      | Server                  |
-| `/cms/tags`             | Manage tags           | Client                  |
-| `/cms/artist`           | Edit artist profile   | Client                  |
-
-**Section 10 Checklist:**
-
-**Dependencies & Auth**
-
-- [x] `next-auth`, `@uiw/react-md-editor`, `react-markdown` installed
-- [x] `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `CMS_ADMIN_EMAIL`, `CMS_ADMIN_PASSWORD` added to `.env.local`
-- [x] `src/app/api/auth/[...nextauth]/route.ts` created
-- [x] `src/middleware.ts` updated to use `withAuth`
-
-**CMS Shell**
-
-- [x] `src/app/cms/layout.tsx` created
-- [x] `src/components/cms/CMSSidebar.tsx` created
-- [x] `src/components/cms/CMSTopbar.tsx` created
-- [x] `src/components/cms/CMSPageHeader.tsx` created
-- [x] `src/components/cms/StatusBadge.tsx` created
-- [x] `src/components/cms/ConfirmDialog.tsx` created
-
-**Shared Form Components**
-
-- [x] `src/components/cms/SlugField.tsx` created
-- [x] `src/components/cms/PublishToggle.tsx` created
-- [x] `src/components/cms/TagSelector.tsx` created
-- [x] `src/components/cms/RichTextEditor.tsx` created
-- [x] `src/components/cms/MediaPicker.tsx` created
-- [x] `src/components/cms/MediaUploader.tsx` created
-
-**CMS Pages — Files Created**
-
-- [x] `src/app/cms/login/page.tsx`
-- [x] `src/app/cms/dashboard/page.tsx`
-- [x] `src/app/cms/posts/page.tsx` + `new/` + `[id]/`
-- [x] `src/app/cms/songs/page.tsx` + `new/` + `[id]/`
-- [x] `src/app/cms/albums/page.tsx` + `new/` + `[id]/`
-- [x] `src/app/cms/events/page.tsx` + `new/` + `[id]/`
-- [x] `src/app/cms/initiatives/page.tsx` + `new/` + `[id]/`
-- [x] `src/app/cms/media/page.tsx`
-- [x] `src/app/cms/bookings/page.tsx`
-- [x] `src/app/cms/tags/page.tsx`
-- [x] `src/app/cms/artist/page.tsx`
-- [x] Route conflict resolved — `(cms)` route group replaced with real `cms/` directory
-
-**Deferred — requires MongoDB Atlas + Cloudinary configured**
-
-- [ ] Login form authenticates with correct credentials
-- [ ] Dashboard stat counts render from DB
-- [ ] Posts CRUD — create, edit, delete, publish/unpublish
-- [ ] Songs CRUD — create, edit, delete, publish/unpublish
-- [ ] Albums CRUD — create, edit, delete
-- [ ] Events CRUD — create, edit, delete, upcoming toggle
-- [ ] Initiatives CRUD — create, edit, delete
-- [ ] Media upload → Cloudinary → URL stored in MongoDB → appears in grid
-- [ ] Booking submissions list renders with status colours
-- [ ] Tags create and delete working
-- [ ] Artist profile saves to DB and reflects on public `/about` page
-- [ ] Unauthenticated visit to `/cms/dashboard` redirects to `/cms/login`
-- [ ] Logout clears session and redirects to `/cms/login`
-- [ ] Content created in CMS appears on public frontend
-- [ ] `/cms/*` confirmed disallowed in `robots.txt`
-
-> All deferred items will be completed in §14 Deployment after MongoDB Atlas and Cloudinary are configured with production credentials.
-
----
-
-## 11. SEO Implementation ✅
-
-### 11.1 Metadata Per Page
-
-Implement `generateMetadata()` on every dynamic route returning:
+**File:** `src/app/cms/dashboard/page.tsx`
 
 ```typescript
-export async function generateMetadata({ params }): Promise<Metadata> {
-  return {
-    title: seo.metaTitle || content.title,
-    description: seo.metaDescription || content.excerpt,
-    openGraph: {
-      title: seo.metaTitle || content.title,
-      description: seo.metaDescription || content.excerpt,
-      images: [{ url: content.coverImageUrl }],
-      type: 'article',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: seo.metaTitle || content.title,
-      description: seo.metaDescription || content.excerpt,
-      images: [content.coverImageUrl],
-    },
-    alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${params.slug}`,
-    },
-  };
+import { connectDB } from '@/lib/mongodb'
+import Song        from '@/models/Song'
+import Post        from '@/models/Post'
+import Album       from '@/models/Album'
+import Booking     from '@/models/Booking'
+import Event       from '@/models/Event'
+
+export default async function CMSDashboard() {
+  await connectDB()
+
+  const [songs, posts, albums, bookings, events] = await Promise.all([
+    Song.countDocuments(),
+    Post.countDocuments(),
+    Album.countDocuments(),
+    Booking.countDocuments({ status: 'pending' }),
+    Event.countDocuments({ isUpcoming: true }),
+  ])
+
+  const stats = [
+    { label: 'Songs',            value: songs,    href: '/cms/songs' },
+    { label: 'Posts',            value: posts,    href: '/cms/posts' },
+    { label: 'Albums',           value: albums,   href: '/cms/albums' },
+    { label: 'Pending Bookings', value: bookings, href: '/cms/bookings' },
+    { label: 'Upcoming Events',  value: events,   href: '/cms/events' },
+  ]
+
+  return (
+    <div>
+      <h1 className="text-2xl font-serif font-bold text-brand-deep mb-6">Dashboard</h1>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {stats.map(s => (
+          <a
+            key={s.label}
+            href={s.href}
+            className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:border-brand-teal transition-colors"
+          >
+            <p className="text-3xl font-bold text-brand-teal">{s.value}</p>
+            <p className="text-sm text-gray-500 mt-1">{s.label}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  )
 }
 ```
 
 ---
 
-### 11.2 Sitemap
+### 10.16 Content List Page Pattern
+
+Every content type follows this server component pattern for its list page.
+
+**Example — Posts List:** `src/app/cms/posts/page.tsx`
+
+```typescript
+import { connectDB } from '@/lib/mongodb'
+import Post from '@/models/Post'
+import Link from 'next/link'
+import CMSPageHeader from '@/components/cms/CMSPageHeader'
+import StatusBadge   from '@/components/cms/StatusBadge'
+
+export default async function CMSPostsPage() {
+  await connectDB()
+  const posts = await Post.find().sort({ createdAt: -1 }).lean()
+
+  return (
+    <div>
+      <CMSPageHeader title="Posts" createHref="/cms/posts/new" createLabel="New Post" />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-6">
+        <table className="w-full text-sm table-fixed">
+          <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+            <tr>
+              <th className="px-4 py-3 text-left">Title</th>
+              <th className="px-4 py-3 text-left">Category</th>
+              <th className="px-4 py-3 text-left">Status</th>
+              <th className="px-4 py-3 text-left">Date</th>
+              <th className="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {posts.map((post: any) => (
+              <tr key={post._id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-4 py-3 font-medium text-brand-deep truncate line-clamp-1">{post.title}</td>
+                <td className="px-4 py-3 text-gray-500 capitalize">{post.category}</td>
+                <td className="px-4 py-3">
+                  <StatusBadge published={post.isPublished} />
+                </td>
+                <td className="px-4 py-3 text-gray-400">
+                  {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : '—'}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <Link href={`/cms/posts/${post._id}`} className="text-brand-teal hover:underline text-xs">
+                    Edit
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+```
+
+Apply the same pattern for songs, albums, events (card layout on mobile), initiatives, and tags.
+
+---
+
+### 10.17 CMS Route Summary
+
+| Route                   | Purpose               | Component Type            |
+| ----------------------- | --------------------- | ------------------------- |
+| `/cms/login`            | Authentication        | Client                    |
+| `/cms/dashboard`        | Overview stats        | Server                    |
+| `/cms/posts`            | List all posts        | Server                    |
+| `/cms/posts/new`        | Create post           | Client (PostForm)         |
+| `/cms/posts/[id]`       | Edit post             | Client (PostForm)         |
+| `/cms/songs`            | List all songs        | Server                    |
+| `/cms/songs/new`        | Create song           | Client (SongForm)         |
+| `/cms/songs/[id]`       | Edit song             | Client (SongForm)         |
+| `/cms/albums`           | List all albums       | Server                    |
+| `/cms/albums/new`       | Create album          | Client (AlbumForm)        |
+| `/cms/albums/[id]`      | Edit album            | Client (AlbumForm)        |
+| `/cms/events`           | List all events       | Server (card layout)      |
+| `/cms/events/new`       | Create event          | Client (EventForm)        |
+| `/cms/events/[id]`      | Edit event            | Client (EventForm)        |
+| `/cms/initiatives`      | List initiatives      | Server                    |
+| `/cms/initiatives/new`  | Create initiative     | Client (InitiativeForm)   |
+| `/cms/initiatives/[id]` | Edit initiative       | Client (InitiativeForm)   |
+| `/cms/media`            | Upload + browse media | Client                    |
+| `/cms/bookings`         | View submissions      | Server + MarkBookingsSeen |
+| `/cms/tags`             | Manage tags           | Client                    |
+| `/cms/artist`           | Edit artist profile   | Client                    |
+| `/cms/settings`         | Site settings         | Client                    |
+
+---
+
+**Section 10 Checklist:**
+
+- [x] `src/app/api/auth/[...nextauth]/route.ts`
+- [x] `src/middleware.ts` — protects `/cms/*` (except login)
+- [x] `src/app/cms/layout.tsx` — CMSShell with pending badge
+- [x] `src/components/cms/CMSShell.tsx` — mobile drawer state
+- [x] `src/components/cms/CMSSidebar.tsx` — collapsible on mobile
+- [x] `src/components/cms/CMSTopbar.tsx` — hamburger + badge + logout
+- [x] `src/components/cms/MarkBookingsSeen.tsx`
+- [x] `src/app/api/cms/bookings-seen/route.ts`
+- [x] `src/app/cms/settings/page.tsx` + `src/app/api/settings/route.ts`
+- [x] `src/app/cms/media/page.tsx` — checkbox selection, bulk delete toolbar, single delete per card, Copy URL
+- [x] `src/app/api/media/route.ts` — DELETE bulk handler added
+- [x] All CRUD pages: posts, songs, albums, events, initiatives, bookings, tags, artist
+- [x] EventForm — `deriveIsUpcoming()` at module scope, no `PublishToggle`
+- [x] Events CMS page — card layout on mobile
+- [x] Initiatives list — `line-clamp-1` truncation, `table-fixed`
+- [x] Booking status updates send Resend email notifications
+- [ ] Login verified with production credentials
+- [ ] Single delete tested — Cloudinary asset removed + MongoDB doc deleted
+- [ ] Bulk delete tested — multiple assets removed in one request
+- [ ] All CRUD operations verified end-to-end with live data
+
+---
+
+## 11. SEO Implementation 🔄
+
+### 11.1 Metadata Per Page ✅
+
+`generateMetadata()` implemented on all dynamic routes. See §8.4 for the pattern.
+
+---
+
+### 11.2 Sitemap ✅
 
 **File:** `src/app/sitemap.ts`
 
@@ -3092,16 +3579,23 @@ import { MetadataRoute } from 'next';
 import { connectDB } from '@/lib/mongodb';
 import Song from '@/models/Song';
 import Post from '@/models/Post';
+import Album from '@/models/Album';
+import Event from '@/models/Event';
+import Initiative from '@/models/Initiative';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   await connectDB();
 
-  const songs = await Song.find({ isPublished: true })
-    .select('slug updatedAt')
-    .lean();
-  const posts = await Post.find({ isPublished: true })
-    .select('slug updatedAt')
-    .lean();
+  const [songs, posts, albums, events, initiatives] = await Promise.all([
+    Song.find({ isPublished: true })
+      .select('albumId slug updatedAt')
+      .populate('albumId', 'slug')
+      .lean(),
+    Post.find({ isPublished: true }).select('slug updatedAt').lean(),
+    Album.find().select('slug updatedAt').lean(),
+    Event.find({ isUpcoming: true }).select('slug updatedAt').lean(),
+    Initiative.find().select('slug updatedAt').lean(),
+  ]);
 
   const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
 
@@ -3110,13 +3604,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/about`, lastModified: new Date() },
     { url: `${BASE}/music`, lastModified: new Date() },
     { url: `${BASE}/blog`, lastModified: new Date() },
-    ...songs.map((s) => ({
-      url: `${BASE}/music/${s.slug}`,
-      lastModified: s.updatedAt,
+    { url: `${BASE}/events`, lastModified: new Date() },
+    { url: `${BASE}/impact`, lastModified: new Date() },
+    ...albums.map((a) => ({
+      url: `${BASE}/music/${a.slug}`,
+      lastModified: a.updatedAt,
     })),
     ...posts.map((p) => ({
       url: `${BASE}/blog/${p.slug}`,
       lastModified: p.updatedAt,
+    })),
+    ...initiatives.map((i) => ({
+      url: `${BASE}/impact/${i.slug}`,
+      lastModified: i.updatedAt,
     })),
   ];
 }
@@ -3124,7 +3624,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
 ---
 
-### 11.3 Robots.ts
+### 11.3 Robots.ts ✅
 
 **File:** `src/app/robots.ts`
 
@@ -3139,42 +3639,131 @@ export default function robots(): MetadataRoute.Robots {
 }
 ```
 
+---
+
+### 11.4 JSON-LD Structured Data ⬜
+
+Add JSON-LD to three page types. Implement as an inline `<script>` in each Server Component page.
+
+#### Song Page — `MusicRecording`
+
+```tsx
+// In src/app/(public)/music/[albumSlug]/[songSlug]/page.tsx (if this route exists)
+// or on the album page per track
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'MusicRecording',
+  name: song.title,
+  byArtist: {
+    '@type': 'MusicGroup',
+    name: 'Glowreeyah',
+  },
+  inAlbum: {
+    '@type': 'MusicAlbum',
+    name: album.title,
+  },
+  description: song.description,
+  url: `${process.env.NEXT_PUBLIC_SITE_URL}/music/${album.slug}`,
+};
+
+// In JSX:
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+/>;
+```
+
+#### Blog Post Page — `Article`
+
+```tsx
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: post.title,
+  description: post.excerpt,
+  image: post.coverImageUrl,
+  datePublished: post.publishedAt,
+  dateModified: post.updatedAt,
+  author: {
+    '@type': 'Person',
+    name: 'Glowreeyah',
+  },
+  url: `${process.env.NEXT_PUBLIC_SITE_URL}/blog/${post.slug}`,
+};
+```
+
+#### Event Page — `Event`
+
+```tsx
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: event.title,
+  startDate: event.date,
+  location: {
+    '@type': 'Place',
+    name: event.location,
+  },
+  description: event.description,
+  url: event.externalLink || `${process.env.NEXT_PUBLIC_SITE_URL}/events`,
+  image: event.coverImageUrl,
+  organizer: {
+    '@type': 'Person',
+    name: 'Glowreeyah',
+  },
+};
+```
+
+---
+
 **Section 11 Checklist:**
 
-- [ ] `generateMetadata()` implemented on every dynamic public route (songs, posts, albums, events, tags)
-- [ ] Open Graph `title`, `description`, and `images` present on all content pages
-- [ ] Twitter Card metadata present on all content pages
-- [ ] Canonical URLs correct — no duplicate or missing canonicals
-- [ ] JSON-LD structured data added to song pages (`MusicRecording`)
-- [ ] JSON-LD structured data added to post pages (`Article`)
-- [ ] JSON-LD structured data added to event pages (`Event`)
-- [ ] `src/app/sitemap.ts` created — `/sitemap.xml` resolves and includes all published songs and posts
-- [ ] `src/app/robots.ts` created — `/robots.txt` resolves, `/cms/` is disallowed
-- [ ] Test metadata in browser DevTools → Elements → `<head>` for a song and post page
+- [x] `generateMetadata()` on all dynamic public routes
+- [x] Open Graph `title`, `description`, `images` on all content pages
+- [x] Twitter Card metadata on all content pages
+- [x] Canonical URLs correct
+- [x] `src/app/sitemap.ts` — covers albums, posts, initiatives, events, static pages
+- [x] `src/app/robots.ts` — `/cms/` disallowed
+- [ ] JSON-LD `MusicRecording` added to song/album pages
+- [ ] JSON-LD `Article` added to blog post pages
+- [ ] JSON-LD `Event` added to events page
+- [ ] Validate JSON-LD at https://search.google.com/test/rich-results
 
 ---
 
 ## 12. Performance & Accessibility ⬜
 
-### Performance Checklist
+### 12.1 Performance Checklist
 
-- [x] `next/image` used for all images — no raw `<img>` tags in public pages
-- [x] `next/font` used for Inter — no layout shift on load
-- [ ] `loading="lazy"` on all video embeds
-- [ ] `revalidate` set on all Server Component content pages
-- [x] Client Component usage minimised — no unnecessary `'use client'` in content pages
-- [x] `npm run build` output reviewed — no large bundle warnings
-- [ ] Lighthouse Performance score ≥ 90 on Home, Music, and Blog pages
+- [x] `next/image` used for all images — no raw `<img>` in public pages
+- [x] `qualities: [75, 80]` set in `next.config.ts`
+- [x] Client Component usage minimised
+- [x] `npm run build` — no large bundle warnings
+- [ ] `loading="lazy"` on all iframe/video embeds
+- [ ] `revalidate` export on content Server Component pages (set to `60` or `3600`)
+- [ ] Lighthouse Performance ≥ 90 on Home, Music, Blog
+- [ ] Image sizes appropriate — verify no oversized images shipped
 
-### Accessibility Checklist
+### 12.2 Accessibility Checklist
 
-- [x] All images have `alt` text — enforced at upload time in CMS
-- [x] Semantic HTML used throughout: `<nav>`, `<main>`, `<article>`, `<section>`, `<header>`, `<footer>`
-- [x] Colour contrast ratio ≥ 4.5:1 verified for body text against backgrounds
-- [x] Keyboard navigation works on Navbar, booking form, and CMS forms
-- [x] `aria-label` on icon-only buttons (Navbar mobile menu toggle, etc.)
-- [ ] Skip navigation link present at top of root layout
-- [ ] Lighthouse Accessibility score ≥ 90
+- [x] All images have `alt` text — enforced at upload (CMS requires altText)
+- [x] Semantic HTML: `<nav>`, `<main>`, `<article>`, `<section>`, `<header>`, `<footer>`
+- [x] Colour contrast ≥ 4.5:1 for body text
+- [x] Keyboard navigation works on Navbar, booking form, CMS forms
+- [x] `aria-label` on icon-only buttons (hamburger menu)
+- [ ] Skip navigation link at top of root layout
+- [ ] Lighthouse Accessibility ≥ 90
+- [ ] Test with screen reader (VoiceOver or NVDA)
+
+### 12.3 Adding Revalidation
+
+Add this export to each public Server Component page that fetches from the DB:
+
+```typescript
+export const revalidate = 3600; // revalidate at most every hour
+```
+
+Or use `revalidate = 60` for more frequently updated content (events, bookings).
 
 ---
 
@@ -3182,90 +3771,146 @@ export default function robots(): MetadataRoute.Robots {
 
 ### 13.1 Manual Testing Checklist
 
-Before each deployment, verify:
+**Public Site**
 
-- [x] All public pages load without errors
-- [x] Dynamic routes resolve correctly (music, blog, tags)
-- [x] API routes return correct status codes
-- [x] Media uploads succeed and URLs resolve
-- [x] CMS CRUD operations work for all content types
-- [x] CMS login, logout, and session expiry work correctly
-- [x] Mobile layout renders correctly at 375px width
-- [x] Sitemap accessible at `/sitemap.xml`
-- [x] Robots.txt accessible at `/robots.txt`
+- [ ] Home page loads — dual hero correct at mobile (375px) and desktop (1280px)
+- [ ] `/about` — hero image uses `object-top`, correct height
+- [ ] `/music` — album cards grid renders
+- [ ] `/music/[albumSlug]` — AlbumPlayer loads tracks, play/pause works, floating bar appears, prev/next work, auto-advance works
+- [ ] `/blog` — post cards render with cover images
+- [ ] `/blog/[slug]` — full post renders, back link goes to correct referer
+- [ ] `/events` — event cards render
+- [ ] `/speaking` → `/events` redirect works (301)
+- [ ] `/impact` — initiative image cards render and link to detail
+- [ ] `/impact/[slug]` — initiative detail page renders
+- [ ] `/booking` — form submits, success state shown, booking appears in CMS
+- [ ] `/media` — gallery renders
+- [ ] `/tag/[slug]` — tagged content lists correctly
+- [ ] `/sitemap.xml` — resolves, includes albums, posts, initiatives
+- [ ] `/robots.txt` — resolves, `/cms/` is disallowed
+
+**CMS**
+
+- [ ] `/cms/login` — login with correct credentials → redirected to `/cms/dashboard`
+- [ ] `/cms/dashboard` — stat counts render from DB
+- [ ] `/cms/posts` — list renders, new post creates, edit updates, delete works, publish toggle works
+- [ ] `/cms/songs` — list renders, new song creates (title field updates correctly), edit updates
+- [ ] `/cms/albums` — CRUD works
+- [ ] `/cms/events` — card layout on mobile, create with date auto-sets `isUpcoming`
+- [ ] `/cms/initiatives` — truncation works, CRUD works
+- [ ] `/cms/media` — upload to Cloudinary works, delete removes from both Cloudinary and MongoDB
+- [ ] `/cms/bookings` — pending badge appears, `MarkBookingsSeen` clears it on visit, status update sends email
+- [ ] `/cms/tags` — create and delete work
+- [ ] `/cms/artist` — profile saves, reflects on `/about`
+- [ ] `/cms/settings` — hero images save, reflect on homepage
+- [ ] Unauthenticated `/cms/dashboard` → redirect to `/cms/login`
+- [ ] Logout → redirect to `/cms/login`, session cleared
+
+**API**
+
+- [ ] `GET /api/songs?albumId=xxx` — returns songs for album
+- [ ] `POST /api/songs` with missing title → 422
+- [ ] `PATCH /api/posts/[id]` with empty `coverImageUrl` → 200 (not 422)
+- [ ] `DELETE /api/media/[id]` — Cloudinary asset deleted + MongoDB record removed
+- [ ] `POST /api/bookings` → booking created, appears in CMS
+- [ ] `PATCH /api/bookings/[id]` with `status: accepted` → email sent via Resend
+- [ ] `POST /api/cms/bookings-seen` → `bookings_seen_at` cookie set
 
 ---
 
 ## 14. Deployment ⬜
 
-### 14.1 Pre-Deployment Steps
+### 14.1 Pre-Deployment Checklist
 
-Complete these steps before deploying for the first time:
-
-- [x] All environment variables confirmed working locally in `.env.local`
-- [x] MongoDB Atlas cluster running, connection string valid
-- [x] Cloudinary credentials active and upload tested
-- [x] All code pushed to `main` branch on GitHub
-- [x] `npm run build` passes locally with zero errors
-- [x] `npx tsc --noEmit` passes with zero TypeScript errors
-
----
-
-### 14.2 Deploy to Vercel
-
-**Step 1 — Log in to Vercel**
-
-Go to https://vercel.com and log in with your GitHub account.
-
-**Step 2 — Import repository**
-
-- Click **"Add New Project"**
-- Select **"Import Git Repository"**
-- Find and select `glowreeyah`
-- Click **"Import"**
-
-**Step 3 — Configure project settings**
-
-- **Framework Preset:** Next.js (auto-detected)
-- **Root Directory:** `./` (default)
-- **Build Command:** `npm run build` (default)
-- **Output Directory:** `.next` (default)
-
-**Step 4 — Add environment variables**
-
-In the "Environment Variables" section, add all variables from your `.env.local` file one by one:
-
-| Key                                 | Value                                                  |
-| ----------------------------------- | ------------------------------------------------------ |
-| `MONGODB_URI`                       | Your Atlas connection string                           |
-| `CLOUDINARY_CLOUD_NAME`             | Your Cloudinary cloud name                             |
-| `CLOUDINARY_API_KEY`                | Your Cloudinary API key                                |
-| `CLOUDINARY_API_SECRET`             | Your Cloudinary API secret                             |
-| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Your Cloudinary cloud name                             |
-| `NEXT_PUBLIC_SITE_URL`              | Your production domain (e.g. `https://glowreeyah.com`) |
-| `NEXT_PUBLIC_SITE_NAME`             | `Glowreeyah`                                           |
-| `NEXTAUTH_SECRET`                   | A strong random 32-character string                    |
-| `NEXTAUTH_URL`                      | Your production domain (e.g. `https://glowreeyah.com`) |
-| `CMS_ADMIN_EMAIL`                   | CMS login email                                        |
-| `CMS_ADMIN_PASSWORD`                | CMS login password                                     |
-
-**Step 5 — Deploy**
-
-Click **"Deploy"**. Vercel will build and deploy the application. This takes 2–5 minutes.
-
-**Step 6 — Add custom domain (optional)**
-
-- Go to **Project → Settings → Domains**
-- Add your custom domain (e.g. `glowreeyah.com`)
-- Follow DNS configuration instructions for your registrar
+- [ ] `npm run build` passes locally — zero errors
+- [ ] `npx tsc --noEmit` passes — zero TypeScript errors
+- [ ] `npm run lint` passes — zero lint errors
+- [ ] All changes committed to `feature/platform-v1` branch
+- [ ] Branch merged to `main` on GitHub
+- [ ] MongoDB Atlas cluster running, connection string valid
+- [ ] Cloudinary credentials active
+- [ ] Resend API key active, sending domain verified (`glowreeyah.com`)
+- [ ] Tawk.to embed script URL noted
 
 ---
 
-### 14.3 Subsequent Deployments
+### 14.2 MongoDB Atlas Production Configuration
 
-All future deployments are automatic. Any push to the `main` branch triggers a production deployment on Vercel. Pushes to other branches create Preview deployments.
+1. Log in to https://cloud.mongodb.com
+2. Select cluster → **Network Access**
+3. Add IP → **Allow Access from Anywhere** (`0.0.0.0/0`) — required because Vercel uses dynamic IPs
+4. Confirm database user has **readWrite** on `glowreeyah`
+5. Enable **Atlas automated backups**
 
-To manually trigger a deployment:
+---
+
+### 14.3 Deploy to Vercel
+
+**Step 1** — Go to https://vercel.com, log in with GitHub.
+
+**Step 2** — Add New Project → Import Git Repository → select `glowreeyah-platform` → Import.
+
+**Step 3** — Framework: Next.js (auto-detected). Root dir: `./`. Build: `npm run build`. Output: `.next`.
+
+**Step 4** — Add all environment variables:
+
+| Key                                 | Value                                        |
+| ----------------------------------- | -------------------------------------------- |
+| `MONGODB_URI`                       | Atlas connection string                      |
+| `CLOUDINARY_CLOUD_NAME`             | Cloudinary cloud name                        |
+| `CLOUDINARY_API_KEY`                | Cloudinary API key                           |
+| `CLOUDINARY_API_SECRET`             | Cloudinary API secret                        |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name                        |
+| `NEXT_PUBLIC_SITE_URL`              | `https://glowreeyah.com` (production domain) |
+| `NEXT_PUBLIC_SITE_NAME`             | `Glowreeyah`                                 |
+| `NEXTAUTH_SECRET`                   | Strong random 32-char string                 |
+| `NEXTAUTH_URL`                      | `https://glowreeyah.com` (production domain) |
+| `CMS_ADMIN_EMAIL`                   | CMS login email                              |
+| `CMS_ADMIN_PASSWORD`                | CMS login password                           |
+| `RESEND_API_KEY`                    | Resend API key                               |
+| `RESEND_FROM_EMAIL`                 | `noreply@glowreeyah.com`                     |
+| `RESEND_TO_EMAIL`                   | Admin notification email                     |
+
+**Step 5** — Click **Deploy**. First build takes 2–5 minutes.
+
+**Step 6** — Add custom domain: Project → Settings → Domains → add `glowreeyah.com`.
+
+---
+
+### 14.4 Tawk.to Integration
+
+Add the Tawk.to embed script to `src/app/layout.tsx` as a `<Script>` tag with `strategy="afterInteractive"`:
+
+```typescript
+import Script from 'next/script';
+
+// In root layout JSX:
+<Script
+  id="tawkto"
+  strategy="afterInteractive"
+  dangerouslySetInnerHTML={{
+    __html: `
+      var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+      (function(){
+        var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+        s1.async=true;
+        s1.src='https://embed.tawk.to/YOUR_PROPERTY_ID/YOUR_WIDGET_ID';
+        s1.charset='UTF-8';
+        s1.setAttribute('crossorigin','*');
+        s0.parentNode.insertBefore(s1,s0);
+      })();
+    `,
+  }}
+/>
+```
+
+Replace `YOUR_PROPERTY_ID` and `YOUR_WIDGET_ID` with values from your Tawk.to dashboard (Administration → Chat Widget → Direct Chat Link).
+
+---
+
+### 14.5 Subsequent Deployments
+
+All future deployments are automatic. Push to `main` → production deployment on Vercel. Other branches → Preview deployments.
 
 ```bash
 git add .
@@ -3275,31 +3920,23 @@ git push origin main
 
 ---
 
-### 14.4 MongoDB Atlas Production Configuration
-
-1. Go to https://cloud.mongodb.com
-2. Select your cluster → **Network Access**
-3. Add IP Address → **Allow Access from Anywhere** (`0.0.0.0/0`) for Vercel (Vercel uses dynamic IPs)
-4. Confirm your database user has **readWrite** permission on the `glowreeyah` database
-5. Enable **Atlas backups** on your cluster (recommended)
-
 **Section 14 Checklist:**
 
-- [ ] `npm run build` passes locally — zero errors
-- [ ] `npx tsc --noEmit` passes — zero TypeScript errors
-- [ ] Code pushed to `main` branch on GitHub
-- [ ] Repository imported into Vercel
-- [ ] All environment variables added to Vercel dashboard (all 11 vars from Appendix C)
-- [ ] `NEXTAUTH_URL` updated to production domain in Vercel (not `localhost`)
-- [ ] `NEXT_PUBLIC_SITE_URL` updated to production domain in Vercel
-- [ ] First deployment successful — production URL loads
-- [ ] MongoDB Atlas Network Access set to `0.0.0.0/0`
-- [ ] Database user has `readWrite` permission on `glowreeyah` database
-- [ ] Atlas automated backups enabled
-- [ ] Custom domain configured (if applicable) and DNS propagated
-- [ ] Production URL loads public frontend correctly
-- [ ] `/cms/login` accessible on production domain
-- [ ] Future pushes to `main` trigger automatic Vercel deployments ✓
+- [x] `npm run build` passes locally
+- [x] `npx tsc --noEmit` passes
+- [x] Code pushed to `main` on GitHub
+- [x] Repository imported into Vercel
+- [x] All 14 env vars added to Vercel dashboard
+- [x] `NEXTAUTH_URL` set to production domain (not `localhost`)
+- [x] `NEXT_PUBLIC_SITE_URL` set to production domain
+- [x] First deployment successful
+- [x] MongoDB Atlas Network Access → `0.0.0.0/0`
+- [x] Atlas automated backups enabled
+- [ ] Custom domain configured and DNS propagated
+- [x] Production URL loads public frontend
+- [x] `/cms-login` accessible on production
+- [x] Tawk.to embed verified (chat widget appears)
+- [x] Resend domain verified — booking email sends successfully
 
 ---
 
@@ -3307,17 +3944,9 @@ git push origin main
 
 ### 15.1 WordPress Export
 
-**Step 1 — Export from WordPress**
+**Step 1** — In WordPress admin: Tools → Export → All Content → download `.xml`.
 
-In your WordPress admin:
-
-- Go to **Tools → Export**
-- Select **All Content**
-- Download the `.xml` export file
-
-**Step 2 — Parse the export**
-
-Install a WordPress XML parser locally:
+**Step 2** — Parse the export:
 
 ```bash
 npm install wordpress-export-parser
@@ -3332,34 +3961,35 @@ import slugify from 'slugify';
 // Parse WordPress XML and insert into MongoDB
 ```
 
-**Step 3 — Upload media**
+**Step 3** — Upload media:
 
 For each image URL in the WordPress export:
 
 1. Download the image
 2. Upload to Cloudinary via the upload API
-3. Record the new Cloudinary URL in the `MediaAsset` collection
-4. Update all references in content
+3. Record the Cloudinary URL in `MediaAsset`
+4. Update content body references
 
-**Step 4 — Validate migrated content**
+**Step 4** — Validate:
 
-- Count posts: compare WordPress post count vs MongoDB document count
+- Post count in MongoDB matches WordPress export
 - Spot-check 10 random posts for content integrity
-- Confirm all images resolve (no broken URLs)
-- Check all slugs are unique
+- All images resolve (no broken URLs)
+- All slugs unique
+
+---
 
 **Section 15 Checklist:**
 
 - [ ] WordPress `.xml` export downloaded
-- [ ] `scripts/migrate.ts` written and tested locally against dev DB
-- [ ] All posts imported — document count matches WordPress export count
-- [ ] All media downloaded from WordPress and uploaded to Cloudinary
-- [ ] `MediaAsset` records created for each migrated media file
-- [ ] All post body image references updated to Cloudinary URLs
-- [ ] 10 random posts spot-checked for content accuracy
+- [ ] `scripts/migrate.ts` written and tested locally
+- [ ] All posts imported — count matches WordPress
+- [ ] All media uploaded to Cloudinary
+- [ ] `MediaAsset` records created for each file
+- [ ] Post body image references updated to Cloudinary URLs
+- [ ] 10 random posts spot-checked
 - [ ] Zero broken image URLs in production
-- [ ] All slugs unique — no duplicate key errors in MongoDB
-- [ ] Migrated content visible and rendering correctly on production frontend
+- [ ] All slugs unique
 
 ---
 
@@ -3368,52 +3998,56 @@ For each image URL in the WordPress export:
 ### Immediate (Day 1)
 
 - [ ] Verify Google Search Console ownership
-- [ ] Submit sitemap: `https://search.google.com/search-console` → Sitemaps → `https://glowreeyah.com/sitemap.xml`
-- [ ] Lighthouse audit run on production — Performance ≥ 90, SEO = 100, Accessibility ≥ 90
-- [ ] CMS login confirmed working on production domain (`/cms/login`)
-- [ ] All CMS CRUD operations tested end-to-end on production
-- [ ] Booking form tested on production — submission appears in `/cms/bookings`
+- [ ] Submit sitemap: https://search.google.com/search-console → Sitemaps → `https://glowreeyah.com/sitemap.xml`
+- [ ] Lighthouse audit on production — Performance ≥ 90, SEO = 100, Accessibility ≥ 90
+- [ ] CMS login confirmed on production domain
+- [ ] All CMS CRUD operations tested on production
+- [ ] Booking form tested — submission appears in `/cms/bookings`
+- [ ] Booking status update sends Resend email on production
 
 ### Week 1
 
-- [ ] Vercel deployment logs reviewed — no runtime errors
-- [ ] MongoDB Atlas metrics reviewed — connection count and query times normal
-- [ ] Cloudinary usage reviewed against free tier limits
-- [ ] Initial user feedback collected and logged
+- [ ] Vercel deployment logs — no runtime errors
+- [ ] MongoDB Atlas metrics — connection count and query times normal
+- [ ] Cloudinary usage within free tier limits
+- [ ] Initial user feedback collected
 
 ### Ongoing
 
-- [ ] Booking submissions reviewed and actioned weekly
-- [ ] New blog / devotional content published via CMS (`/cms/posts`)
+- [ ] Booking submissions reviewed weekly
+- [ ] New blog / devotional content via `/cms/posts`
 - [ ] SEO rankings monitored monthly
-- [ ] Dependencies updated monthly: `npm outdated` → update and re-test
+- [ ] Dependencies updated monthly: `npm outdated` → update → re-test
 
 ---
 
 ## Appendix A — File Creation Order
 
-Execute file creation in this sequence to avoid import errors:
+Execute in this sequence to avoid import errors:
 
 1. `src/lib/mongodb.ts`
 2. `src/lib/cloudinary.ts`
-3. `src/lib/utils.ts`
-4. `src/models/*.ts` (all models)
-5. `src/app/api/**/*.ts` (all route handlers, including `api/auth/[...nextauth]/route.ts`)
-6. `src/components/layout/*.tsx`
-7. `src/components/ui/*.tsx`
-8. `src/components/cms/*.tsx` (sidebar, topbar, forms, shared components)
-9. `src/components/music/*.tsx`
-10. `src/components/content/*.tsx`
-11. `src/app/(cms)/layout.tsx`
-12. `src/app/(cms)/login/page.tsx`
-13. `src/app/(cms)/dashboard/page.tsx`
-14. `src/app/(cms)/**/*.tsx` (all CMS pages)
-15. `src/app/layout.tsx`
-16. `src/app/(public)/page.tsx`
-17. `src/app/(public)/**/*.tsx` (all public pages)
-18. `src/app/sitemap.ts`
-19. `src/app/robots.ts`
-20. `src/middleware.ts`
+3. `src/lib/resend.ts`
+4. `src/lib/utils.ts`
+5. `src/lib/validators/*.ts` (all validators)
+6. `src/models/*.ts` (all models)
+7. `src/app/api/auth/[...nextauth]/route.ts`
+8. `src/app/api/**/*.ts` (all route handlers)
+9. `src/middleware.ts`
+10. `src/components/layout/*.tsx`
+11. `src/components/ui/*.tsx`
+12. `src/components/cms/*.tsx`
+13. `src/components/music/*.tsx`
+14. `src/components/content/*.tsx`
+15. `src/app/cms/layout.tsx`
+16. `src/app/cms-login/page.tsx`
+17. `src/app/cms/dashboard/page.tsx`
+18. `src/app/cms/**/*.tsx` (all CMS pages)
+19. `src/app/layout.tsx`
+20. `src/app/(public)/page.tsx`
+21. `src/app/(public)/**/*.tsx` (all public pages)
+22. `src/app/sitemap.ts`
+23. `src/app/robots.ts`
 
 ---
 
@@ -3429,7 +4063,7 @@ npm run build
 # Run production build locally
 npm run start
 
-# Check for TypeScript errors
+# TypeScript check
 npx tsc --noEmit
 
 # Lint
@@ -3443,20 +4077,69 @@ npx prettier --write src/
 
 ## Appendix C — Environment Variable Checklist
 
-| Variable                            | Required | Used In                 |
-| ----------------------------------- | -------- | ----------------------- |
-| `MONGODB_URI`                       | ✅       | `src/lib/mongodb.ts`    |
-| `CLOUDINARY_CLOUD_NAME`             | ✅       | `src/lib/cloudinary.ts` |
-| `CLOUDINARY_API_KEY`                | ✅       | `src/lib/cloudinary.ts` |
-| `CLOUDINARY_API_SECRET`             | ✅       | `src/lib/cloudinary.ts` |
-| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | ✅       | Client components       |
-| `NEXT_PUBLIC_SITE_URL`              | ✅       | SEO, sitemap            |
-| `NEXT_PUBLIC_SITE_NAME`             | ✅       | Metadata                |
-| `NEXTAUTH_SECRET`                   | ✅       | CMS auth                |
-| `NEXTAUTH_URL`                      | ✅       | CMS auth                |
-| `CMS_ADMIN_EMAIL`                   | ✅       | CMS login credentials   |
-| `CMS_ADMIN_PASSWORD`                | ✅       | CMS login credentials   |
+| Variable                            | Required | Used In                                   |
+| ----------------------------------- | -------- | ----------------------------------------- |
+| `MONGODB_URI`                       | ✅       | `src/lib/mongodb.ts`                      |
+| `CLOUDINARY_CLOUD_NAME`             | ✅       | `src/lib/cloudinary.ts`                   |
+| `CLOUDINARY_API_KEY`                | ✅       | `src/lib/cloudinary.ts`                   |
+| `CLOUDINARY_API_SECRET`             | ✅       | `src/lib/cloudinary.ts`                   |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | ✅       | Client components                         |
+| `NEXT_PUBLIC_SITE_URL`              | ✅       | SEO, sitemap, JSON-LD, referer back links |
+| `NEXT_PUBLIC_SITE_NAME`             | ✅       | Metadata                                  |
+| `NEXTAUTH_SECRET`                   | ✅       | CMS auth                                  |
+| `NEXTAUTH_URL`                      | ✅       | CMS auth                                  |
+| `CMS_ADMIN_EMAIL`                   | ✅       | CMS login credentials                     |
+| `CMS_ADMIN_PASSWORD`                | ✅       | CMS login credentials                     |
+| `RESEND_API_KEY`                    | ✅       | `src/lib/resend.ts` — booking emails      |
+| `RESEND_FROM_EMAIL`                 | ✅       | `src/lib/resend.ts` — sender address      |
+| `RESEND_TO_EMAIL`                   | ✅       | `src/lib/resend.ts` — admin notifications |
 
 ---
 
-_This document supersedes all previous implementation notes. For feature definitions see `features.md`. For brand and architectural constraints see `constitution.md`._
+## Appendix D — What Changed in This Session
+
+Changes made in the session ending 2026-04-06, now reflected in this document:
+
+**API fixes**
+
+- All `[id]` route handlers updated to `params: Promise<{ id: string }>` and `await params` (Next.js 15)
+- Post PATCH 404 fix — `params.id` → awaited `id`
+- Post validator — `coverImageUrl` now `.optional().or(z.literal(''))`, all URL fields same pattern
+- Song form — `onChange` for title field fixed (was updating `date`)
+
+**New models & routes**
+
+- `SiteSettings` model — `heroImageUrl`, `heroImageMobileUrl`, `heroHeadline`, `heroSubheadline`, `siteTagline`
+- `GET/PATCH /api/settings` route — upsert pattern
+- `POST /api/cms/bookings-seen` route — cookie-based seen tracking
+
+**CMS**
+
+- CMS route group `(cms)` → real `cms/` directory (resolved Next.js 15 route conflict)
+- `CMSShell` — outer client component for mobile drawer state
+- `CMSSidebar` — collapsible on mobile, persistent on desktop
+- `CMSTopbar` — hamburger button + pending bookings badge
+- `MarkBookingsSeen` — client component, fires on `/cms/bookings` mount
+- `EventForm` — `deriveIsUpcoming()` at module scope; `PublishToggle` removed
+- `CMSRowActions` — removed unused `router`
+- Events CMS page — mobile card layout replacing table
+- Initiatives page — `line-clamp-1` + `table-fixed`
+- Booking status PATCH — triggers Resend email via `sendBookingStatusEmail()`
+- `/cms/settings` page + `SiteSettings` CMS form
+
+**Public site**
+
+- Homepage hero — dual layout (mobile stacked `md:hidden`, desktop overlay `hidden md:flex`)
+- `heroImageMobileUrl` field added to `SiteSettings`, settings API, CMS settings page
+- Album detail — `SongCard` → `AlbumPlayer` (inline play, floating player, prev/next, volume, auto-advance)
+- Blog post detail — hero image layout + referer-based back link
+- About page — `object-top`, fixed height hero container
+- Events homepage section — cards grid (was single featured event)
+- Impact/initiatives homepage — image cards linking to detail pages
+- Initiative detail pages added (`/impact/[slug]`)
+- `/speaking` renamed to `/events` throughout
+- `next.config.ts` — `qualities: [75, 80]`, `/speaking` → `/events` redirect
+
+---
+
+_This document supersedes all previous implementation notes. Version 2.0.0. For feature definitions see `04_features.md`. For brand and architectural constraints see `01_constitution.md`._
