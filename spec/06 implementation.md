@@ -2,8 +2,8 @@
 
 **Project:** Glowreeyah Digital Platform
 **Document Type:** Software Design Document (SDD) — Single Source of Truth
-**Version:** 2.0.0
-**Last Updated:** 2026-04-06
+**Version:** 2.1.0
+**Last Updated:** 2026-04-09
 **Status:** Pre-deployment
 
 ---
@@ -28,6 +28,8 @@
 | §14     | Deployment                  | ⬜ Not Started |
 | §15     | Content Migration           | ⬜ Not Started |
 | §16     | Post-Launch                 | ⬜ Not Started |
+| §17     | Multi-Tenant Roles          | ⬜ Not Started |
+| §18     | Paystack Payments           | ⬜ Not Started |
 
 > Update this table as each section is completed. Change `⬜ Not Started` → `🔄 In Progress` → `✅ Complete`.
 
@@ -603,6 +605,8 @@ export interface IAlbum extends Document {
   coverImageUrl: string;
   description: string;
   tags: mongoose.Types.ObjectId[];
+  isSingle: boolean;       // true = single track release, false = album
+  price: number;           // price in kobo (Paystack unit); 0 = free
   seo: { metaTitle: string; metaDescription: string };
 }
 
@@ -614,6 +618,8 @@ const AlbumSchema = new Schema<IAlbum>(
     coverImageUrl: { type: String, required: true },
     description: { type: String },
     tags: [{ type: Schema.Types.ObjectId, ref: 'Tag' }],
+    isSingle: { type: Boolean, default: false },
+    price: { type: Number, default: 0 },   // 0 = free / streaming only
     seo: { metaTitle: String, metaDescription: String },
   },
   { timestamps: true }
@@ -643,6 +649,7 @@ export interface ISong extends Document {
   coverImageUrl: string;
   tags: mongoose.Types.ObjectId[];
   isPublished: boolean;
+  price: number;           // price in kobo; 0 = free / included in album price
   seo: { metaTitle: string; metaDescription: string };
 }
 
@@ -660,6 +667,7 @@ const SongSchema = new Schema<ISong>(
     coverImageUrl: { type: String },
     tags: [{ type: Schema.Types.ObjectId, ref: 'Tag' }],
     isPublished: { type: Boolean, default: true },
+    price: { type: Number, default: 0 },
     seo: { metaTitle: String, metaDescription: String },
   },
   { timestamps: true }
@@ -1795,6 +1803,7 @@ export const SongSchema = z.object({
   coverImageUrl: z.string().url().optional().or(z.literal('')),
   tags: z.array(z.string()).optional(),
   isPublished: z.boolean().default(true),
+  price: z.number().min(0).default(0),   // kobo; 0 = free / included in album
   seo: z
     .object({
       metaTitle: z.string().optional(),
@@ -1853,6 +1862,8 @@ export const AlbumSchema = z.object({
   coverImageUrl: z.string().url('Must be a valid URL'),
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
+  isSingle: z.boolean().default(false),
+  price: z.number().min(0).default(0),   // kobo; 0 = free
   seo: z
     .object({
       metaTitle: z.string().optional(),
@@ -2781,35 +2792,39 @@ The badge in `CMSTopbar` shows new pending bookings since the last time the admi
 
 ---
 
-### 10.7 EventForm — isUpcoming Derivation ✅
+### 10.7 EventForm — Past Event Lock ✅
 
-`deriveIsUpcoming()` is defined at **module scope** (outside the component function) so it does not re-create on each render:
+Past events are **viewable but not editable**. All fields render as `readOnly`, the Save button is disabled and visually muted, and an amber notice banner explains why. Delete remains available.
+
+Two module-level helpers drive this:
 
 ```typescript
 // At module level — NOT inside the component
+
 function deriveIsUpcoming(dateStr: string): boolean {
-  if (!dateStr) return true;
-  return new Date(dateStr) >= new Date();
+  if (!dateStr) return true
+  return new Date(dateStr) >= new Date()
 }
 
-export default function EventForm({ event }: Props) {
-  const [form, setForm] = useState({
-    // ...
-    isUpcoming: event?.isUpcoming ?? true,
-  });
-
-  function handleDateChange(dateStr: string) {
-    setForm((f) => ({
-      ...f,
-      date: dateStr,
-      isUpcoming: deriveIsUpcoming(dateStr),
-    }));
-  }
-  // ...
+function isPastEvent(event?: EventData): boolean {
+  if (!event?._id) return false          // new events always editable
+  if (event.isUpcoming === false) return true
+  if (event.date) return new Date(event.date) < new Date()
+  return false
 }
 ```
 
-`PublishToggle` is **not** present in `EventForm`.
+Key implementation details:
+
+- `isPast` is derived once at component initialisation from `isPastEvent(event)` — not state, not recalculated on render
+- A shared `inputCls` string switches between the normal focus ring and a greyed-out style (`bg-gray-50 text-gray-400 cursor-not-allowed`) based on `isPast`
+- Every `onChange` handler is guarded with `!isPast &&` so keyboard entry is silently ignored even if `readOnly` is bypassed
+- `SlugField` and `MediaPicker` (both interactive components) are replaced with plain readonly `<input>` elements when `isPast` is true
+- The Save button gets `disabled={isPast || saving}` plus `cursor-not-allowed` styling and a `title` tooltip
+- `handleSubmit` has a `if (isPast) return` early exit as a second line of defence
+- `PublishToggle` is **not** present in `EventForm`
+
+**File:** `src/components/cms/EventForm.tsx` — full implementation delivered as a separate file.
 
 ---
 
@@ -4021,6 +4036,556 @@ For each image URL in the WordPress export:
 
 ---
 
+---
+
+## 17. Multi-Tenant Support & CMS Roles ⬜
+
+### 17.1 Overview
+
+Replace the single hardcoded admin credential with a `CMSUser` collection supporting three roles:
+
+| Role      | Permissions                                                                          |
+| --------- | ------------------------------------------------------------------------------------ |
+| `admin`   | Full access — all CRUD, settings, user management, bookings                          |
+| `editor`  | Create and edit content — no settings, no user management                            |
+| `creator` | Create content only — cannot edit or delete others' content, no settings             |
+
+---
+
+### 17.2 CMSUser Model — `src/models/CMSUser.ts`
+
+```typescript
+import mongoose, { Schema, Document } from 'mongoose';
+import bcrypt from 'bcryptjs';
+
+export interface ICMSUser extends Document {
+  name: string;
+  email: string;
+  passwordHash: string;
+  role: 'admin' | 'editor' | 'creator';
+  isActive: boolean;
+  comparePassword(candidate: string): Promise<boolean>;
+}
+
+const CMSUserSchema = new Schema<ICMSUser>(
+  {
+    name:         { type: String, required: true },
+    email:        { type: String, required: true, unique: true, lowercase: true },
+    passwordHash: { type: String, required: true },
+    role:         { type: String, enum: ['admin', 'editor', 'creator'], default: 'editor' },
+    isActive:     { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+
+CMSUserSchema.methods.comparePassword = function (candidate: string) {
+  return bcrypt.compare(candidate, this.passwordHash);
+};
+
+export default mongoose.models.CMSUser ||
+  mongoose.model<ICMSUser>('CMSUser', CMSUserSchema);
+```
+
+Install bcryptjs:
+
+```bash
+npm install bcryptjs
+npm install --save-dev @types/bcryptjs
+```
+
+---
+
+### 17.3 Updated NextAuth Handler
+
+**File:** `src/app/api/auth/[...nextauth]/route.ts`
+
+```typescript
+import NextAuth, { NextAuthOptions } from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import { connectDB } from '@/lib/mongodb';
+import CMSUser from '@/models/CMSUser';
+
+export const authOptions: NextAuthOptions = {
+  providers: [
+    CredentialsProvider({
+      name: 'Credentials',
+      credentials: {
+        email:    { label: 'Email',    type: 'email' },
+        password: { label: 'Password', type: 'password' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null;
+        await connectDB();
+        const user = await CMSUser.findOne({
+          email:    credentials.email.toLowerCase(),
+          isActive: true,
+        });
+        if (!user) return null;
+        const valid = await user.comparePassword(credentials.password);
+        if (!valid) return null;
+        return { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
+      },
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) token.role = (user as any).role;
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) (session.user as any).role = token.role;
+      return session;
+    },
+  },
+  pages: { signIn: '/cms/login' },
+  session: { strategy: 'jwt' },
+  secret: process.env.NEXTAUTH_SECRET,
+};
+
+const handler = NextAuth(authOptions);
+export { handler as GET, handler as POST };
+```
+
+---
+
+### 17.4 NextAuth Type Augmentation
+
+**File:** `src/types/next-auth.d.ts`
+
+```typescript
+import 'next-auth';
+import 'next-auth/jwt';
+
+declare module 'next-auth' {
+  interface User { role?: string }
+  interface Session {
+    user: { name?: string; email?: string; image?: string; role?: string }
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT { role?: string }
+}
+```
+
+---
+
+### 17.5 Role-Based Route Guard
+
+**File:** `src/lib/requireRole.ts`
+
+```typescript
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { NextResponse } from 'next/server';
+
+type Role = 'admin' | 'editor' | 'creator';
+const HIERARCHY: Record<Role, number> = { admin: 3, editor: 2, creator: 1 };
+
+export async function requireRole(minimum: Role) {
+  const session = await getServerSession(authOptions);
+  const role = (session?.user as any)?.role as Role | undefined;
+  if (!role || HIERARCHY[role] < HIERARCHY[minimum]) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  return null; // authorised
+}
+```
+
+Usage in any API route:
+
+```typescript
+export async function DELETE(req: NextRequest, ...) {
+  const denied = await requireRole('admin');
+  if (denied) return denied;
+  // ...proceed
+}
+```
+
+---
+
+### 17.6 Permission Matrix
+
+| API Action                         | creator | editor | admin |
+| ---------------------------------- | ------- | ------ | ----- |
+| GET any content                    | ✅      | ✅     | ✅    |
+| POST (create) content              | ✅      | ✅     | ✅    |
+| PATCH (edit) content               | ❌      | ✅     | ✅    |
+| DELETE content                     | ❌      | ❌     | ✅    |
+| GET/PATCH settings                 | ❌      | ❌     | ✅    |
+| GET/PATCH bookings                 | ❌      | ✅     | ✅    |
+| GET/POST/DELETE media              | ❌      | ✅     | ✅    |
+| CMS user management (`/cms/users`) | ❌      | ❌     | ✅    |
+
+---
+
+### 17.7 CMS Users API
+
+**File:** `src/app/api/cms/users/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
+import { connectDB } from '@/lib/mongodb';
+import CMSUser from '@/models/CMSUser';
+import { requireRole } from '@/lib/requireRole';
+
+export async function GET() {
+  const denied = await requireRole('admin');
+  if (denied) return denied;
+  await connectDB();
+  const users = await CMSUser.find().select('-passwordHash').sort({ createdAt: -1 }).lean();
+  return NextResponse.json({ data: users });
+}
+
+export async function POST(req: NextRequest) {
+  const denied = await requireRole('admin');
+  if (denied) return denied;
+  await connectDB();
+  const { name, email, password, role } = await req.json();
+  const passwordHash = await bcrypt.hash(password, 12);
+  const user = await CMSUser.create({ name, email, passwordHash, role });
+  return NextResponse.json({ data: { _id: user._id, name, email, role } }, { status: 201 });
+}
+```
+
+**File:** `src/app/api/cms/users/[id]/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import CMSUser from '@/models/CMSUser';
+import { requireRole } from '@/lib/requireRole';
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const denied = await requireRole('admin');
+  if (denied) return denied;
+  const { id } = await params;
+  await connectDB();
+  const { role, isActive } = await req.json();
+  const user = await CMSUser.findByIdAndUpdate(id, { role, isActive }, { new: true })
+    .select('-passwordHash');
+  if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ data: user });
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const denied = await requireRole('admin');
+  if (denied) return denied;
+  const { id } = await params;
+  await connectDB();
+  await CMSUser.findByIdAndDelete(id);
+  return NextResponse.json({ ok: true });
+}
+```
+
+---
+
+### 17.8 Sidebar — Admin-Only Users Link
+
+```typescript
+// In CMSSidebar.tsx
+const { data: session } = useSession()
+const isAdmin = (session?.user as any)?.role === 'admin'
+
+// Add to nav array:
+...(isAdmin ? [{ href: '/cms/users', label: 'Users', icon: '👤' }] : [])
+```
+
+---
+
+### 17.9 Seed First Admin
+
+**File:** `scripts/seedAdmin.ts`
+
+```typescript
+import { connectDB } from '../src/lib/mongodb';
+import CMSUser from '../src/models/CMSUser';
+import bcrypt from 'bcryptjs';
+
+async function seed() {
+  await connectDB();
+  const exists = await CMSUser.findOne({ email: 'admin@glowreeyah.com' });
+  if (exists) { console.log('Admin already exists'); process.exit(0); }
+  const passwordHash = await bcrypt.hash('your-secure-password', 12);
+  await CMSUser.create({ name: 'Admin', email: 'admin@glowreeyah.com', passwordHash, role: 'admin' });
+  console.log('Admin created');
+  process.exit(0);
+}
+
+seed().catch(console.error);
+```
+
+Run once: `npx tsx scripts/seedAdmin.ts`
+
+After confirming DB login works, remove `CMS_ADMIN_EMAIL` and `CMS_ADMIN_PASSWORD` from env vars.
+
+---
+
+**Section 17 Checklist:**
+
+- [ ] `npm install bcryptjs && npm install --save-dev @types/bcryptjs`
+- [ ] `src/models/CMSUser.ts` created
+- [ ] `src/types/next-auth.d.ts` created — role in JWT and session
+- [ ] `src/app/api/auth/[...nextauth]/route.ts` updated — DB lookup, role callbacks, `authOptions` exported
+- [ ] `src/lib/requireRole.ts` created
+- [ ] `requireRole('admin')` applied to: DELETE media, DELETE tags, DELETE any content, GET/PATCH settings
+- [ ] `requireRole('editor')` applied to: PATCH content, GET/PATCH bookings, media upload
+- [ ] `src/app/api/cms/users/route.ts` and `[id]/route.ts` created
+- [ ] `/cms/users` page created
+- [ ] `CMSSidebar` — Users link visible to admin only
+- [ ] `scripts/seedAdmin.ts` run — first admin confirmed in MongoDB
+- [ ] Login with seeded admin verified
+- [ ] Editor returns 403 on DELETE — verified
+- [ ] `CMS_ADMIN_EMAIL` / `CMS_ADMIN_PASSWORD` retired after DB login confirmed
+
+---
+
+## 18. Paystack Payment Integration ⬜
+
+### 18.1 Overview
+
+Paystack handles purchasing of individual songs and full albums (including singles). `price` is stored in **kobo** on both `Album` and `Song` models. `price: 0` means free/streaming only.
+
+```
+User clicks "Buy"  →  POST /api/payments/initialize  →  Paystack checkout URL
+                                                               ↓
+                                               User pays on Paystack hosted page
+                                                               ↓
+                                   Paystack webhook → POST /api/payments/webhook
+                                                               ↓
+                                           Order record updated → accessGranted: true
+                                                               ↓
+                                              Resend email with download/access link
+```
+
+---
+
+### 18.2 Install & Env
+
+No SDK required — use Paystack's REST API directly with `fetch`.
+
+```env
+PAYSTACK_SECRET_KEY=sk_live_xxxxx           # sk_test_xxxxx in dev
+NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_live_xxx # only needed for inline widget
+```
+
+---
+
+### 18.3 Order Model — `src/models/Order.ts`
+
+```typescript
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IOrder extends Document {
+  email: string;
+  itemType: 'song' | 'album';
+  itemId: mongoose.Types.ObjectId;
+  itemTitle: string;
+  amountKobo: number;
+  paystackReference: string;
+  paystackStatus: 'pending' | 'success' | 'failed';
+  accessGranted: boolean;
+}
+
+const OrderSchema = new Schema<IOrder>(
+  {
+    email:             { type: String, required: true, lowercase: true },
+    itemType:          { type: String, enum: ['song', 'album'], required: true },
+    itemId:            { type: Schema.Types.ObjectId, required: true },
+    itemTitle:         { type: String, required: true },
+    amountKobo:        { type: Number, required: true },
+    paystackReference: { type: String, required: true, unique: true },
+    paystackStatus:    { type: String, enum: ['pending', 'success', 'failed'], default: 'pending' },
+    accessGranted:     { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+export default mongoose.models.Order ||
+  mongoose.model<IOrder>('Order', OrderSchema);
+```
+
+---
+
+### 18.4 Initialize Payment — `src/app/api/payments/initialize/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Order from '@/models/Order';
+import Album from '@/models/Album';
+import Song from '@/models/Song';
+
+export async function POST(req: NextRequest) {
+  await connectDB();
+  const { email, itemType, itemId } = await req.json();
+
+  if (!email || !itemType || !itemId) {
+    return NextResponse.json({ error: 'email, itemType, and itemId are required' }, { status: 422 });
+  }
+
+  const item = itemType === 'album'
+    ? await Album.findById(itemId).lean()
+    : await Song.findById(itemId).lean();
+
+  if (!item) return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+  if (!item.price || item.price === 0) {
+    return NextResponse.json({ error: 'This item is free' }, { status: 400 });
+  }
+
+  const paystackRes = await fetch('https://api.paystack.co/transaction/initialize', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email,
+      amount: item.price,
+      metadata: { itemType, itemId: itemId.toString(), itemTitle: item.title },
+      callback_url: `${process.env.NEXT_PUBLIC_SITE_URL}/shop/verify`,
+    }),
+  });
+
+  const paystackData = await paystackRes.json();
+  if (!paystackData.status) {
+    return NextResponse.json({ error: 'Paystack initialization failed' }, { status: 502 });
+  }
+
+  await Order.create({
+    email, itemType, itemId,
+    itemTitle: item.title,
+    amountKobo: item.price,
+    paystackReference: paystackData.data.reference,
+    paystackStatus: 'pending',
+  });
+
+  return NextResponse.json({ checkoutUrl: paystackData.data.authorization_url });
+}
+```
+
+---
+
+### 18.5 Webhook Handler — `src/app/api/payments/webhook/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
+import { connectDB } from '@/lib/mongodb';
+import Order from '@/models/Order';
+
+export async function POST(req: NextRequest) {
+  const body = await req.text();
+  const signature = req.headers.get('x-paystack-signature') ?? '';
+  const hash = crypto
+    .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY!)
+    .update(body)
+    .digest('hex');
+
+  if (hash !== signature) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+  }
+
+  const event = JSON.parse(body);
+
+  if (event.event === 'charge.success') {
+    await connectDB();
+    await Order.findOneAndUpdate(
+      { paystackReference: event.data.reference },
+      { paystackStatus: 'success', accessGranted: true }
+    );
+    // TODO: send download/access email via Resend
+  }
+
+  return NextResponse.json({ ok: true });
+}
+```
+
+> Register webhook URL in Paystack dashboard: `https://glowreeyah.com/api/payments/webhook`
+
+---
+
+### 18.6 Verify After Redirect — `src/app/api/payments/verify/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Order from '@/models/Order';
+
+export async function GET(req: NextRequest) {
+  const reference = new URL(req.url).searchParams.get('reference');
+  if (!reference) return NextResponse.json({ error: 'No reference' }, { status: 400 });
+
+  const paystackRes = await fetch(
+    `https://api.paystack.co/transaction/verify/${reference}`,
+    { headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` } }
+  );
+  const data = await paystackRes.json();
+
+  if (data.data?.status === 'success') {
+    await connectDB();
+    await Order.findOneAndUpdate(
+      { paystackReference: reference },
+      { paystackStatus: 'success', accessGranted: true }
+    );
+    return NextResponse.json({ status: 'success' });
+  }
+
+  return NextResponse.json({ status: data.data?.status ?? 'failed' });
+}
+```
+
+---
+
+### 18.7 Public Buy Button
+
+On album and song detail pages, show a Buy button when `price > 0`:
+
+```typescript
+// Price display helper — kobo to naira
+function formatPrice(kobo: number): string {
+  return `₦${(kobo / 100).toLocaleString('en-NG')}`
+}
+
+// Button (client component)
+<button onClick={() => handleBuy(item._id, itemType)}>
+  Buy — {formatPrice(item.price)}
+</button>
+```
+
+`handleBuy` collects the user's email (inline input or modal), POSTs to `/api/payments/initialize`, then redirects to the returned `checkoutUrl`.
+
+---
+
+### 18.8 CMS Orders Page
+
+Add `/cms/orders` to the CMS sidebar (admin and editor). Lists all orders with: purchaser email, item name, item type, amount, Paystack status badge, access granted flag, date.
+
+---
+
+**Section 18 Checklist:**
+
+- [ ] `PAYSTACK_SECRET_KEY` added to `.env.local` and Vercel
+- [ ] `src/models/Order.ts` created
+- [ ] `src/app/api/payments/initialize/route.ts` created
+- [ ] `src/app/api/payments/webhook/route.ts` created — signature verified
+- [ ] `src/app/api/payments/verify/route.ts` created
+- [ ] Webhook URL registered in Paystack dashboard
+- [ ] `Album.isSingle`, `Album.price`, `Song.price` wired into AlbumForm and SongForm
+- [ ] Buy button renders on public album/song pages when `price > 0`
+- [ ] Test end-to-end in test mode (`sk_test_` key)
+- [ ] Webhook fires → `accessGranted` flips to `true`
+- [ ] `/cms/orders` page renders orders correctly
+
+---
+
 ## Appendix A — File Creation Order
 
 Execute in this sequence to avoid import errors:
@@ -4077,44 +4642,44 @@ npx prettier --write src/
 
 ## Appendix C — Environment Variable Checklist
 
-| Variable                            | Required | Used In                                   |
-| ----------------------------------- | -------- | ----------------------------------------- |
-| `MONGODB_URI`                       | ✅       | `src/lib/mongodb.ts`                      |
-| `CLOUDINARY_CLOUD_NAME`             | ✅       | `src/lib/cloudinary.ts`                   |
-| `CLOUDINARY_API_KEY`                | ✅       | `src/lib/cloudinary.ts`                   |
-| `CLOUDINARY_API_SECRET`             | ✅       | `src/lib/cloudinary.ts`                   |
-| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | ✅       | Client components                         |
-| `NEXT_PUBLIC_SITE_URL`              | ✅       | SEO, sitemap, JSON-LD, referer back links |
-| `NEXT_PUBLIC_SITE_NAME`             | ✅       | Metadata                                  |
-| `NEXTAUTH_SECRET`                   | ✅       | CMS auth                                  |
-| `NEXTAUTH_URL`                      | ✅       | CMS auth                                  |
-| `CMS_ADMIN_EMAIL`                   | ✅       | CMS login credentials                     |
-| `CMS_ADMIN_PASSWORD`                | ✅       | CMS login credentials                     |
-| `RESEND_API_KEY`                    | ✅       | `src/lib/resend.ts` — booking emails      |
-| `RESEND_FROM_EMAIL`                 | ✅       | `src/lib/resend.ts` — sender address      |
-| `RESEND_TO_EMAIL`                   | ✅       | `src/lib/resend.ts` — admin notifications |
+| Variable                            | Required        | Used In                                                       |
+| ----------------------------------- | --------------- | ------------------------------------------------------------- |
+| `MONGODB_URI`                       | ✅              | `src/lib/mongodb.ts`                                          |
+| `CLOUDINARY_CLOUD_NAME`             | ✅              | `src/lib/cloudinary.ts`                                       |
+| `CLOUDINARY_API_KEY`                | ✅              | `src/lib/cloudinary.ts`                                       |
+| `CLOUDINARY_API_SECRET`             | ✅              | `src/lib/cloudinary.ts`                                       |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | ✅              | Client components                                             |
+| `NEXT_PUBLIC_SITE_URL`              | ✅              | SEO, sitemap, JSON-LD, referer back links                     |
+| `NEXT_PUBLIC_SITE_NAME`             | ✅              | Metadata                                                      |
+| `NEXTAUTH_SECRET`                   | ✅              | CMS auth                                                      |
+| `NEXTAUTH_URL`                      | ✅              | CMS auth                                                      |
+| `CMS_ADMIN_EMAIL`                   | ⚠️ retire after §17 | Env-var login — replaced by `CMSUser` DB auth in §17     |
+| `CMS_ADMIN_PASSWORD`                | ⚠️ retire after §17 | Env-var login — replaced by `CMSUser` DB auth in §17     |
+| `RESEND_API_KEY`                    | ✅              | `src/lib/resend.ts` — booking emails                          |
+| `RESEND_FROM_EMAIL`                 | ✅              | `src/lib/resend.ts` — sender address                          |
+| `RESEND_TO_EMAIL`                   | ✅              | `src/lib/resend.ts` — admin notifications                     |
+| `PAYSTACK_SECRET_KEY`               | ✅ (§18)        | `src/app/api/payments/*` — server-side Paystack calls         |
+| `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY`   | optional (§18)  | Client-side Paystack inline widget                            |
 
 ---
 
-## Appendix D — What Changed in This Session
+## Appendix D — What Changed Across Sessions
 
-Changes made in the session ending 2026-04-06, now reflected in this document:
+### Session 1 — 2026-04-06
 
 **API fixes**
-
 - All `[id]` route handlers updated to `params: Promise<{ id: string }>` and `await params` (Next.js 15)
 - Post PATCH 404 fix — `params.id` → awaited `id`
 - Post validator — `coverImageUrl` now `.optional().or(z.literal(''))`, all URL fields same pattern
 - Song form — `onChange` for title field fixed (was updating `date`)
 
 **New models & routes**
-
 - `SiteSettings` model — `heroImageUrl`, `heroImageMobileUrl`, `heroHeadline`, `heroSubheadline`, `siteTagline`
 - `GET/PATCH /api/settings` route — upsert pattern
 - `POST /api/cms/bookings-seen` route — cookie-based seen tracking
+- `DELETE /api/media` bulk handler — accepts `{ ids: string[] }`, uses `Promise.allSettled` on Cloudinary
 
 **CMS**
-
 - CMS route group `(cms)` → real `cms/` directory (resolved Next.js 15 route conflict)
 - `CMSShell` — outer client component for mobile drawer state
 - `CMSSidebar` — collapsible on mobile, persistent on desktop
@@ -4128,7 +4693,6 @@ Changes made in the session ending 2026-04-06, now reflected in this document:
 - `/cms/settings` page + `SiteSettings` CMS form
 
 **Public site**
-
 - Homepage hero — dual layout (mobile stacked `md:hidden`, desktop overlay `hidden md:flex`)
 - `heroImageMobileUrl` field added to `SiteSettings`, settings API, CMS settings page
 - Album detail — `SongCard` → `AlbumPlayer` (inline play, floating player, prev/next, volume, auto-advance)
@@ -4142,4 +4706,30 @@ Changes made in the session ending 2026-04-06, now reflected in this document:
 
 ---
 
-_This document supersedes all previous implementation notes. Version 2.0.0. For feature definitions see `04_features.md`. For brand and architectural constraints see `01_constitution.md`._
+### Session 2 — 2026-04-09
+
+**Media library**
+- CMS media page — checkbox selection per card, select-all toolbar, "Delete all N" button (visible only when select-all is checked), per-card Delete button on hover overlay
+- Audio file icon placeholder — `asset.type === 'audio'` renders musical note SVG instead of broken `<img>`
+- ESLint fix — bare ternary in `toggleOne` → explicit `if/else`
+
+**EventForm — past event lock**
+- `isPastEvent()` module-level helper — checks `isUpcoming === false` then falls back to date comparison
+- All fields `readOnly` + greyed-out `inputCls` when past
+- Amber notice banner at top of form
+- Save button `disabled` + `cursor-not-allowed` + `title` tooltip
+- `handleSubmit` early-exits if `isPast`; Delete still enabled
+- `SlugField` and `MediaPicker` replaced with plain readonly inputs when past
+
+**New features — models & routes**
+- `Album.isSingle: boolean` — marks a release as a single (default `false`)
+- `Album.price: number` — price in kobo for Paystack (default `0` = free)
+- `Song.price: number` — price in kobo for individual track purchase (default `0`)
+- `albumValidator` — `isSingle` and `price` fields added
+- `songValidator` — `price` field added
+- §17 Multi-tenant CMS roles — `CMSUser` model (bcrypt), updated NextAuth handler with DB lookup, role embedded in JWT/session, `requireRole()` guard, `/cms/users` page, admin seed script
+- §18 Paystack payments — `Order` model, `initialize`/`webhook`/`verify` API routes, public buy button pattern, `/cms/orders` page
+
+---
+
+_This document supersedes all previous implementation notes. Version 2.1.0. For feature definitions see `04_features.md`. For brand and architectural constraints see `01_constitution.md`._
