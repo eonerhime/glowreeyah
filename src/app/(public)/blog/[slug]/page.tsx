@@ -60,17 +60,38 @@ export default async function PostPage({ params }: Props) {
     .populate('tags', 'name slug')
     .lean()) as {
     title: string;
+    slug: string;
     excerpt?: string;
     body: string;
     coverImageUrl?: string;
     publishedAt?: Date;
+    updatedAt?: Date;
     category: string;
   } | null;
 
   if (!post) notFound();
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.excerpt,
+    image: post.coverImageUrl,
+    ...(post.publishedAt && { datePublished: post.publishedAt.toISOString() }),
+    ...(post.updatedAt && { dateModified: post.updatedAt.toISOString() }),
+    author: {
+      '@type': 'Person',
+      name: 'Glowreeyah',
+    },
+    url: `${process.env.NEXT_PUBLIC_SITE_URL}/blog/${post.slug}`,
+  };
+
   return (
     <div className="min-h-screen bg-brand-warm">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero */}
       {post.coverImageUrl ? (
         <div className="relative w-full h-72 md:h-96">

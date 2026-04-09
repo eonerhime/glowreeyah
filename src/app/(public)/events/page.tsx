@@ -67,8 +67,40 @@ export default async function EventsPage() {
       isUpcoming: new Date(e.date) >= now,
     }));
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Glowreeyah Events',
+    url: `${process.env.NEXT_PUBLIC_SITE_URL}/events`,
+    numberOfItems: upcoming.length,
+    itemListElement: serialise(upcoming).map((evt, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: {
+        '@type': 'Event',
+        name: evt.title,
+        startDate: evt.date,
+        location: {
+          '@type': 'Place',
+          name: evt.location,
+        },
+        description: evt.description,
+        url: evt.externalLink || `${process.env.NEXT_PUBLIC_SITE_URL}/events`,
+        image: evt.coverImageUrl,
+        organizer: {
+          '@type': 'Person',
+          name: 'Glowreeyah',
+        },
+      },
+    })),
+  };
+
   return (
     <div className="min-h-screen bg-brand-warm">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Header */}
       <section className="bg-brand-deep text-white py-20 px-6 text-center">
         <div className="max-w-4xl mx-auto">

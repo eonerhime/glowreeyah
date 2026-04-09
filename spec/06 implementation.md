@@ -3577,9 +3577,9 @@ Apply the same pattern for songs, albums, events (card layout on mobile), initia
 
 ---
 
-## 11. SEO Implementation 🔄
+## 11. SEO Implementation ✅
 
-### 11.1 Metadata Per Page ✅
+### 11.1 Metadata Per Page
 
 `generateMetadata()` implemented on all dynamic routes. See §8.4 for the pattern.
 
@@ -3656,7 +3656,7 @@ export default function robots(): MetadataRoute.Robots {
 
 ---
 
-### 11.4 JSON-LD Structured Data ⬜
+### 11.4 JSON-LD Structured Data ✅
 
 Add JSON-LD to three page types. Implement as an inline `<script>` in each Server Component page.
 
@@ -3673,12 +3673,14 @@ const jsonLd = {
     '@type': 'MusicGroup',
     name: 'Glowreeyah',
   },
-  inAlbum: {
-    '@type': 'MusicAlbum',
-    name: album.title,
-  },
+  ...(album && {
+    inAlbum: {
+      '@type': 'MusicAlbum',
+      name: album.title,
+    },
+  }),
   description: song.description,
-  url: `${process.env.NEXT_PUBLIC_SITE_URL}/music/${album.slug}`,
+  url: `${process.env.NEXT_PUBLIC_SITE_URL}/music/${albumSlug}/${songSlug}`,
 };
 
 // In JSX:
@@ -3697,8 +3699,8 @@ const jsonLd = {
   headline: post.title,
   description: post.excerpt,
   image: post.coverImageUrl,
-  datePublished: post.publishedAt,
-  dateModified: post.updatedAt,
+  ...(post.publishedAt && { datePublished: post.publishedAt.toISOString() }),
+  ...(post.updatedAt && { dateModified: post.updatedAt.toISOString() }),
   author: {
     '@type': 'Person',
     name: 'Glowreeyah',
@@ -3712,20 +3714,30 @@ const jsonLd = {
 ```tsx
 const jsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'Event',
-  name: event.title,
-  startDate: event.date,
-  location: {
-    '@type': 'Place',
-    name: event.location,
-  },
-  description: event.description,
-  url: event.externalLink || `${process.env.NEXT_PUBLIC_SITE_URL}/events`,
-  image: event.coverImageUrl,
-  organizer: {
-    '@type': 'Person',
-    name: 'Glowreeyah',
-  },
+  '@type': 'ItemList',
+  name: 'Glowreeyah Events',
+  url: `${process.env.NEXT_PUBLIC_SITE_URL}/events`,
+  numberOfItems: upcoming.length,
+  itemListElement: serialise(upcoming).map((evt, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    item: {
+      '@type': 'Event',
+      name: evt.title,
+      startDate: evt.date,
+      location: {
+        '@type': 'Place',
+        name: evt.location,
+      },
+      description: evt.description,
+      url: evt.externalLink || `${process.env.NEXT_PUBLIC_SITE_URL}/events`,
+      image: evt.coverImageUrl,
+      organizer: {
+        '@type': 'Person',
+        name: 'Glowreeyah',
+      },
+    },
+  })),
 };
 ```
 
@@ -3739,9 +3751,9 @@ const jsonLd = {
 - [x] Canonical URLs correct
 - [x] `src/app/sitemap.ts` — covers albums, posts, initiatives, events, static pages
 - [x] `src/app/robots.ts` — `/cms/` disallowed
-- [ ] JSON-LD `MusicRecording` added to song/album pages
-- [ ] JSON-LD `Article` added to blog post pages
-- [ ] JSON-LD `Event` added to events page
+- [x] JSON-LD `MusicRecording` added to song/album pages
+- [x] JSON-LD `Article` added to blog post pages
+- [x] JSON-LD `Event` added to events page
 - [ ] Validate JSON-LD at https://search.google.com/test/rich-results
 
 ---
@@ -3782,70 +3794,70 @@ Or use `revalidate = 60` for more frequently updated content (events, bookings).
 
 ---
 
-## 13. Testing ⬜
+## 13. Testing ✅
 
 ### 13.1 Manual Testing Checklist
 
 **Public Site**
 
-- [ ] Home page loads — dual hero correct at mobile (375px) and desktop (1280px)
-- [ ] `/about` — hero image uses `object-top`, correct height
-- [ ] `/music` — album cards grid renders
-- [ ] `/music/[albumSlug]` — AlbumPlayer loads tracks, play/pause works, floating bar appears, prev/next work, auto-advance works
-- [ ] `/blog` — post cards render with cover images
-- [ ] `/blog/[slug]` — full post renders, back link goes to correct referer
-- [ ] `/events` — event cards render
-- [ ] `/speaking` → `/events` redirect works (301)
-- [ ] `/impact` — initiative image cards render and link to detail
-- [ ] `/impact/[slug]` — initiative detail page renders
-- [ ] `/booking` — form submits, success state shown, booking appears in CMS
-- [ ] `/media` — gallery renders
-- [ ] `/tag/[slug]` — tagged content lists correctly
-- [ ] `/sitemap.xml` — resolves, includes albums, posts, initiatives
-- [ ] `/robots.txt` — resolves, `/cms/` is disallowed
+- [x] Home page loads — dual hero correct at mobile (375px) and desktop (1280px)
+- [x] `/about` — hero image uses `object-top`, correct height
+- [x] `/music` — album cards grid renders
+- [x] `/music/[albumSlug]` — AlbumPlayer loads tracks, play/pause works, floating bar appears, prev/next work, auto-advance works
+- [x] `/blog` — post cards render with cover images
+- [x] `/blog/[slug]` — full post renders, back link goes to correct referer
+- [x] `/events` — event cards render
+- [x] `/speaking` → `/events` redirect works (301)
+- [x] `/impact` — initiative image cards render and link to detail
+- [x] `/impact/[slug]` — initiative detail page renders
+- [x] `/booking` — form submits, success state shown, booking appears in CMS
+- [x] `/media` — gallery renders
+- [x] `/tag/[slug]` — tagged content lists correctly
+- [x] `/sitemap.xml` — resolves, includes albums, posts, initiatives
+- [x] `/robots.txt` — resolves, `/cms/` is disallowed
 
 **CMS**
 
-- [ ] `/cms/login` — login with correct credentials → redirected to `/cms/dashboard`
-- [ ] `/cms/dashboard` — stat counts render from DB
-- [ ] `/cms/posts` — list renders, new post creates, edit updates, delete works, publish toggle works
-- [ ] `/cms/songs` — list renders, new song creates (title field updates correctly), edit updates
-- [ ] `/cms/albums` — CRUD works
-- [ ] `/cms/events` — card layout on mobile, create with date auto-sets `isUpcoming`
-- [ ] `/cms/initiatives` — truncation works, CRUD works
-- [ ] `/cms/media` — upload to Cloudinary works, delete removes from both Cloudinary and MongoDB
-- [ ] `/cms/bookings` — pending badge appears, `MarkBookingsSeen` clears it on visit, status update sends email
-- [ ] `/cms/tags` — create and delete work
-- [ ] `/cms/artist` — profile saves, reflects on `/about`
-- [ ] `/cms/settings` — hero images save, reflect on homepage
-- [ ] Unauthenticated `/cms/dashboard` → redirect to `/cms/login`
-- [ ] Logout → redirect to `/cms/login`, session cleared
+- [x] `/cms/login` — login with correct credentials → redirected to `/cms/dashboard`
+- [x] `/cms/dashboard` — stat counts render from DB
+- [x] `/cms/posts` — list renders, new post creates, edit updates, delete works, publish toggle works
+- [x] `/cms/songs` — list renders, new song creates (title field updates correctly), edit updates
+- [x] `/cms/albums` — CRUD works
+- [x] `/cms/events` — card layout on mobile, create with date auto-sets `isUpcoming`
+- [x] `/cms/initiatives` — truncation works, CRUD works
+- [x] `/cms/media` — upload to Cloudinary works, delete removes from both Cloudinary and MongoDB
+- [x] `/cms/bookings` — pending badge appears, `MarkBookingsSeen` clears it on visit, status update sends email
+- [x] `/cms/tags` — create and delete work
+- [x] `/cms/artist` — profile saves, reflects on `/about`
+- [x] `/cms/settings` — hero images save, reflect on homepage
+- [x] Unauthenticated `/cms/dashboard` → redirect to `/cms/login`
+- [x] Logout → redirect to `/cms/login`, session cleared
 
 **API**
 
-- [ ] `GET /api/songs?albumId=xxx` — returns songs for album
-- [ ] `POST /api/songs` with missing title → 422
-- [ ] `PATCH /api/posts/[id]` with empty `coverImageUrl` → 200 (not 422)
-- [ ] `DELETE /api/media/[id]` — Cloudinary asset deleted + MongoDB record removed
-- [ ] `POST /api/bookings` → booking created, appears in CMS
-- [ ] `PATCH /api/bookings/[id]` with `status: accepted` → email sent via Resend
-- [ ] `POST /api/cms/bookings-seen` → `bookings_seen_at` cookie set
+- [x] `GET /api/songs?albumId=xxx` — returns songs for album
+- [x] `POST /api/songs` with missing title → 422
+- [x] `PATCH /api/posts/[id]` with empty `coverImageUrl` → 200 (not 422)
+- [x] `DELETE /api/media/[id]` — Cloudinary asset deleted + MongoDB record removed
+- [x] `POST /api/bookings` → booking created, appears in CMS
+- [x] `PATCH /api/bookings/[id]` with `status: accepted` → email sent via Resend
+- [x] `POST /api/cms/bookings-seen` → `bookings_seen_at` cookie set
 
 ---
 
-## 14. Deployment ⬜
+## 14. Deployment ✅
 
 ### 14.1 Pre-Deployment Checklist
 
-- [ ] `npm run build` passes locally — zero errors
-- [ ] `npx tsc --noEmit` passes — zero TypeScript errors
-- [ ] `npm run lint` passes — zero lint errors
-- [ ] All changes committed to `feature/platform-v1` branch
-- [ ] Branch merged to `main` on GitHub
-- [ ] MongoDB Atlas cluster running, connection string valid
-- [ ] Cloudinary credentials active
-- [ ] Resend API key active, sending domain verified (`glowreeyah.com`)
-- [ ] Tawk.to embed script URL noted
+- [x] `npm run build` passes locally — zero errors
+- [x] `npx tsc --noEmit` passes — zero TypeScript errors
+- [x] `npm run lint` passes — zero lint errors
+- [x] All changes committed to `feature/platform-v1` branch
+- [x] Branch merged to `main` on GitHub
+- [x] MongoDB Atlas cluster running, connection string valid
+- [x] Cloudinary credentials active
+- [x] Resend API key active, sending domain verified (`glowreeyah.com`)
+- [x] Tawk.to embed script URL noted
 
 ---
 
@@ -3897,26 +3909,27 @@ Or use `revalidate = 60` for more frequently updated content (events, bookings).
 Add the Tawk.to embed script to `src/app/layout.tsx` as a `<Script>` tag with `strategy="afterInteractive"`:
 
 ```typescript
-import Script from 'next/script';
+'use client';
 
-// In root layout JSX:
-<Script
-  id="tawkto"
-  strategy="afterInteractive"
-  dangerouslySetInnerHTML={{
-    __html: `
-      var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-      (function(){
-        var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-        s1.async=true;
-        s1.src='https://embed.tawk.to/YOUR_PROPERTY_ID/YOUR_WIDGET_ID';
-        s1.charset='UTF-8';
-        s1.setAttribute('crossorigin','*');
-        s0.parentNode.insertBefore(s1,s0);
-      })();
-    `,
-  }}
-/>
+import { useEffect } from 'react';
+
+export default function TawkChat() {
+  useEffect(() => {
+    const s1 = document.createElement('script');
+    const s0 = document.getElementsByTagName('script')[0];
+    s1.async = true;
+    s1.src = 'https://embed.tawk.to/69d1097f06ab001c35228672/1jlc8q798';
+    s1.charset = 'UTF-8';
+    s1.setAttribute('crossorigin', '*');
+    s0.parentNode!.insertBefore(s1, s0);
+
+    return () => {
+      s1.parentNode?.removeChild(s1);
+    };
+  }, []);
+
+  return null;
+}
 ```
 
 Replace `YOUR_PROPERTY_ID` and `YOUR_WIDGET_ID` with values from your Tawk.to dashboard (Administration → Chat Widget → Direct Chat Link).
