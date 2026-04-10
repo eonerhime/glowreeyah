@@ -84,7 +84,7 @@ export default async function AlbumPage({ params }: Props) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'MusicRecording',
-    name: song.title,
+    name: album.title,
     byArtist: {
       '@type': 'MusicGroup',
       name: 'Glowreeyah',
@@ -95,7 +95,7 @@ export default async function AlbumPage({ params }: Props) {
         name: album.title,
       },
     }),
-    description: song.description,
+    description: album.description,
     url: `${process.env.NEXT_PUBLIC_SITE_URL}/music/${albumSlug}`,
   };
 
