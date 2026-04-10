@@ -1,12 +1,14 @@
 'use client';
+
 import { useState, useRef, useEffect, useCallback } from 'react';
 import SongCard, { type SongType } from '@/components/music/SongCard';
 
 interface Props {
   songs: SongType[];
+  albumSlug: string;
 }
 
-export default function AlbumPlayer({ songs = [] }: Props) {
+export default function AlbumPlayer({ songs, albumSlug }: Props) {
   const [nowPlaying, setNowPlaying] = useState<SongType | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -163,6 +165,7 @@ export default function AlbumPlayer({ songs = [] }: Props) {
             song={song}
             onPlay={handlePlay}
             nowPlaying={isPlaying ? (nowPlaying?._id ?? null) : null}
+            albumSlug={albumSlug}
           />
         ))}
         {songs.length === 0 && (

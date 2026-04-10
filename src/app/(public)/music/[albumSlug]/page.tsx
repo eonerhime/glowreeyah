@@ -83,22 +83,25 @@ export default async function AlbumPage({ params }: Props) {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'MusicRecording',
+    '@type': 'MusicAlbum',
     name: album.title,
     byArtist: {
       '@type': 'MusicGroup',
       name: 'Glowreeyah',
     },
-    ...(album && {
-      inAlbum: {
-        '@type': 'MusicAlbum',
-        name: album.title,
-      },
-    }),
-    description: album.description,
+    ...(album.releaseYear && { datePublished: String(album.releaseYear) }),
+    ...(album.description && { description: album.description }),
+    ...(album.coverImageUrl && { image: album.coverImageUrl }),
     url: `${process.env.NEXT_PUBLIC_SITE_URL}/music/${albumSlug}`,
+    numTracks: songs.length,
+    track: songs.map((s, index) => ({
+      '@type': 'MusicRecording',
+      position: index + 1,
+      name: s.title,
+      ...(s.audioUrl && { contentUrl: s.audioUrl }),
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/music/${albumSlug}`,
+    })),
   };
-
   return (
     <div className="min-h-screen bg-brand-warm">
       <script
@@ -156,7 +159,7 @@ export default async function AlbumPage({ params }: Props) {
             {album.description}
           </p>
         )}
-        <AlbumPlayer songs={songs} />
+        <AlbumPlayer songs={songs} albumSlug={albumSlug} />
         <div className="mt-12 pt-6 border-t border-gray-200">
           <Link
             href={backHref}
