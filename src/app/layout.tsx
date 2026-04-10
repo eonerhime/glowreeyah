@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: { default: 'Glowreeyah', template: '%s | Glowreeyah' },
   description: 'Music. Ministry. Movement.',
+  verification: {
+    google: 'P6t5VSqVAcbSM0i6_Ad-e2mThX3HAmzpGIOJyIvJXGc',
+  },
 };
 
 export default function RootLayout({
