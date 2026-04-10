@@ -81,8 +81,30 @@ export default async function AlbumPage({ params }: Props) {
     coverImageUrl: s.coverImageUrl,
   }));
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'MusicRecording',
+    name: song.title,
+    byArtist: {
+      '@type': 'MusicGroup',
+      name: 'Glowreeyah',
+    },
+    ...(album && {
+      inAlbum: {
+        '@type': 'MusicAlbum',
+        name: album.title,
+      },
+    }),
+    description: song.description,
+    url: `${process.env.NEXT_PUBLIC_SITE_URL}/music/${albumSlug}`,
+  };
+
   return (
     <div className="min-h-screen bg-brand-warm">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero */}
       {album.coverImageUrl ? (
         <div className="relative w-full h-[70vh]">
